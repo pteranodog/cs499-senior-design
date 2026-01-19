@@ -1,0 +1,7 @@
+services:
+  pirate-frontend:
+    build:
+      context: ./
+      dockerfile: ./containers/pirate-frontend/Dockerfile
+    ports:
+      - "3000:3000"
