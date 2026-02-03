@@ -1,4 +1,5 @@
 import 'leaflet/dist/leaflet.css';
+import HornPorts from './HornPorts';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 
 function PirateMap() {
@@ -13,6 +14,10 @@ function PirateMap() {
           CS499 - Senior Design
         </Popup>
       </Marker>
+
+      {/* Display popups for Somilian Piracy-relevant ports */}
+      <HornPorts/>
+
     </MapContainer>
   )
 }
