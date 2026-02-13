@@ -62,7 +62,10 @@ function Controls()
 
         //AUTO TERMINATE WHEN DURATION IS REACHED
         if (durationInSeconds > 0 && newSeconds >= durationInSeconds) {
-          handleTerminate();
+          clearInterval(interval);
+          setIsRunning(false);
+          setShowEndScreen(true);
+          return durationInSeconds;
         }
         return newSeconds;
       });
@@ -116,11 +119,11 @@ function Controls()
 
 
   const handleStep = () => {
-    if (isRunning) return; // only allow step when paused
+    if (isRunning) return;
 
     setSeconds(prev => prev + 1);
 
-    // Run one tick of simulation logic
+    // RUN ONE TICK AT A TIME
     setEntries(prev => prev + Math.floor(Math.random() * 2));
     setExits(prev => prev + Math.floor(Math.random() * 2));
     setCaptures(prev => prev + Math.floor(Math.random() * 2));
@@ -136,6 +139,69 @@ function Controls()
       return 1;
     })
   }
+
+
+const handleExport = (format = "json") => {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+
+  const runData = {
+    simulationName: simName,
+    region,
+    operationalCondition,
+    durationMinutes: duration,
+    elapsedTime: formatTime(seconds),
+    outcomes: {
+      entries,
+      exits,
+      captures,
+      defeats,
+      rescues,
+      evasions
+    }
+  };
+
+  let fileContent;
+  let fileType;
+  let fileExtension;
+
+  if (format === "json") {
+    fileContent = JSON.stringify(runData, null, 2);
+    fileType = "application/json";
+    fileExtension = "json";
+  }
+
+  if (format === "csv") {
+    fileContent =
+`Simulation Name,${simName}
+Region,${region}
+Operational Condition,${operationalCondition}
+Duration (minutes),${duration}
+Elapsed Time,${formatTime(seconds)}
+
+Entries,${entries}
+Exits,${exits}
+Captures,${captures}
+Defeats,${defeats}
+Rescues,${rescues}
+Evasions,${evasions}`;
+
+    fileType = "text/csv";
+    fileExtension = "csv";
+  }
+
+  const blob = new Blob([fileContent], { type: fileType });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${simName || "simulation"}-${timestamp}.${fileExtension}`;
+  document.body.appendChild(link);
+  link.click();
+
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 
 
 return (
@@ -305,7 +371,7 @@ return (
             className="position-fixed top-50 start-50 translate-middle bg-dark text-light p-4 rounded shadow"
             style={{ zIndex: 2000, minWidth: "400px" }}
           >
-            <h5 className="mb-3">Configure Simulation</h5>
+            <h5 className="mb-3">Simulation Complete</h5>
             
             {/* END METRICS GO HERE */}
             <p className = "mb-4">Elapsed Time:  {formatTime(seconds)}</p>
@@ -323,20 +389,35 @@ return (
             <p><strong>Rescues:</strong> {rescues}</p>
             <p><strong>Evasions:</strong> {evasions}</p>
 
-            <div className = "d-grip">
+            <div className = "d-grid gap-2">
               <button
                 className = "btn btn-success"
                 onClick = {() => {
-                  setShowEndScreen(true);                 
+                  handleExport("json");                 
                 }}
               >
-                Export
+                Export as JSON
+              </button>
+
+              <button
+                className = "btn btn-success"
+                onClick = {() => {
+                  handleExport("csv")
+                }}
+              >
+                Export as CSV
               </button>
 
               <button
                 className = "btn btn-success"
                 onClick = {() => {
                   setSeconds(0);
+                  setEntries(0);
+                  setExits(0);
+                  setCaptures(0);
+                  setDefeats(0);
+                  setRescues(0);
+                  setEvasions(0);
                   setShowEndScreen(false);
                   setShowStartScreen(true);
                 }}
@@ -407,7 +488,7 @@ return (
           className="btn btn-warning btn-sm"
           onClick={handleSpeed}
         >
-          Speed
+          Speed ({speed}x)
         </button>
 
         <button 
