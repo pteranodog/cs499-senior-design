@@ -11,6 +11,7 @@ function Controls()
   const [timeOfDay, setTimeOfDay] = useState("Day");
   const [weather, setWeather] = useState("Clear");
   const [showStartScreen, setShowStartScreen] = useState(true);
+  const [showEndScreen, setShowEndScreen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
 
   useEffect ( () => 
@@ -44,32 +45,71 @@ function Controls()
     setIsRunning(true);
   };
 
-  return (
+  const handleTerminate = () => {
+    setIsRunning(false);;
+    setShowEndScreen(true);
+  }
+
+return (
+  <>
+    {/* TOP RIGHT CONTROL */}
     <Control prepend position="topright">
       <div onClick={(e) => e.stopPropagation()}>
-        
-        {/* START SCREEN IN CENTER OF SCREEN */}
+
+        {/* START SCREEN IN CENTER */}
         {showStartScreen && (
           <div
-            className = "position-fixed top-50 start-50 translate-middle bg-dark text-light p-4 rounded shadow"
-            style = {{zindex: 2000, minWidth: "400px"}}
+            className="position-fixed top-50 start-50 translate-middle bg-dark text-light p-4 rounded shadow"
+            style={{ zIndex: 2000, minWidth: "400px" }}
           >
-            <h5 
-              className = "mb-3" > Configure Simulation
-            </h5>
+            <h5 className="mb-3">Configure Simulation</h5>
 
             {/* CONFIG INFO GOES HERE */}
 
-            <div className = "d-grid mt-4">
-              <button className = "btn btn-success" onClick = {handleStart}>
+            <div className="d-grid mt-4">
+              <button className="btn btn-success" onClick={handleStart}>
                 Start Simulation
               </button>
             </div>
           </div>
         )}
 
+        {/* SIMULATION END SCREEN */}
+        {showEndScreen && (
+          <div
+            className="position-fixed top-50 start-50 translate-middle bg-dark text-light p-4 rounded shadow"
+            style={{ zIndex: 2000, minWidth: "400px" }}
+          >
+            <h5 className="mb-3">Configure Simulation</h5>
 
-        {/* STATUS DISPLAY IN TOP RIGHT */}
+            <p className = "mb-4">Elapsed Time:  {formatTime(seconds)}</p>
+
+            <div className = "d-grip gap-2">
+              <button
+                className = "btn btn-success"
+                onClick = {() => {
+                  setShowEndScreen(true);                 
+                }}
+              >
+                Export
+              </button>
+
+              <button
+                className = "btn btn-success"
+                onClick = {() => {
+                  setSeconds(0);
+                  setShowEndScreen(false);
+                  setShowStartScreen(true);
+                }}
+              >
+                Restart
+              </button>
+              
+            </div>
+          </div>
+        )}
+
+        {/* STATUS DISPLAY */}
         <Row className="mb-2">
           <Col md="auto">
             <Card
@@ -87,32 +127,37 @@ function Controls()
           </Col>
         </Row>
 
-
-        {/* EMPTY DROPDOWN */}
+        {/* DROPDOWN */}
         <Row>
           <Col md="auto">
             <Card bg="secondary" className="rounded shadow">
               <Card.Body className="p-2">
                 <Dropdown>
-                  <Dropdown.Toggle
-                    variant="light"
-                    size="sm"
-                    disabled
-                  >
+                  <Dropdown.Toggle variant="light" size="sm" disabled>
                     View Live Counts
                   </Dropdown.Toggle>
-
-                  <Dropdown.Menu>
-                    {/* Empty for now */}
-                  </Dropdown.Menu>
+                  <Dropdown.Menu>{/* Empty for now */}</Dropdown.Menu>
                 </Dropdown>
               </Card.Body>
             </Card>
           </Col>
         </Row>
+
       </div>
     </Control>
-  );
+
+    {/* BOTTOM RIGHT CONTROLS */}
+    <Control prepend position="bottomright">
+      <div onClick={(e) => e.stopPropagation()} className="d-flex gap-2">
+        <button className="btn btn-primary btn-sm">Step</button>
+        <button className="btn btn-warning btn-sm">Speed</button>
+        <button className="btn btn-danger btn-sm" onClick = {handleTerminate}>
+          Terminate
+        </button>
+      </div>
+    </Control>
+  </>
+);
 }
 
 export default Controls;
