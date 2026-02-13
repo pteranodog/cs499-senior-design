@@ -13,6 +13,7 @@ function Controls()
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [speed, setSpeed] = useState(1);
 
   // CONFIGURATION STATE FIELDS
   const [simName, setSimName] = useState("");
@@ -49,7 +50,6 @@ function Controls()
     operationalCondition !== "" &&
     percentValid;
 
-
   useEffect ( () => 
   {
     if (!isRunning) return;
@@ -79,10 +79,10 @@ function Controls()
       setRescues((prev) => prev + Math.floor(Math.random() * 2));
       setEvasions((prev) => prev + Math.floor(Math.random() * 2));
 
-    }, 1000);
+    }, 1000 / speed);
 
     return () => clearInterval(interval);
-  }, [isRunning, duration]);
+  }, [isRunning, duration, speed]);
 
 
   const formatTime = (s) => 
@@ -104,8 +104,37 @@ function Controls()
 
 
   const handleTerminate = () => {
+    const confirm = window.confirm(
+      "Are you sure you want to terminate this run?"
+    );
+
+    if(!confirm) return;
+
     setIsRunning(false);
     setShowEndScreen(true);
+  }
+
+
+  const handleStep = () => {
+    if (isRunning) return; // only allow step when paused
+
+    setSeconds(prev => prev + 1);
+
+    // Run one tick of simulation logic
+    setEntries(prev => prev + Math.floor(Math.random() * 2));
+    setExits(prev => prev + Math.floor(Math.random() * 2));
+    setCaptures(prev => prev + Math.floor(Math.random() * 2));
+    setDefeats(prev => prev + Math.floor(Math.random() * 2));
+    setRescues(prev => prev + Math.floor(Math.random() * 2));
+    setEvasions(prev => prev + Math.floor(Math.random() * 2));
+  }
+
+    const handleSpeed = () => {
+    setSpeed(prev => {
+      if (prev === 1) return 2;
+      if (prev ===2) return 4;
+      return 1;
+    })
   }
 
 
@@ -280,6 +309,19 @@ return (
             
             {/* END METRICS GO HERE */}
             <p className = "mb-4">Elapsed Time:  {formatTime(seconds)}</p>
+            <p><strong>Simulation Name:</strong> {simName}</p>
+            <p><strong>Region:</strong> {region}</p>
+            <p><strong>Operational Condition:</strong> {operationalCondition}</p>
+            <p><strong>Elapsed Time:</strong> {formatTime(seconds)}</p>
+
+            <hr />
+
+            <p><strong>Entries:</strong> {entries}</p>
+            <p><strong>Exits:</strong> {exits}</p>
+            <p><strong>Captures:</strong> {captures}</p>
+            <p><strong>Defeats:</strong> {defeats}</p>
+            <p><strong>Rescues:</strong> {rescues}</p>
+            <p><strong>Evasions:</strong> {evasions}</p>
 
             <div className = "d-grip">
               <button
@@ -346,11 +388,35 @@ return (
     {/* BOTTOM RIGHT CONTROLS */}
     <Control prepend position="bottomright">
       <div onClick={(e) => e.stopPropagation()} className="d-flex gap-2">
-        <button className="btn btn-primary btn-sm">Step</button>
-        <button className="btn btn-warning btn-sm">Speed</button>
-        <button className="btn btn-danger btn-sm" onClick = {handleTerminate}>
+        <button 
+          className="btn btn-primary btn-sm"
+          onClick = {() => setIsRunning(prev => !prev)}
+          >
+            {isRunning ? "Pause" : "Resume"}
+        </button>
+
+        <button 
+          className="btn btn-primary btn-sm"
+          onClick = {handleStep}
+          disabled = {isRunning}
+        >
+          Step
+        </button>
+
+        <button 
+          className="btn btn-warning btn-sm"
+          onClick={handleSpeed}
+        >
+          Speed
+        </button>
+
+        <button 
+          className="btn btn-danger btn-sm" 
+          onClick = {handleTerminate}
+        >
           Terminate
         </button>
+
       </div>
     </Control>
   </>
