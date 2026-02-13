@@ -14,14 +14,50 @@ function Controls()
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
 
+  // CONFIGURATION STATE FIELDS
+  const [simName, setSimName] = useState("");
+  const [region, setRegion] = useState("");
+  const [duration, setDuration] = useState("");
+  const [merchantRate, setMerchantRate] = useState(50);
+  const [pirateRate, setPirateRate] = useState(50);
+  const [securityRate, setSecurityRate] = useState(50);
+  const [operationalCondition, setOperationalCondition] = useState("");
+
+  const totalPercentage = merchantRate + pirateRate + securityRate;
+  const percentValid = totalPercentage <= 100;
+  const minDuration = 1;
+  const maxDuration = 180;
+  
+  const durationValid = 
+    duration !== "" &&
+    Number(duration) >= minDuration &&
+    Number(duration) <= maxDuration;
+
+  const isSetupValid = 
+    simName.trim() !== "" &&
+    region !== "" &&
+    durationValid &&
+    operationalCondition !== "" &&
+    percentValid;
+
+
   useEffect ( () => 
   {
     if (!isRunning) return;
 
-    const interval = setInterval ( () => 
-    {
-      setSeconds((prev) => prev +1);
+    const durationInSeconds = Number(duration) * 60;
 
+    const interval = setInterval ( () => {
+      setSeconds((prev) => {
+        const newSeconds = prev + 1;
+
+        //AUTO TERMINATE WHEN DURATION IS REACHED
+        if (durationInSeconds > 0 && newSeconds >= durationInSeconds) {
+          handleTerminate();
+        }
+        return newSeconds;
+      });
+        
       const hour = new Date().getHours();
       setTimeOfDay (hour >= 6 && hour < 18 ? "Day" : "Night");
 
@@ -29,7 +65,8 @@ function Controls()
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isRunning]);
+  }, [isRunning, duration]);
+
 
   const formatTime = (s) => 
   {
@@ -39,16 +76,21 @@ function Controls()
     return `${hrs}:${mins}:${secs}`;
   };
 
+
   const handleStart = () => 
   {
+    if (!isSetupValid) return;
+
     setShowStartScreen(false);
     setIsRunning(true);
   };
 
+
   const handleTerminate = () => {
-    setIsRunning(false);;
+    setIsRunning(false);
     setShowEndScreen(true);
   }
+
 
 return (
   <>
@@ -65,9 +107,146 @@ return (
             <h5 className="mb-3">Configure Simulation</h5>
 
             {/* CONFIG INFO GOES HERE */}
+            {/* SET SIM NAME */}
+            <div className = "mb-3">
+              <label className = "form-label"> Simulation Name </label>
+              <input
+                type = "text"
+                className = "form-control"
+                value = {simName}
+                onChange = {(e) => setSimName(e.target.value)}
+                disabled = {isRunning}
+              />
+            </div>
 
+            {/* SET REGION */}
+            <div className = "mb-3">
+              <label className = "form-label"> Region </label>
+              <select
+                className = "form-select"
+                value = {region}
+                onChange = {(e) => setRegion(e.target.value)}
+                disabled = {isRunning}
+              >
+                <option value = ""> Select Region </option>
+                <option value = "Gulf of Guinea"> Gulf of Guinea </option>
+                <option value = "Gulf of Aden/Somalian Coast"> Gulf of Aden/Somalian Coast </option>
+                <option value = "Malacca Strait"> Malacca Strait </option>
+              </select>
+            </div>
+
+            {/* SET MERCHANT PRESENCE PERCENTAGE */}
+            <div className = "mb-3">
+              <label className = "form-label"> Merchant Presence: {merchantRate}% </label>
+              <input
+                type = "range"
+                min = "0"
+                max = "100"
+                value = {merchantRate}
+                className = "form-range"
+                onChange = {(e) => setMerchantRate(Number(e.target.value))}
+                disabled = {isRunning}
+              />
+            </div>
+
+            {/* SET PIRATE PRESENCE PERCENTAGE */}
+            <div className = "mb-3">
+              <label className = "form-label"> Pirate Presence: {pirateRate}% </label>
+              <input
+                type = "range"
+                min = "0"
+                max = "100"
+                value = {pirateRate}
+                className = "form-range"
+                onChange = {(e) => setPirateRate(Number(e.target.value))}
+                disabled = {isRunning}
+              />
+            </div>
+
+            {/* SET SECURITY PRESENCE PERCENTAGE */}
+            <div className = "mb-3">
+              <label className = "form-label"> Security Presence: {securityRate}% </label>
+              <input
+                type = "range"
+                min = "0"
+                max = "100"
+                value = {securityRate}
+                className = "form-range"
+                onChange = {(e) => setSecurityRate(Number(e.target.value))}
+                disabled = {isRunning}
+              />
+            </div>
+
+            {/* INLINE WARNING FOR SLIDER PERCENTAGES SUM*/}
+            {merchantRate + pirateRate + securityRate > 100 && (
+              <div className = "text-danger small">
+                Total of Merchant, Pirate, and Security percentages cannot exceed 100%
+              </div>
+            )}
+
+            {/* SET DURATION */}
+            <div className = "mb-3">
+              <label className = "form-label"> Duration (minutes) </label>
+              <input
+                type = "number"
+                className = "form-control"
+                value = {duration}
+                min = {minDuration}
+                max = {maxDuration}
+                onChange = {(e) => setDuration(e.target.value)}
+                disabled = {isRunning}
+              />
+              {duration !== "" && Number(duration) < minDuration && (
+                <div className="text-danger small">
+                  Duration must be at least {minDuration} minute{minDuration > 1 ? "s" : ""}
+                </div>
+              )}
+              {duration !== "" && Number(duration) > maxDuration && (
+                <div className="text-danger small">
+                  Duration cannot exceed {maxDuration} minutes
+                </div>
+              )}              
+            </div>
+
+            {/* SET OOPERATIONAL CONDITION */}
+            <div className="mb-3">
+              <label className="form-label">Operational Condition</label>
+              <div>
+                <div className="form-check form-check-inline">
+                  <input
+                    type="radio"
+                    className="form-check-input"
+                    name="operationalCondition"
+                    value="Day"
+                    checked={operationalCondition === "Day"}
+                    onChange={(e) => setOperationalCondition(e.target.value)}
+                    disabled = {isRunning}
+                  />
+                  <label className="form-check-label">Day</label>
+                </div>
+
+                <div className="form-check form-check-inline">
+                  <input
+                    type="radio"
+                    className="form-check-input"
+                    name="operationalCondition"
+                    value="Night"
+                    checked={operationalCondition === "Night"}
+                    onChange={(e) => setOperationalCondition(e.target.value)}
+                    disabled = {isRunning}
+                  />
+                  <label className="form-check-label">Night</label>
+                </div>
+              </div>
+            </div>
+
+            {/* START BUTTON */}
             <div className="d-grid mt-4">
-              <button className="btn btn-success" onClick={handleStart}>
+              <button 
+                className = "btn btn-success" 
+                onClick={handleStart}
+                disabled = {!isSetupValid}
+              >
                 Start Simulation
               </button>
             </div>
@@ -81,10 +260,11 @@ return (
             style={{ zIndex: 2000, minWidth: "400px" }}
           >
             <h5 className="mb-3">Configure Simulation</h5>
-
+            
+            {/* END METRICS GO HERE */}
             <p className = "mb-4">Elapsed Time:  {formatTime(seconds)}</p>
 
-            <div className = "d-grip gap-2">
+            <div className = "d-grip">
               <button
                 className = "btn btn-success"
                 onClick = {() => {
@@ -136,7 +316,9 @@ return (
                   <Dropdown.Toggle variant="light" size="sm" disabled>
                     View Live Counts
                   </Dropdown.Toggle>
-                  <Dropdown.Menu>{/* Empty for now */}</Dropdown.Menu>
+                  <Dropdown.Menu>
+                    {/* Empty for now */}
+                  </Dropdown.Menu>
                 </Dropdown>
               </Card.Body>
             </Card>
