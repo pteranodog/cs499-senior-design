@@ -23,6 +23,15 @@ function Controls()
   const [securityRate, setSecurityRate] = useState(50);
   const [operationalCondition, setOperationalCondition] = useState("");
 
+  // LIVE METRICS COUNTING (DROPDOWN)
+  const [entries, setEntries] = useState(0);
+  const [exits, setExits] = useState(0);
+  const [captures, setCaptures] = useState(0);
+  const [defeats, setDefeats] = useState(0);
+  const [rescues, setRescues] = useState(0);
+  const [evasions, setEvasions] = useState(0);
+ 
+
   const totalPercentage = merchantRate + pirateRate + securityRate;
   const percentValid = totalPercentage <= 100;
   const minDuration = 1;
@@ -60,8 +69,16 @@ function Controls()
         
       const hour = new Date().getHours();
       setTimeOfDay (hour >= 6 && hour < 18 ? "Day" : "Night");
-
       setWeather("Clear");
+
+      // RANDOM COUNTS FOR TESTING. REPLACE LATER W/ REAL LOGIC
+      setEntries((prev) => prev + Math.floor(Math.random() * 2));
+      setExits((prev) => prev + Math.floor(Math.random() * 2));
+      setCaptures((prev) => prev + Math.floor(Math.random() * 2));
+      setDefeats((prev) => prev + Math.floor(Math.random() * 2));
+      setRescues((prev) => prev + Math.floor(Math.random() * 2));
+      setEvasions((prev) => prev + Math.floor(Math.random() * 2));
+
     }, 1000);
 
     return () => clearInterval(interval);
@@ -308,22 +325,20 @@ return (
         </Row>
 
         {/* DROPDOWN */}
-        <Row>
-          <Col md="auto">
-            <Card bg="secondary" className="rounded shadow">
-              <Card.Body className="p-2">
-                <Dropdown>
-                  <Dropdown.Toggle variant="light" size="sm" disabled>
-                    View Live Counts
-                  </Dropdown.Toggle>
-                  <Dropdown.Menu>
-                    {/* Empty for now */}
-                  </Dropdown.Menu>
-                </Dropdown>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+        <Dropdown>
+          <Dropdown.Toggle variant="dark" size="sm">
+            View Live Counts
+          </Dropdown.Toggle>
+
+          <Dropdown.Menu>
+            <Dropdown.Item disabled>Entries: {entries}</Dropdown.Item>
+            <Dropdown.Item disabled>Exits: {exits}</Dropdown.Item>
+            <Dropdown.Item disabled>Captures: {captures}</Dropdown.Item>
+            <Dropdown.Item disabled>Defeats: {defeats}</Dropdown.Item>
+            <Dropdown.Item disabled>Rescues: {rescues}</Dropdown.Item>
+            <Dropdown.Item disabled>Evasions: {evasions}</Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
 
       </div>
     </Control>
