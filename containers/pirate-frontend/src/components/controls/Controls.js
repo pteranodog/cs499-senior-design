@@ -7,9 +7,9 @@ import Dropdown from 'react-bootstrap/Dropdown';
 
 function Controls() 
 {
+  // STATES
   const [seconds, setSeconds] = useState(0);
   const [timeOfDay, setTimeOfDay] = useState("Day");
-  const [weather, setWeather] = useState("Clear");
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -22,7 +22,9 @@ function Controls()
   const [merchantRate, setMerchantRate] = useState(50);
   const [pirateRate, setPirateRate] = useState(50);
   const [securityRate, setSecurityRate] = useState(50);
-  const [operationalCondition, setOperationalCondition] = useState("");
+  const [weather, setWeather] = useState("");
+  const [startHour, setStartHour] = useState("");
+  const [startMinute, setStartMinute] = useState("");
 
   // LIVE METRICS COUNTING (DROPDOWN)
   const [entries, setEntries] = useState(0);
@@ -32,23 +34,36 @@ function Controls()
   const [rescues, setRescues] = useState(0);
   const [evasions, setEvasions] = useState(0);
  
-
+  // BOUNDS FOR SIM POPULATION AND DURATION
   const totalPercentage = merchantRate + pirateRate + securityRate;
   const percentValid = totalPercentage <= 100;
   const minDuration = 1;
   const maxDuration = 180;
   
+  // DURATION INPUT VALIDATION
   const durationValid = 
     duration !== "" &&
     Number(duration) >= minDuration &&
     Number(duration) <= maxDuration;
 
+  // TIME INPUT VALIDATION
+  const startTimeValid =
+    startHour !== "" &&
+    startMinute !== "" &&
+    Number(startHour) >= 0 &&
+    Number(startHour) <= 23 &&
+    Number(startMinute) >= 0 &&
+    Number(startMinute) <= 59;
+
+  // ALL INPUT VALIDATION
   const isSetupValid = 
     simName.trim() !== "" &&
     region !== "" &&
     durationValid &&
-    operationalCondition !== "" &&
+    startTimeValid &&
+    weather !== "" &&
     percentValid;
+
 
   useEffect ( () => 
   {
@@ -67,12 +82,9 @@ function Controls()
           setShowEndScreen(true);
           return durationInSeconds;
         }
+
         return newSeconds;
       });
-        
-      const hour = new Date().getHours();
-      setTimeOfDay (hour >= 6 && hour < 18 ? "Day" : "Night");
-      setWeather("Clear");
 
       // RANDOM COUNTS FOR TESTING. REPLACE LATER W/ REAL LOGIC
       setEntries((prev) => prev + Math.floor(Math.random() * 2));
@@ -83,11 +95,24 @@ function Controls()
       setEvasions((prev) => prev + Math.floor(Math.random() * 2));
 
     }, 1000 / speed);
-
     return () => clearInterval(interval);
+
   }, [isRunning, duration, speed]);
 
+  // USEEFFECT FOR TIME OF DAY
+  useEffect ( () => 
+  {
+    if (startHour === "" || startMinute === "") return;
 
+    const totalSimulatedMinutes = Number(startHour) * 60 + Number(startMinute) + Math.floor(seconds / 60);
+    const simulatedHour = Math.floor(totalSimulatedMinutes / 60) % 24;
+
+    const night = simulatedHour < 6 || simulatedHour >= 18;
+    setTimeOfDay(night ? "Night" : "Day");
+    //setIsNight(night);
+  }, [seconds, startHour, startMinute])
+
+  // TIME FORMATTING  
   const formatTime = (s) => 
   {
     const hrs = String(Math.floor(s / 3600)).padStart(2, "0");
@@ -96,16 +121,36 @@ function Controls()
     return `${hrs}:${mins}:${secs}`;
   };
 
+  // CLOCK LOGIC FOR AUTO DAY/NIGHT SWITCH
+  const getSimulatedClock = () => 
+  {
+    if (startHour === "" || startMinute === "") return "00:00";
 
+    const totalSimulatedMinutes =
+      Number(startHour) * 60 +
+      Number(startMinute) +
+      Math.floor(seconds / 60);
+
+    const hour = Math.floor(totalSimulatedMinutes / 60) % 24;
+    const minute = totalSimulatedMinutes % 60;
+
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  };
+
+  // ACTION HANDLER FOR START BUTTON
   const handleStart = () => 
   {
     if (!isSetupValid) return;
+
+    // SET INITIAL TIME OF DAY IMMEDIATELY
+    const initialHour = Number(startHour);
+    setTimeOfDay(initialHour >= 6 && initialHour < 18 ? "Day" : "Night");
 
     setShowStartScreen(false);
     setIsRunning(true);
   };
 
-
+  // TERMINATION HANDLING W/ MESSAGE
   const handleTerminate = () => {
     const confirm = window.confirm(
       "Are you sure you want to terminate this run?"
@@ -117,11 +162,15 @@ function Controls()
     setShowEndScreen(true);
   }
 
-
+  // STEP BUTTON HANDLING
   const handleStep = () => {
     if (isRunning) return;
 
-    setSeconds(prev => prev + 1);
+    setSeconds(prev => {
+      const newSeconds = prev + 1;
+
+      return newSeconds;
+    });
 
     // RUN ONE TICK AT A TIME
     setEntries(prev => prev + Math.floor(Math.random() * 2));
@@ -140,14 +189,14 @@ function Controls()
     })
   }
 
-
+// CSV/JSON EXPORT HANDLING
 const handleExport = (format = "json") => {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 
   const runData = {
     simulationName: simName,
     region,
-    operationalCondition,
+    weather,
     durationMinutes: duration,
     elapsedTime: formatTime(seconds),
     outcomes: {
@@ -174,10 +223,9 @@ const handleExport = (format = "json") => {
     fileContent =
 `Simulation Name,${simName}
 Region,${region}
-Operational Condition,${operationalCondition}
+Weather,${weather}
 Duration (minutes),${duration}
 Elapsed Time,${formatTime(seconds)}
-
 Entries,${entries}
 Exits,${exits}
 Captures,${captures}
@@ -320,35 +368,50 @@ return (
               )}              
             </div>
 
-            {/* SET OOPERATIONAL CONDITION */}
-            <div className="mb-3">
-              <label className="form-label">Operational Condition</label>
-              <div>
-                <div className="form-check form-check-inline">
-                  <input
-                    type="radio"
-                    className="form-check-input"
-                    name="operationalCondition"
-                    value="Day"
-                    checked={operationalCondition === "Day"}
-                    onChange={(e) => setOperationalCondition(e.target.value)}
-                    disabled = {isRunning}
-                  />
-                  <label className="form-check-label">Day</label>
-                </div>
+            {/* SET OPERATIONAL CONDITIONS */}
+            <div className = "mb-3">
+              <label className="form-label">Weather Condition</label>
+              <select
+                className="form-select"
+                value={weather}
+                onChange={(e) => setWeather(e.target.value)}
+                disabled={isRunning}
+              >
+                <option value="">Select Weather</option>
+                <option value="Clear">Clear</option>
+                <option value="Storm">Storm</option>
+                <option value="Fog">Fog</option>
+               </select>
+            </div>
 
-                <div className="form-check form-check-inline">
-                  <input
-                    type="radio"
-                    className="form-check-input"
-                    name="operationalCondition"
-                    value="Night"
-                    checked={operationalCondition === "Night"}
-                    onChange={(e) => setOperationalCondition(e.target.value)}
-                    disabled = {isRunning}
-                  />
-                  <label className="form-check-label">Night</label>
-                </div>
+            {/* SET TIME WINDOW */}
+            <div className="mb-3">
+                <label className="form-label">Start Time (HH:MM)</label>
+
+                <div className="d-flex gap-2">
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="HH"
+                  min="0"
+                  max="23"
+                  value={startHour}
+                  onChange={(e) => setStartHour(e.target.value)}
+                  disabled={isRunning}
+                />
+
+                <span className="align-self-center">:</span>
+
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="MM"
+                  min="0"
+                  max="59"
+                  value={startMinute}
+                  onChange={(e) => setStartMinute(e.target.value)}
+                  disabled={isRunning}
+                />
               </div>
             </div>
 
@@ -365,82 +428,19 @@ return (
           </div>
         )}
 
-        {/* SIMULATION END SCREEN */}
-        {showEndScreen && (
-          <div
-            className="position-fixed top-50 start-50 translate-middle bg-dark text-light p-4 rounded shadow"
-            style={{ zIndex: 2000, minWidth: "400px" }}
-          >
-            <h5 className="mb-3">Simulation Complete</h5>
-            
-            {/* END METRICS GO HERE */}
-            <p className = "mb-4">Elapsed Time:  {formatTime(seconds)}</p>
-            <p><strong>Simulation Name:</strong> {simName}</p>
-            <p><strong>Region:</strong> {region}</p>
-            <p><strong>Operational Condition:</strong> {operationalCondition}</p>
-            <p><strong>Elapsed Time:</strong> {formatTime(seconds)}</p>
-
-            <hr />
-
-            <p><strong>Entries:</strong> {entries}</p>
-            <p><strong>Exits:</strong> {exits}</p>
-            <p><strong>Captures:</strong> {captures}</p>
-            <p><strong>Defeats:</strong> {defeats}</p>
-            <p><strong>Rescues:</strong> {rescues}</p>
-            <p><strong>Evasions:</strong> {evasions}</p>
-
-            <div className = "d-grid gap-2">
-              <button
-                className = "btn btn-success"
-                onClick = {() => {
-                  handleExport("json");                 
-                }}
-              >
-                Export as JSON
-              </button>
-
-              <button
-                className = "btn btn-success"
-                onClick = {() => {
-                  handleExport("csv")
-                }}
-              >
-                Export as CSV
-              </button>
-
-              <button
-                className = "btn btn-success"
-                onClick = {() => {
-                  setSeconds(0);
-                  setEntries(0);
-                  setExits(0);
-                  setCaptures(0);
-                  setDefeats(0);
-                  setRescues(0);
-                  setEvasions(0);
-                  setShowEndScreen(false);
-                  setShowStartScreen(true);
-                }}
-              >
-                Restart
-              </button>
-              
-            </div>
-          </div>
-        )}
-
         {/* STATUS DISPLAY */}
         <Row className="mb-2">
           <Col md="auto">
             <Card
-              bg="dark"
-              text="light"
+              bg={timeOfDay === "Night" ? "dark" : "light"}
+              text={timeOfDay === "Night" ? "light" : "dark"}
               className="rounded shadow"
               style={{ minWidth: "100px" }}
             >
               <Card.Body className="p-2 small">
                 <div><strong>Elapsed:</strong> {formatTime(seconds)}</div>
-                <div><strong>Time:</strong> {timeOfDay}</div>
+                <div><strong>Clock:</strong> {getSimulatedClock()}</div>
+                <div><strong>Mode:</strong> {timeOfDay}</div>
                 <div><strong>Weather:</strong> {weather}</div>
               </Card.Body>
             </Card>
@@ -452,7 +452,6 @@ return (
           <Dropdown.Toggle variant="dark" size="sm">
             View Live Counts
           </Dropdown.Toggle>
-
           <Dropdown.Menu>
             <Dropdown.Item disabled>Entries: {entries}</Dropdown.Item>
             <Dropdown.Item disabled>Exits: {exits}</Dropdown.Item>
@@ -462,13 +461,14 @@ return (
             <Dropdown.Item disabled>Evasions: {evasions}</Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>
-
       </div>
     </Control>
 
     {/* BOTTOM RIGHT CONTROLS */}
     <Control prepend position="bottomright">
       <div onClick={(e) => e.stopPropagation()} className="d-flex gap-2">
+       
+        {/* PAUSE/RESUME TOGGLE BUTTON */}
         <button 
           className="btn btn-primary btn-sm"
           onClick = {() => setIsRunning(prev => !prev)}
@@ -476,6 +476,7 @@ return (
             {isRunning ? "Pause" : "Resume"}
         </button>
 
+        {/* STEP BUTTON (ONE STEP PER CLICK) */}
         <button 
           className="btn btn-primary btn-sm"
           onClick = {handleStep}
@@ -484,22 +485,87 @@ return (
           Step
         </button>
 
+        {/* SPEED ADJUSTMENT BUTTON */}
         <button 
           className="btn btn-warning btn-sm"
           onClick={handleSpeed}
         >
           Speed ({speed}x)
         </button>
-
+        
+        {/* TERMINATE BUTTON */}
         <button 
           className="btn btn-danger btn-sm" 
           onClick = {handleTerminate}
         >
           Terminate
         </button>
-
       </div>
     </Control>
+
+    {/* SIMULATION END SCREEN */}
+    {showEndScreen && (
+      <div
+        className="position-fixed top-50 start-50 translate-middle bg-dark text-light p-4 rounded shadow"
+        style={{ zIndex: 2000, minWidth: "400px" }}
+      >
+        <h5 className="mb-3">Simulation Complete</h5>
+            
+        {/* DISPLAY FINAL METRICS */}
+        <p><strong>Simulation Name:</strong> {simName}</p>
+        <p><strong>Region:</strong> {region}</p>
+        <p><strong>Elapsed Time:</strong> {formatTime(seconds)}</p>
+
+        <hr />
+
+        <p><strong>Entries:</strong> {entries}</p>
+        <p><strong>Exits:</strong> {exits}</p>
+        <p><strong>Captures:</strong> {captures}</p>
+        <p><strong>Defeats:</strong> {defeats}</p>
+        <p><strong>Rescues:</strong> {rescues}</p>
+        <p><strong>Evasions:</strong> {evasions}</p>
+
+        {/* EXPORT AS JSON BUTTON */}
+        <div className = "d-grid gap-2">
+          <button
+            className = "btn btn-success"
+            onClick = {() => {
+              handleExport("json");                 
+            }}
+          >
+            Export as JSON
+          </button>
+
+          {/* EXPORT AS CSV BUTTON */}
+          <button
+            className = "btn btn-success"
+            onClick = {() => {
+              handleExport("csv")
+            }}
+          >
+            Export as CSV
+          </button>
+
+          {/* MAKE RESET BUTTON AND RESET COUNTS ON CLICK */}
+          <button
+            className = "btn btn-success"
+            onClick = {() => {
+              setSeconds(0);
+              setEntries(0);
+              setExits(0);
+              setCaptures(0);
+              setDefeats(0);
+              setRescues(0);
+              setEvasions(0);
+              setShowEndScreen(false);
+              setShowStartScreen(true);
+            }}
+          >
+            Restart
+          </button>
+        </div>
+      </div>
+    )}
   </>
 );
 }
