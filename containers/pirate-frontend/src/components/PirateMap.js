@@ -1,6 +1,6 @@
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import TopRightControls from './controls/TopRightControls.js';
+import Controls from './controls/Controls';
 
 function PirateMap() {
   return (
@@ -19,7 +19,7 @@ function PirateMap() {
       </Marker>
 
       {/* Controls that float above the map in the top right */}
-      <TopRightControls/>
+      <Controls/>
     </MapContainer>
   )
 }
