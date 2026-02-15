@@ -11,6 +11,8 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-leaflet": "^5.0.0-rc.2",
+    "react-leaflet-custom-control": "1.5.0",
+    "react-bootstrap": "2.10.10",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
