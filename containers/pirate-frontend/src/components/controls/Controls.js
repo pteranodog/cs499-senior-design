@@ -250,11 +250,9 @@ Evasions,${evasions}`;
   URL.revokeObjectURL(url);
 };
 
-
-
 return (
   <>
-    {/* TOP RIGHT CONTROL */}
+    {/* START SCREEN (CENTERED) AND LIVE METRIC TRACKING DROPDOWN (TOP RIGHT) */}
     <Control prepend position="topright">
       <div onClick={(e) => e.stopPropagation()}>
 
@@ -279,6 +277,61 @@ return (
               />
             </div>
 
+            {/* SET TIME WINDOW */}
+            <div className="mb-3">
+                <label className="form-label">Start Time (HH:MM)</label>
+
+                <div className="d-flex gap-2">
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="HH"
+                  min="0"
+                  max="23"
+                  value={startHour}
+                  onChange={(e) => setStartHour(e.target.value)}
+                  disabled={isRunning}
+                />
+
+                <span className="align-self-center">:</span>
+
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="MM"
+                  min="0"
+                  max="59"
+                  value={startMinute}
+                  onChange={(e) => setStartMinute(e.target.value)}
+                  disabled={isRunning}
+                />
+              </div>
+            </div>
+
+            {/* SET DURATION */}
+            <div className = "mb-3">
+              <label className = "form-label"> Duration (minutes) </label>
+              <input
+                type = "number"
+                className = "form-control"
+                value = {duration}
+                min = {minDuration}
+                max = {maxDuration}
+                onChange = {(e) => setDuration(e.target.value)}
+                disabled = {isRunning}
+              />
+              {duration !== "" && Number(duration) < minDuration && (
+                <div className="text-danger small">
+                  Duration must be at least {minDuration} minute{minDuration > 1 ? "s" : ""}
+                </div>
+              )}
+              {duration !== "" && Number(duration) > maxDuration && (
+                <div className="text-danger small">
+                  Duration cannot exceed {maxDuration} minutes
+                </div>
+              )}              
+            </div>
+
             {/* SET REGION */}
             <div className = "mb-3">
               <label className = "form-label"> Region </label>
@@ -294,6 +347,29 @@ return (
                 <option value = "Malacca Strait"> Malacca Strait </option>
               </select>
             </div>
+
+            {/* SET WEATHER CONDITIONS */}
+            <div className = "mb-3">
+              <label className="form-label">Weather Condition</label>
+              <select
+                className="form-select"
+                value={weather}
+                onChange={(e) => setWeather(e.target.value)}
+                disabled={isRunning}
+              >
+                <option value="">Select Weather</option>
+                <option value="Clear">Clear</option>
+                <option value="Storm">Storm</option>
+                <option value="Fog">Fog</option>
+               </select>
+            </div>
+
+            {/* INLINE WARNING FOR SLIDER PERCENTAGES SUM*/}
+            {merchantRate + pirateRate + securityRate > 100 && (
+              <div className = "text-danger small">
+                Total of Merchant, Pirate, and Security percentages cannot exceed 100%
+              </div>
+            )}
 
             {/* SET MERCHANT PRESENCE PERCENTAGE */}
             <div className = "mb-3">
@@ -337,84 +413,6 @@ return (
               />
             </div>
 
-            {/* INLINE WARNING FOR SLIDER PERCENTAGES SUM*/}
-            {merchantRate + pirateRate + securityRate > 100 && (
-              <div className = "text-danger small">
-                Total of Merchant, Pirate, and Security percentages cannot exceed 100%
-              </div>
-            )}
-
-            {/* SET DURATION */}
-            <div className = "mb-3">
-              <label className = "form-label"> Duration (minutes) </label>
-              <input
-                type = "number"
-                className = "form-control"
-                value = {duration}
-                min = {minDuration}
-                max = {maxDuration}
-                onChange = {(e) => setDuration(e.target.value)}
-                disabled = {isRunning}
-              />
-              {duration !== "" && Number(duration) < minDuration && (
-                <div className="text-danger small">
-                  Duration must be at least {minDuration} minute{minDuration > 1 ? "s" : ""}
-                </div>
-              )}
-              {duration !== "" && Number(duration) > maxDuration && (
-                <div className="text-danger small">
-                  Duration cannot exceed {maxDuration} minutes
-                </div>
-              )}              
-            </div>
-
-            {/* SET OPERATIONAL CONDITIONS */}
-            <div className = "mb-3">
-              <label className="form-label">Weather Condition</label>
-              <select
-                className="form-select"
-                value={weather}
-                onChange={(e) => setWeather(e.target.value)}
-                disabled={isRunning}
-              >
-                <option value="">Select Weather</option>
-                <option value="Clear">Clear</option>
-                <option value="Storm">Storm</option>
-                <option value="Fog">Fog</option>
-               </select>
-            </div>
-
-            {/* SET TIME WINDOW */}
-            <div className="mb-3">
-                <label className="form-label">Start Time (HH:MM)</label>
-
-                <div className="d-flex gap-2">
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="HH"
-                  min="0"
-                  max="23"
-                  value={startHour}
-                  onChange={(e) => setStartHour(e.target.value)}
-                  disabled={isRunning}
-                />
-
-                <span className="align-self-center">:</span>
-
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="MM"
-                  min="0"
-                  max="59"
-                  value={startMinute}
-                  onChange={(e) => setStartMinute(e.target.value)}
-                  disabled={isRunning}
-                />
-              </div>
-            </div>
-
             {/* START BUTTON */}
             <div className="d-grid mt-4">
               <button 
@@ -428,7 +426,33 @@ return (
           </div>
         )}
 
-        {/* STATUS DISPLAY */}
+        {/* SHOW ELAPSED TIME */}
+        <Card bg="light" text="dark" className="mb-2 p-2 small">
+          <div><strong>Time Elapsed:</strong> {formatTime(seconds)}</div>
+        </Card>
+
+        {/* DROPDOWN */}
+        <div>
+          <Dropdown>
+            <Dropdown.Toggle variant="light" size="sm">
+              View Live Counts
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              <Dropdown.Item disabled>Entries: {entries}</Dropdown.Item>
+              <Dropdown.Item disabled>Exits: {exits}</Dropdown.Item>
+              <Dropdown.Item disabled>Captures: {captures}</Dropdown.Item>
+              <Dropdown.Item disabled>Defeats: {defeats}</Dropdown.Item>
+              <Dropdown.Item disabled>Rescues: {rescues}</Dropdown.Item>
+              <Dropdown.Item disabled>Evasions: {evasions}</Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        </div>
+      </div>
+    </Control>
+
+    {/* ALWAYS VISIBLE STATUS DISPLAY (TOP RIGHT) */}
+    <Control prepend position = "topleft">
+      <div onClick={(e) => e.stopPropagation()}>
         <Row className="mb-2">
           <Col md="auto">
             <Card
@@ -438,29 +462,19 @@ return (
               style={{ minWidth: "100px" }}
             >
               <Card.Body className="p-2 small">
-                <div><strong>Elapsed:</strong> {formatTime(seconds)}</div>
-                <div><strong>Clock:</strong> {getSimulatedClock()}</div>
+                <div><strong>Sim Name:</strong>{simName}</div>
+                <div><strong>Start Time:</strong> {getSimulatedClock()}</div>
                 <div><strong>Mode:</strong> {timeOfDay}</div>
+                <div><strong>Duration: </strong>{duration} minutes</div>
+                <div><strong>Region:</strong> {region}</div>
                 <div><strong>Weather:</strong> {weather}</div>
+                <div><strong>Merchant Presence:</strong></div>
+                <div><strong>Pirate Presence:</strong></div>
+                <div><strong>Security Presence:</strong></div>
               </Card.Body>
             </Card>
           </Col>
         </Row>
-
-        {/* DROPDOWN */}
-        <Dropdown>
-          <Dropdown.Toggle variant="dark" size="sm">
-            View Live Counts
-          </Dropdown.Toggle>
-          <Dropdown.Menu>
-            <Dropdown.Item disabled>Entries: {entries}</Dropdown.Item>
-            <Dropdown.Item disabled>Exits: {exits}</Dropdown.Item>
-            <Dropdown.Item disabled>Captures: {captures}</Dropdown.Item>
-            <Dropdown.Item disabled>Defeats: {defeats}</Dropdown.Item>
-            <Dropdown.Item disabled>Rescues: {rescues}</Dropdown.Item>
-            <Dropdown.Item disabled>Evasions: {evasions}</Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
       </div>
     </Control>
 
@@ -567,7 +581,7 @@ return (
       </div>
     )}
   </>
-);
+ );
 }
 
 export default Controls;
