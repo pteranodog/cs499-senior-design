@@ -294,8 +294,8 @@ class Wander extends Face {
 
     }
 }
-
-
+/////// DELETE ME
+/*
     
 class FollowPath { // Advance a mover along a Path
     constructor(path, pathOffset, currentParam, moverKinematic, maxAcceleration): // no target kinematic needed in init; determined by other data
@@ -417,3 +417,6 @@ for step in range(TheTimer.maxSteps + 1):
     time.sleep(TheTimer.stepDelay) // wait for one timestep as functionined by timer object
     TheTimer.step += 1 // increment timestep
 
+
+AND ME: 
+*/
