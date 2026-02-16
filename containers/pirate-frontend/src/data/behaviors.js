@@ -47,6 +47,11 @@
         }
     }
 
+    function orientationToVector(orientation) { // Convert an orientation (number of rads) to its cartesian vector equivalent
+        result = [Math.cos(orientation), Math.sin(orientation)]
+        return result
+    }
+
 
 
 class Kinematic { // class used to identify a ship's position, orientation, velocity,and rotation
@@ -100,7 +105,7 @@ class Seek { // Mover advances directly towards a target
     }
     
     getSteering() { // output of this method used as an argument in update function of mover
-        result = SteeringOutput() // initialize output
+        result = new SteeringOutput() // initialize output
 
         result.linear = subtract(this.k2.pos, this.k1.pos) // get difference between target pos and pos of mover we want to steer
         result.linear = normalize(result.linear)
@@ -119,7 +124,7 @@ class Flee { // Mover travels  directly away from a target
     }
     
     getSteering() { // output of this function used as an argument in update function of mover
-        result = SteeringOutput() // initialize output
+        result = new SteeringOutput() // initialize output
 
         result.linear = this.k1.pos.subtract(this.k2.pos) // get difference between target pos and pos of mover we want to steer (inverted args between seek/flee)
         result.linear = result.linear.normalize()
@@ -143,14 +148,14 @@ class Arrive { // Send a mover towards a target, slowing down as it gets close t
 
     
     getSteering(this) {  // output of this function used as an argument in update function of mover
-        result = SteeringOutput() // initialize output
+        result = new SteeringOutput() // initialize output
 
         direction = subtract(this.k2.pos,this.k1.pos) // get difference between target pos and pos of mover we want to steer; this time, save separately as a direction
         distance = getLength(direction) // save distance between the two
         
         if (distance < this.targetRadius) { // has this mover reached its target?
             this.k1.isCollided = True
-            return SteeringOutput([0,0], 0) // if so, no need to steer; return a 0 steering output
+            return new SteeringOutput([0,0], 0) // if so, no need to steer; return a 0 steering output
         }
         if (distance > this.slowRadius) { // is this mover far away enough from its target that it doesn't need to start slowing down (to prevent overshot)?
             this.targetSpeed = this.maxSpeed // if so, stay at max speed
@@ -179,8 +184,49 @@ class Arrive { // Send a mover towards a target, slowing down as it gets close t
     }
 }
 
-class Pursue extends Seek {
-    
+class Pursue extends Seek { // Similar to seek, except predicts where target is going and sends the subject mover towards that point
+    constructor(moverKinematic, targetKinematic, maxAcceleration, maxPrediction) {
+        super(moverKinematic, targetKinematic, maxAcceleration)
+        this.maxPrediction = maxPrediction // Max prediction time, i.e. how far ahead to predict target's movement
+        // Make new target obj to override Seek's with later
+        this.pursuedTarget = {
+            pos: [0,0],
+            orientation: 0
+        }
+    }
+    getSteering() {
+        // First, modify target data to be a prediction
+        let direction = subtract(this.targetKinematic.pos,moverKinematic.pos) // Direction and distance
+        let distance = length(direction)
+
+        let pursuedTarget = { // init target that will override Seek's target (basically dummy object to hold predicted pos)
+            pos: [0,0]
+
+        }
+
+        let speed = length(moverKinematic.velocity) // record subject mover's current speed
+        let prediction // init here so it can be modified from within if-else
+
+        // Is that speed too slow for a reasonable prediction?
+        if (speed <= distance / this.maxPrediction) {
+            prediction = this.maxPrediction // if so, look as far ahead as possible
+        }
+        else {
+            prediction = distance / speed // otherwise calculate prediction time normally
+        }
+
+        // now get predicted position 
+        predictedPos = add(this.targetKinematic, scalarMult(this.targetKinematic.velocity, prediction))
+
+        // finally, set the fields accordingly
+        this.temp = this.targetKinematic
+        this.targetKinematic = this.pursuedTarget // switch to new target obj so Seek can do the rest of the steering work
+
+        result = super.getSteering()
+        this.targetKinematic = this.temp // restore true target
+        
+        return result
+    }
 }
 
 function clampOreintation (orientation) { // Returns a clamped orientation value (rotation angle in rads) of a particular Kinematic instance to a [-pi, pi] boundary
@@ -283,31 +329,47 @@ class Wander extends Face {
         this.wanderOffset = 60 // forward offset from character of wander circle
         this.wanderRadius = 10// radius of wander circle
         this.wanderRate = 8 // maximum wander orientation change
-        this.wanderOrientation = float // holds current orientation of wander target
+        this.wanderOrientation = 0 // holds current orientation of wander target; init at 0? i think?
         this.maxAcceleration = maxAcceleration // max LINEAR acceleration; not used by super, rather by this specific behavior
     }
 
     getSteering() {
         // Update wander orientation
+        this.wanderOrientation += Math.random() * this.wanderRate
 
-        // Jiggle target randomly
+        // Get the orientation we want to achieve
+        let targetOrientation = this.wanderOrientation + this.moverKinematic.orientation
 
+        // Calculate center of wander circle's pos (remember the targetKinematic here is a self-provided, simplified, generic Object with pos/orientation properties)
+        this.targetKinematic.pos = this.moverKinematic.pos + this.wanderOffset * orientationToVector(this.moverKinematic.orientation)
+
+        // From there, find the target's location
+        this.targetKinematic.position += this.wanderRadius * orientationToVector(targetOrientation)
+        
+        // Let Face take it from here
+        result = super.getSteering()
+
+        // Add linear acceleration to the result (since Face only returns angular)
+        result.linear = this.maxAcceleration * orientationToVector(this.moverKinematic.orientation)
+
+        return result
     }
 }
-/////// DELETE ME
-/*
+
     
-class FollowPath { // Advance a mover along a Path
-    constructor(path, pathOffset, currentParam, moverKinematic, maxAcceleration): // no target kinematic needed in init; determined by other data
+class FollowPath extends Seek { // Advance a mover along a Path
+    constructor(path, pathOffset, currentParam, moverKinematic, maxAcceleration) {  // no target kinematic needed in init; determined by other data
         this.path = path
         this.pathOffset = pathOffset
         this.currentParam = currentParam
+        this.maxAcceleration = maxAcceleration
 
-        targetKinematic = Kinematic(Vector(0, 0), 0, Vector(0, 0), 0) // placeholder target kinematic so parent init can be called
+        targetKinematic = new Kinematic([0,0], 0, [0,0], 0) // placeholder target kinematic so parent init can be called
 
-        super().__init__(moverKinematic, targetKinematic, maxAcceleration) // init parent class (Seek)
+        super(moverKinematic, ) // init parent class (Seek)
+    }
 
-    function getSteering(this):
+    getSteering() {
         // find my path param
         this.currentParam = this.path.getParam(this.k1.pos)
 
@@ -318,68 +380,84 @@ class FollowPath { // Advance a mover along a Path
         this.k2.pos = this.path.getPosition(this.targetParam)
 
         // now get Seek's steering to steer towards that param pos ("my" position and target's position are now set)
-        return super().getSteering()
+        return super.getSteering()
+    }
 }
     
-class Path: // functionines the path data structure necessary to implement path following
-    function __init__(this, points, id):
-        this.id = id
+class Path {  // functions as the path data structure necessary to implement path following
+    constructor(points, id) {
+        this.id = id 
         this.points = points // will be a collection of Vectors
-        this.segments = len(points) - 1
-        this.distances = [0] * (this.segments + 1)
-        this.params = [0] * (this.segments + 1) // will hold parametrizations (0-1) of distances
+        this.segments = length(points) - 1
+        this.distances = new Array(this.segments + 1).fill(0)
+        this.params = new Array(this.segments + 1).fill(0) // will hold parametrizations (0-1) of distances
         this.totalLength = 0 // used in parametrization
+    }
 
-    function assemble(this): // Iterates through this path's points and assigns values to data members accordingly
-        for i in range(1, len(this.points)): // find length of each segment
-            thisSeg = this.points[i].subtract(this.points[i-1])
-            thisSegLength = thisSeg.getLength()
-            this.distances[i] = thisSegLength + this.distances[i-1]
+    assemble() { // Iterates through this path's points and assigns values to data members accordingly
+        for (let i = 1; i < this.params.length; i++ ) { // find length of each segment
+            let thisSeg = subtract(this.points[i], this.points.at(-1))
+            let thisSegLength = getLength(thisSeg)
+            this.distances[i] = thisSegLength + this.distances.at(-1)
+        }
+        this.totalLength = this.distances.at(-1) // last member of distances holds total path distance
 
-        this.totalLength = this.distances[-1] // last member of distances holds total path distance
+        for (i = 1; i < this.points.len; i++) { // get parametrized lengths
+            this.params[i] = this.distances[i] / this.totalLength // 0 - 1   
+        } 
+    }
 
-        for i in range(1, len(this.points)): // get parametrized lengths
-            this.params[i] = this.distances[i] / this.totalLength // 0 -1    
-
-    function getPosition(this, param): // return the vector that is the given parametrized distance along the given path
+    getPosition(param) { // return the vector that is the given parametrized distance along the given path
         // edge case handling
-        if param <= 0:
+        if (param <= 0) {
             return this.points[0]
-        if param >= 1:
-            return this.points[-1]
-        
-        segIndex = 0 // index of this Path's param that is directly ahead of the given param (i.e. given param lies between params[this] and params[this + 1])
-        for i in range(1, len(this.params)):  // find which params the given param lies between
-            if this.params[i] > param:
+        }
+        if (param >= 1) {
+            return this.points.at(-1) // so js doesnt have normal negative arr indexing like python but the at method does??? why???
+        }
+        let segIndex = 0 // index of this Path's param that is directly ahead of the given param (i.e. given param lies between params[this] and params[this + 1])
+        for (let i = 1; i < this.params.len; i++ ) {  // find which params the given param lies between
+            if (this.params[i] > param) {
                 segIndex = i - 1
                 break
-        A = this.points[segIndex]
-        B = this.points[segIndex + 1] // given param lies somewhere on segment AB
-        T = (param - this.params[segIndex])  / (this.params[segIndex + 1] - this.params[segIndex]) // how far along this segment?
-        P = A.add(B.subtract(A).scalarMult(T))
+            }
+        }
+        let A = this.points[segIndex]
+        let B = this.points[segIndex + 1] // given param lies somewhere on segment AB
+        let T = (param - this.params[segIndex])  / (this.params[segIndex + 1] - this.params[segIndex]) // how far along this segment?
+        let P = add(A, scalarMult(subtract(B, A),T))
         return P
+    }
     
-    function getParam(this, point): // return the param of the path that corresponds to the point on the path that is closest to the given point
-        leastDist = math.inf // track the lowest distance seen
-        closestPoint = Vector(math.inf, math.inf) // track the closest point on the path to the given point
-        closestSegIndex = 0 // track index of closest 
-        for i in range(1, len(this.points)): // find the closest point on the path
-            p = point.closestPointOnSegment(this.points[i], this.points[i-1])
-            d = point.subtract(p).getLength()
-            if d < leastDist:
+    getParam(point) { // return the param of the path that corresponds to the point on the path that is closest to the given point
+        let leastDist = Math.inf // track the lowest distance seen
+        let closestPoint = [Math.inf, Math.inf] // track the closest point on the path to the given point
+        let closestSegIndex = 0 // track index of closest 
+        for (let i = 1; i < this.params.len; i++ ) { // find the closest point on the path
+            let p = closestPointOnSegment(point, this.points[i], this.points[i-1])
+            let d = getLength(subtract(point, p))
+            if (d < leastDist) {
                 leastDist = d
                 closestPoint = p
                 closestSegIndex = i - 1
-        A = this.points[closestSegIndex] // line AB is the segment the segment on which the closest point to the input point lies
-        B = this.points[closestSegIndex + 1]
-        T = (closestPoint.subtract(A)).getLength() / (B.subtract(A)).getLength() // how far along this segment?
-        C = this.params[closestSegIndex] + T * (this.params[closestSegIndex + 1] - this.params[closestSegIndex])
+            }
+        }
+        let A = this.points[closestSegIndex] // line AB is the segment the segment on which the closest point to the input point lies
+        let B = this.points[closestSegIndex + 1]
+        let T = (closestPoint.subtract(A)).getLength() / (B.subtract(A)).getLength() // how far along this segment?
+        let C = this.params[closestSegIndex] + T * (this.params[closestSegIndex + 1] - this.params[closestSegIndex])
         return C
-
+    }
+}
         
 
 
-// ============================= PART 2: Instantiate movers, movement behaviors, and timer; functionine data printing function =============================
+// NOTE: Everything below this comment was an application of these behaviors from CS 330's program 2 (hence the python); in the future,
+// we may want to convert it to JS + use for testing functionality of behaviors; but for now it is all commented out.
+
+/* 
+// ============================= PART 2: Instantiate characters, movement behaviors, and timer; define data printing function =============================
+
 output = open("CS330 Assignment 2 output.txt", "w") // open output file to write to
 
 // Initialize timer
@@ -418,5 +496,4 @@ for step in range(TheTimer.maxSteps + 1):
     TheTimer.step += 1 // increment timestep
 
 
-AND ME: 
 */
