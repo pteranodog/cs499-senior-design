@@ -153,7 +153,7 @@ function Controls()
   // TERMINATION HANDLING W/ MESSAGE
   const handleTerminate = () => {
     const confirm = window.confirm(
-      "Are you sure you want to terminate this run?"
+      "Are you sure you want to terminate this run?\nBy terminating, this simulation will end and your summary outcome will be presented."
     );
 
     if(!confirm) return;
@@ -535,7 +535,7 @@ return (
               marginRight: "8px",
             }}
           ></div>
-            <span>Maerchants</span>
+            <span>Merchants</span>
           </div>
 
           {/* PIRATES */}
@@ -625,6 +625,16 @@ return (
             }}
           >
             Restart
+          </button>
+
+          {/*MAKE EXIT BUTTON ON END SCREEN TO CLOSE WINDOW*/}
+          <button
+            className = "btn btn-success"
+            onClick = {() => {
+              window.close()
+            }}
+          >
+            Exit
           </button>
         </div>
       </div>
