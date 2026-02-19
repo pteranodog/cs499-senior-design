@@ -626,16 +626,6 @@ return (
           >
             Restart
           </button>
-
-          {/*MAKE EXIT BUTTON ON END SCREEN TO CLOSE WINDOW*/}
-          <button
-            className = "btn btn-success"
-            onClick = {() => {
-              window.close()
-            }}
-          >
-            Exit
-          </button>
         </div>
       </div>
     )}
