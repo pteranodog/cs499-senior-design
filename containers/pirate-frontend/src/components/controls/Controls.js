@@ -173,6 +173,23 @@ function Controls()
     setIsRunning(false);
     setShowEndScreen(true);
   }
+  const handleRestart = () => {
+    const confirm = window.confirm(
+      "Are you sure you wish to restart? You will be unable to save the current simulation after."
+    );
+
+    if(!confirm) return;
+
+    setSeconds(0);
+    setEntries(0);
+    setExits(0);
+    setCaptures(0);
+    setDefeats(0);
+    setRescues(0);
+    setEvasions(0);
+    setShowEndScreen(false);
+    setShowStartScreen(true);
+  }
 
   // STEP BUTTON HANDLING
   const handleStep = () => {
@@ -624,17 +641,7 @@ return (
           {/* MAKE RESET BUTTON AND RESET COUNTS ON CLICK */}
           <button
             className = "btn btn-success"
-            onClick = {() => {
-              setSeconds(0);
-              setEntries(0);
-              setExits(0);
-              setCaptures(0);
-              setDefeats(0);
-              setRescues(0);
-              setEvasions(0);
-              setShowEndScreen(false);
-              setShowStartScreen(true);
-            }}
+            onClick = {handleRestart}
           >
             Restart
           </button>
