@@ -64,7 +64,6 @@ function Controls()
     weather !== "" &&
     percentValid;
 
-
   useEffect ( () => 
   {
     if (!isRunning) return;
@@ -98,6 +97,19 @@ function Controls()
     return () => clearInterval(interval);
 
   }, [isRunning, duration, speed]);
+
+  // USEEFFECT FOR WARNING ON CLOSE
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
 
   // USEEFFECT FOR TIME OF DAY
   useEffect ( () => 
