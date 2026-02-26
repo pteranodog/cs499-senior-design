@@ -64,7 +64,6 @@ function Controls()
     weather !== "" &&
     percentValid;
 
-
   useEffect ( () => 
   {
     if (!isRunning) return;
@@ -98,6 +97,19 @@ function Controls()
     return () => clearInterval(interval);
 
   }, [isRunning, duration, speed]);
+
+  // USEEFFECT FOR WARNING ON CLOSE
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
 
   // USEEFFECT FOR TIME OF DAY
   useEffect ( () => 
@@ -153,13 +165,30 @@ function Controls()
   // TERMINATION HANDLING W/ MESSAGE
   const handleTerminate = () => {
     const confirm = window.confirm(
-      "Are you sure you want to terminate this run?"
+      "Are you sure you want to terminate this run?\nBy terminating, this simulation will end and your summary outcome will be presented."
     );
 
     if(!confirm) return;
 
     setIsRunning(false);
     setShowEndScreen(true);
+  }
+  const handleRestart = () => {
+    const confirm = window.confirm(
+      "Are you sure you wish to restart? You will be unable to save the current simulation after."
+    );
+
+    if(!confirm) return;
+
+    setSeconds(0);
+    setEntries(0);
+    setExits(0);
+    setCaptures(0);
+    setDefeats(0);
+    setRescues(0);
+    setEvasions(0);
+    setShowEndScreen(false);
+    setShowStartScreen(true);
   }
 
   // STEP BUTTON HANDLING
@@ -535,7 +564,7 @@ return (
               marginRight: "8px",
             }}
           ></div>
-            <span>Maerchants</span>
+            <span>Merchants</span>
           </div>
 
           {/* PIRATES */}
@@ -612,17 +641,7 @@ return (
           {/* MAKE RESET BUTTON AND RESET COUNTS ON CLICK */}
           <button
             className = "btn btn-success"
-            onClick = {() => {
-              setSeconds(0);
-              setEntries(0);
-              setExits(0);
-              setCaptures(0);
-              setDefeats(0);
-              setRescues(0);
-              setEvasions(0);
-              setShowEndScreen(false);
-              setShowStartScreen(true);
-            }}
+            onClick = {handleRestart}
           >
             Restart
           </button>
