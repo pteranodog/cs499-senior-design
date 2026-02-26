@@ -33,7 +33,7 @@ function arriveTest()
 function seekTest()
 {    
     let testTargetKinematic = new Behaviors.Kinematic([0,0], 0, [0,0], 0) // This guy doesn't move.
-    let testSeekerKinematic = new Behaviors.Kinematic([20,20], 0, [1,1], 0.3) // This guy seeks ^
+    let testSeekerKinematic = new Behaviors.Kinematic([-20,-20], 0, [-1,-1], 0.3) // This guy seeks ^
 
     let testSeek = new Behaviors.Seek(testSeekerKinematic, testTargetKinematic, 2,2,1,1) // Give testSeekerKinematic a Seek behavior
 
@@ -111,9 +111,32 @@ function pursueTest()
     console.log("\n\n========== Pursue Test Concluded ==========\n\n")
 }
 
+function wanderTest()
+{    
+    
+    let testWandererKinematic = new Behaviors.Kinematic([1,1], 0, [1,1], 0.3) // This guy wanders randomly
+
+    let testWander = new Behaviors.Wander(testWandererKinematic, 2,1,2,0.5,0.1) // Give testWandererKinematic a Wander behavior
+
+    let testWanderer = new Behaviors.Mover(testWandererKinematic, 2, 10, testWander) // Define movement stats for Wanderr
+
+    console.log("\nWander demonstration\n\n")
+    console.log("\nThese are the starting coordinates of the Wandering mover:")
+    console.log(testWandererKinematic.pos)
+    console.log("\nNow we will step through 20 seconds of activity, printing the new coordinates of the mover after each second. It should:"
+        ,"\n- Wander about randomly, but not jarringly"
+    )
+    for (let i = 0; i < 20; i++) {
+        testWanderer.update(testWander.getSteering(),testWanderer.maxSpeed, 1)
+        console.log(testWandererKinematic.pos)
+    }
+    console.log("\n\n========== Wander Test Concluded ==========\n\n")
+}
 
 arriveTest()
 seekTest()
 fleeTest()
 
 pursueTest()
+
+wanderTest()

@@ -264,14 +264,13 @@ class Align { // Align the movement of one mover with the movement of another
         this.slowThreshold = slowThreshold // When the focused mover's orientation is within this many rads of the target's, slow down rotation
         this.targetThreshold = targetThreshold // When the focused mover's orientation is within this many rads of the target's, stop rotating entirely
         this.timeToTarget = 0.1 // Time over which to achieve target orientation (NOTE: could need tweaked/ made variable?)
+        console.log(this)
     }
 
     getSteering() { // output of this function used as an argument in update function of mover
-        let result = SteeringOutput() // initialize output
-
+        let result = new SteeringOutput() // initialize output
         // Get the naïve rotation to match the target
         let rotation = this.targetKinematic.orientation - this.moverKinematic.orientation
-
         // Clamp to [-pi, pi] 
         rotation = clampOreintation(rotation)
         let rotationSize = Math.abs(rotation)
@@ -288,7 +287,7 @@ class Align { // Align the movement of one mover with the movement of another
             targetRotation = this.maxRotation
         }
         else { // Between intervals, scale rotation to slow down
-            targetRotation = this.maxRotation * rotationSize / slowRadius
+            targetRotation = this.maxRotation * rotationSize / this.slowThreshold
         }
         
         // make targetRotation combine speed and direction
@@ -317,13 +316,13 @@ class Face extends Align { // Face a mover towards another mover
     }
 
         getSteering() {
-            let direction = targetKinematic.pos - moverKinematic.pos // Direction and distance vector between subject mover and target mover
+            let direction = subtract(this.targetKinematic.pos, this.moverKinematic.pos) // Direction and distance vector between subject mover and target mover
 
-            if (length(direction) == 0) {
-                let result = SteeringOutput(0, 0)
+            if (getLength(direction) == 0) {
+                let result =  new SteeringOutput(0, 0)
                 return result
             }
-            faceTarget = this.targetKinematic
+            let faceTarget = this.targetKinematic
             faceTarget.orientation = Math.atan2(direction[0], direction[1])
 
             return super.getSteering()
@@ -340,7 +339,7 @@ class Wander extends Face {
         }
 
         super(moverKinematic, target, maxAngularAcc, maxRotation, slowThreshold, targetThreshold)
-
+        console.log(this.targetKinematic.pos)
         // NOTE: hardcoded values; normally they'd be set by args of the constructor but rn im desperate to just FINISH this; might make sense for other args to  be hardcoded? idk
         this.wanderOffset = 60 // forward offset from character of wander circle
         this.wanderRadius = 10// radius of wander circle
@@ -351,7 +350,7 @@ class Wander extends Face {
 
     getSteering() {
         // Update wander orientation
-        this.wanderOrientation += Math.random() * this.wanderRate
+        this.wanderOrientation += Math.random(-1,1) * this.wanderRate
 
         // Get the orientation we want to achieve
         let targetOrientation = this.wanderOrientation + this.moverKinematic.orientation
@@ -426,6 +425,7 @@ class Path {  // functions as the path data structure necessary to implement pat
     getPosition(param) { // return the vector that is the given parametrized distance along the given path
         // edge case handling
         if (param <= 0) {
+            
             return this.points[0]
         }
         if (param >= 1) {
