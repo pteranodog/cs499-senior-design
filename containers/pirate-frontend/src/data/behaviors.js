@@ -9,7 +9,7 @@
             console.error("division by 0 attmpted on: " + vector)
             return [0,0] // prevent division by 0
         }
-        result = [vector[0] / length, vector[1] / length]
+        let result = [vector[0] / length, vector[1] / length]
         return result
     }
     
@@ -48,7 +48,7 @@
     }
 
     function orientationToVector(orientation) { // Convert an orientation (number of rads) to its cartesian vector equivalent
-        result = [Math.cos(orientation), Math.sin(orientation)]
+        let result = [Math.cos(orientation), Math.sin(orientation)]
         return result
     }
 
@@ -78,7 +78,7 @@ class Mover { // Holds all data and methods relevant to a behavior-based moving 
         this.acceleration = acceleration
         this.maxSpeed = maxSpeed
         this.behavior = behavior
-        this.isCollided = False
+        this.isCollided = false
     }
 
     update(steering, maxSpeed, time) {
@@ -91,7 +91,7 @@ class Mover { // Holds all data and methods relevant to a behavior-based moving 
         this.acceleration = steering.linear // update this movers own acceleration value
 
         if (getLength(this.kinematic.velocity) > maxSpeed) { // is this mover going above their max speed?
-            this.kinematic.velocity = normalize(this.kinematic.velocity.normalize)
+            this.kinematic.velocity = normalize(this.kinematic.velocity)
             this.kinematic.velocity = scalarMult(this.kinematic.velocity, maxSpeed) // if so, return to max speed
         }
     }
@@ -105,7 +105,7 @@ class Seek { // Mover advances directly towards a target
     }
     
     getSteering() { // output of this method used as an argument in update function of mover
-        result = new SteeringOutput() // initialize output
+        let result = new SteeringOutput() // initialize output
 
         result.linear = subtract(this.k2.pos, this.k1.pos) // get difference between target pos and pos of mover we want to steer
         result.linear = normalize(result.linear)
@@ -124,11 +124,11 @@ class Flee { // Mover travels  directly away from a target
     }
     
     getSteering() { // output of this function used as an argument in update function of mover
-        result = new SteeringOutput() // initialize output
+        let result = new SteeringOutput() // initialize output
 
-        result.linear = this.k1.pos.subtract(this.k2.pos) // get difference between target pos and pos of mover we want to steer (inverted args between seek/flee)
-        result.linear = result.linear.normalize()
-        result.linear = result.linear.scalarMult(this.maxAcceleration) // set the magnitude of this acceleration vector to the maximum
+        result.linear = subtract(this.k1.pos, this.k2.pos) // get difference between target pos and pos of mover we want to steer (inverted args between seek/flee)
+        result.linear = normalize(result.linear)
+        result.linear = scalarMult(result.linear, this.maxAcceleration) // set the magnitude of this acceleration vector to the maximum
 
         result.angular = 0
         return result
@@ -147,14 +147,14 @@ class Arrive { // Send a mover towards a target, slowing down as it gets close t
     }
 
     
-    getSteering(this) {  // output of this function used as an argument in update function of mover
-        result = new SteeringOutput() // initialize output
+    getSteering() {  // output of this function used as an argument in update function of mover
+        let result = new SteeringOutput() // initialize output
 
-        direction = subtract(this.k2.pos,this.k1.pos) // get difference between target pos and pos of mover we want to steer; this time, save separately as a direction
-        distance = getLength(direction) // save distance between the two
+        let direction = subtract(this.k2.pos,this.k1.pos) // get difference between target pos and pos of mover we want to steer; this time, save separately as a direction
+        let distance = getLength(direction) // save distance between the two
         
         if (distance < this.targetRadius) { // has this mover reached its target?
-            this.k1.isCollided = True
+            this.k1.isCollided = true
             return new SteeringOutput([0,0], 0) // if so, no need to steer; return a 0 steering output
         }
         if (distance > this.slowRadius) { // is this mover far away enough from its target that it doesn't need to start slowing down (to prevent overshot)?
@@ -165,7 +165,7 @@ class Arrive { // Send a mover towards a target, slowing down as it gets close t
         }
 
         // combine the direction of the difference in position with the speed obtained from the logic above to obtain a new velocity 
-        targetVelocity = direction
+        let targetVelocity = direction
         targetVelocity = normalize(targetVelocity)
         targetVelocity = scalarMult(targetVelocity, this.targetSpeed)
 
@@ -199,7 +199,7 @@ class Pursue extends Seek { // Similar to seek, except predicts where target is 
         let direction = subtract(this.targetKinematic.pos,moverKinematic.pos) // Direction and distance
         let distance = length(direction)
 
-        let pursuedTarget = { // init target that will override Seek's target (basically dummy object to hold predicted pos)
+        this.pursuedTarget = { // init target that will override Seek's target (basically dummy object to hold predicted pos)
             pos: [0,0]
 
         }
@@ -222,7 +222,7 @@ class Pursue extends Seek { // Similar to seek, except predicts where target is 
         this.temp = this.targetKinematic
         this.targetKinematic = this.pursuedTarget // switch to new target obj so Seek can do the rest of the steering work
 
-        result = super.getSteering()
+        let result = super.getSteering()
         this.targetKinematic = this.temp // restore true target
         
         return result
@@ -230,7 +230,7 @@ class Pursue extends Seek { // Similar to seek, except predicts where target is 
 }
 
 function clampOreintation (orientation) { // Returns a clamped orientation value (rotation angle in rads) of a particular Kinematic instance to a [-pi, pi] boundary
-    result = (orientation) % (6.28) 
+    let result = (orientation) % (6.28) 
 
     if(Math.abs(result) > 3.14) {
         sign = Math.sign(result)
@@ -251,7 +251,7 @@ class Align { // Align the movement of one mover with the movement of another
     }
 
     getSteering() { // output of this function used as an argument in update function of mover
-        result = SteeringOutput() // initialize output
+        let result = SteeringOutput() // initialize output
 
         // Get the naïve rotation to match the target
         let rotation = this.targetKinematic.orientation - this.moverKinematic.orientation
@@ -304,7 +304,7 @@ class Face extends Align { // Face a mover towards another mover
             let direction = targetKinematic.pos - moverKinematic.pos // Direction and distance vector between subject mover and target mover
 
             if (length(direction) == 0) {
-                result = SteeringOutput(0, 0)
+                let result = SteeringOutput(0, 0)
                 return result
             }
             faceTarget = this.targetKinematic
@@ -347,7 +347,7 @@ class Wander extends Face {
         this.targetKinematic.position += this.wanderRadius * orientationToVector(targetOrientation)
         
         // Let Face take it from here
-        result = super.getSteering()
+        let result = super.getSteering()
 
         // Add linear acceleration to the result (since Face only returns angular)
         result.linear = this.maxAcceleration * orientationToVector(this.moverKinematic.orientation)
@@ -450,7 +450,9 @@ class Path {  // functions as the path data structure necessary to implement pat
     }
 }
         
-
+export  {getLength, normalize, add, subtract, scalarMult, dotProduct, closestPointOnSegment, orientationToVector, clampOreintation, Mover, Kinematic, SteeringOutput, Seek, Flee,
+    Arrive, Pursue, Path, FollowPath, Wander, Face, Align
+}
 
 // NOTE: Everything below this comment was an application of these behaviors from CS 330's program 2 (hence the python); in the future,
 // we may want to convert it to JS + use for testing functionality of behaviors; but for now it is all commented out.
