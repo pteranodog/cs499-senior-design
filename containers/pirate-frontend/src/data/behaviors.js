@@ -97,6 +97,19 @@ class Mover { // Holds all data and methods relevant to a behavior-based moving 
     }
 }
 
+class Continue { // Keep a character moving in its current trajectory; no change in orientation or velocity
+    constructor(characterKinematic) { // identify which character is continuing (retaining initial values), and give max acceleration
+        this.k1 = characterKinematic // k1 = character to continue
+        }
+        getSteering() { // since we want to continue (rate of change of velocity + orientation = 0), return a 0 vector for acceleration, and return 0 for angular
+        let result = new SteeringOutput() // initialize output
+        result.linear = [0,0]
+        result.angular = 0
+        return result
+    }
+}
+
+
 class Seek { // Mover advances directly towards a target
     constructor(moverKinematic, targetKinematic, maxAcceleration) {  // identify which mover is seeking to which, and give max acceleration
         this.k1 = moverKinematic //k1 = mover to steer
@@ -185,8 +198,11 @@ class Arrive { // Send a mover towards a target, slowing down as it gets close t
 }
 
 class Pursue extends Seek { // Similar to seek, except predicts where target is going and sends the subject mover towards that point
+    // REMINDER: k1 is the pursuer, k2 is the target (via Seek implementation)
     constructor(moverKinematic, targetKinematic, maxAcceleration, maxPrediction) {
         super(moverKinematic, targetKinematic, maxAcceleration)
+
+        console.log(this)
         this.maxPrediction = maxPrediction // Max prediction time, i.e. how far ahead to predict target's movement
         // Make new target obj to override Seek's with later
         this.pursuedTarget = {
@@ -196,15 +212,15 @@ class Pursue extends Seek { // Similar to seek, except predicts where target is 
     }
     getSteering() {
         // First, modify target data to be a prediction
-        let direction = subtract(this.targetKinematic.pos,moverKinematic.pos) // Direction and distance
-        let distance = length(direction)
+        let direction = subtract(this.k2.pos, this.k1.pos) // Direction and distance
+        let distance = getLength(direction)
 
         this.pursuedTarget = { // init target that will override Seek's target (basically dummy object to hold predicted pos)
             pos: [0,0]
 
         }
 
-        let speed = length(moverKinematic.velocity) // record subject mover's current speed
+        let speed = getLength(this.k1.velocity) // record subject mover's current speed
         let prediction // init here so it can be modified from within if-else
 
         // Is that speed too slow for a reasonable prediction?
@@ -215,15 +231,15 @@ class Pursue extends Seek { // Similar to seek, except predicts where target is 
             prediction = distance / speed // otherwise calculate prediction time normally
         }
 
-        // now get predicted position 
-        predictedPos = add(this.targetKinematic, scalarMult(this.targetKinematic.velocity, prediction))
+        // now get predicted position (EDIT: making it a field rather than local var for testing purposes)
+        this.predictedPos = add(this.k2.pos, scalarMult(this.k2.velocity, prediction))
 
         // finally, set the fields accordingly
-        this.temp = this.targetKinematic
-        this.targetKinematic = this.pursuedTarget // switch to new target obj so Seek can do the rest of the steering work
+        this.temp = this.k2
+        this.k2 = this.pursuedTarget // switch to new target obj so Seek can do the rest of the steering work
 
         let result = super.getSteering()
-        this.targetKinematic = this.temp // restore true target
+        this.k2 = this.temp // restore true target
         
         return result
     }
@@ -451,7 +467,7 @@ class Path {  // functions as the path data structure necessary to implement pat
 }
         
 export  {getLength, normalize, add, subtract, scalarMult, dotProduct, closestPointOnSegment, orientationToVector, clampOreintation, Mover, Kinematic, SteeringOutput, Seek, Flee,
-    Arrive, Pursue, Path, FollowPath, Wander, Face, Align
+    Arrive, Pursue, Path, FollowPath, Wander, Face, Align, Continue
 }
 
 // NOTE: Everything below this comment was an application of these behaviors from CS 330's program 2 (hence the python); in the future,
