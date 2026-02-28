@@ -1,11 +1,6 @@
 import * as Behaviors from "../data/behaviors.js";
 
-
-
 // Define dedicated behavior testing functions
-
-
-
 function arriveTest()
 {    
     let testTargetKinematic = new Behaviors.Kinematic([0,0], 0, [0,0], 0) // This guy doesn't move.
@@ -33,7 +28,7 @@ function arriveTest()
 function seekTest()
 {    
     let testTargetKinematic = new Behaviors.Kinematic([0,0], 0, [0,0], 0) // This guy doesn't move.
-    let testSeekerKinematic = new Behaviors.Kinematic([20,20], 0, [1,1], 0.3) // This guy seeks ^
+    let testSeekerKinematic = new Behaviors.Kinematic([-20,-20], 0, [-1,-1], 0.3) // This guy seeks ^
 
     let testSeek = new Behaviors.Seek(testSeekerKinematic, testTargetKinematic, 2,2,1,1) // Give testSeekerKinematic a Seek behavior
 
@@ -111,9 +106,126 @@ function pursueTest()
     console.log("\n\n========== Pursue Test Concluded ==========\n\n")
 }
 
+function alignTest()
+{    
+    let testTargetKinematic = new Behaviors.Kinematic([0,0], 1, [0,0], 0) // This guy stays here, retains orientation = 1
 
+    let testAlignerKinematic = new Behaviors.Kinematic([-10,-10], -0.3, [1,0], 0) // This guy aligns his orientation w/ ^ 
+
+
+    let testAlign = new Behaviors.Align(testAlignerKinematic, testTargetKinematic, 0.2, 0.4, 0.3, 0.1) // Give testAlignerKinematic an Align behavior
+
+    let testAligner = new Behaviors.Mover(testAlignerKinematic, 2, 10, testAlign) // Define movement stats for aligner
+
+    console.log("\nAlign demonstration\n\nThis is the orientation of the stationary target for this test:")
+    console.log(testTargetKinematic.orientation)
+    console.log("\nThese are the starting coordinates +orientation of the Aligning mover:")
+    console.log("coords: ", testAlignerKinematic.pos, "\norientation: ", testAlignerKinematic.orientation)
+    console.log("\nNow we will step through 20 seconds of activity, printing the new coordinates + orientation of the mover after each second. It should:"
+        ,"\n- Steer towards the same direction the target is facing"
+        ,"\n- Move in that direction"
+    )
+    for (let i = 0; i < 20; i++) {
+
+        testAligner.update(testAlign.getSteering(),testAligner.maxSpeed, 1)
+        console.log("Mover's pos: ",testAlignerKinematic.pos, "\nMover's orientation:", testAlignerKinematic.orientation)
+    }
+    console.log("\n\n========== Align Test Concluded ==========\n\n")
+}
+
+function faceTest()
+{    
+    let testTargetKinematic = new Behaviors.Kinematic([-100,0], 1, [0,0], 0) // This guy stays here, retains orientation = 1
+
+    let testFacerKinematic = new Behaviors.Kinematic([-10,0], -0.3, [0,0], 0) // This guy Faces this guy ^ 
+
+
+    let testFace = new Behaviors.Face(testFacerKinematic, testTargetKinematic, 0.2, 0.4, 0.4, 0.2) // Give testFacerKinematic a Face behavior
+
+    let testFacer = new Behaviors.Mover(testFacerKinematic, 2, 10, testFace) // Define movement stats for Facer
+
+    console.log("\nFace demonstration\n\nThis is the position of the stationary target for this test:")
+    console.log(testTargetKinematic.pos)
+    console.log("\nThese are the starting coordinates + orientation of the Facing mover:")
+    console.log("coords: ", testFacerKinematic.pos, "\norientation: ", testFacerKinematic.orientation)
+    console.log("\nNow we will step through 20 seconds of activity, printing the new coordinates + orientation of the mover after each second. It should:"
+        ,"\n- Steer towards the target"
+        ,"\n- Move according to its initial stats (Face only applies rotational changes, not linear)"
+    )
+    for (let i = 0; i < 20; i++) {
+
+        testFacer.update(testFace.getSteering(),testFacer.maxSpeed, 1)
+        console.log("Mover's pos: ",testFacerKinematic.pos, "\nMover's orientation:", testFacerKinematic.orientation)
+    }
+    console.log("\n\n========== Face Test Concluded ==========\n\n")
+}
+
+function wanderTest()
+{    
+    let testWandererKinematic = new Behaviors.Kinematic([-10,0], -0.3, [0,0], 0) // This guy Wanders about
+
+
+    let testWander = new Behaviors.Wander(testWandererKinematic, 1, 0.4, 0.6, 0.5,0.1, 5) // Give testWandererKinematic a Wander behavior
+
+    let testWanderer = new Behaviors.Mover(testWandererKinematic, 2, 8, testWander) // Define movement stats for Wanderr
+
+    console.log("\nWander demonstration")
+    console.log("\nThese are the starting coordinates + orientation of the mover:")
+    console.log("coords: ", testWandererKinematic.pos, "\norientation: ", testWandererKinematic.orientation)
+    console.log("\nNow we will step through 20 seconds of activity, printing the new coordinates + orientation of the mover after each second. It should:"
+        ,"\n- Wander about randomly, but not too jarringly"
+    )
+    for (let i = 0; i < 20; i++) {
+
+        testWanderer.update(testWander.getSteering(),testWanderer.maxSpeed, 1)
+        console.log("Mover's pos: ",testWandererKinematic.pos, "\nMover's orientation:", testWandererKinematic.orientation)
+    }
+    console.log("\n\n========== Wander Test Concluded ==========\n\n")
+}
+
+
+
+
+
+function pathFollowTest()
+{    
+    let testPath = new Behaviors.Path([[0,0],[3,4],[6,8],[9,12]], 20)
+    testPath.assemble()
+    
+    
+    let testPathFollowerKinematic = new Behaviors.Kinematic([-5,-5], -0.1, [0,0], 0) // This guy follows testPath
+    
+    
+    let testPathFollow = new Behaviors.FollowPath(testPath, 0.04, testPath.getParam(testPathFollowerKinematic.pos),testPathFollowerKinematic, 1)
+    
+    
+    let testPathFollower = new Behaviors.Mover(testPathFollowerKinematic, 0.5, 1, testPathFollow) // Define movement stats for the path follower
+    
+    console.log("\nPath Follow demonstration\n\nThis is the starting pos of the mover:")
+    console.log(testPathFollowerKinematic.pos)
+    console.log("\nThese are the points that make up the path: ")
+    console.log(testPath.points)
+    console.log("\nNow we will step through 20 seconds of activity, printing the new coordinates + orientation of the mover after each second. It should:"
+        ,"\n- Move towards whichever point (not necessarily a major, i.e. listed, point) on the path is closest to it"
+        ,"\n- Once it reaches such a point, it does the same for the next point on the path"
+    )
+    for (let i = 0; i < 20; i++) {
+            testPathFollower.update(testPathFollow.getSteering(),testPathFollower.maxSpeed, 1)
+            console.log("\nMover's pos: ",testPathFollowerKinematic.pos)
+            console.log("Targeted point: ", testPath.getPosition(testPathFollow.currentParam))
+    }
+    console.log("\n\n========== Path follow Test Concluded ==========\n\n")
+}
+
+
+// Call test functions
 arriveTest()
 seekTest()
 fleeTest()
-
 pursueTest()
+
+alignTest()
+faceTest()
+wanderTest()
+
+pathFollowTest()

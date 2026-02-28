@@ -1,4 +1,5 @@
-// ============================= 
+
+// ============================= Vector math functions =============================
     function getLength(vector) { // return the magnitude (length) of this vector
         return(((vector[0]**2) + vector[1]**2)**0.5)
     }
@@ -27,17 +28,17 @@
         
     
     function dotProduct(vector1, vector2) { // return the dot product of these two vectors
-        return (vector1[0] * vector2[0]) + (vector1[1] + vector2[1])
+        return (vector1[0] * vector2[0]) + (vector1[1] * vector2[1])
     }
     
     function closestPointOnSegment(vector, A, B){ // return the point on line segment A,B that is closest to the X and Y of this vector
-        AB = subtract(B, A)
-        AQ = subtract(vector, A)
+        let AB = subtract(B, A)
+        let AQ = subtract(vector, A)
 
-        T = (dotProduct(AQ, AB)) / (dotProduct(AB, AB)) // how "far along" AB is AQ's projection?
+        let T = (dotProduct(AQ, AB)) / (dotProduct(AB, AB)) // how "far along" AB is AQ's projection?
 
         if (T <= 0) {
-            return 
+            return A
         }
         else if (T >= 1) { 
             return B
@@ -52,7 +53,7 @@
         return result
     }
 
-
+// ============================= Physical Data Classes =============================
 
 class Kinematic { // class used to identify a ship's position, orientation, velocity,and rotation
     constructor(position, orientation, velocity, rotation) {
@@ -84,10 +85,16 @@ class Mover { // Holds all data and methods relevant to a behavior-based moving 
     update(steering, maxSpeed, time) {
         this.kinematic.pos = add(this.kinematic.pos, scalarMult(this.kinematic.velocity, time)) // advance position according to velocity
         this.kinematic.orientation += this.kinematic.rotation * time // change orientation according to rotation
+        this.kinematic.orientation = clampOreintation(this.kinematic.orientation)
 
         this.kinematic.velocity = add(this.kinematic.velocity, scalarMult(steering.linear,time)) // increase velocity according to acceleration
         this.kinematic.rotation += steering.angular * time // increase rotation according to angular acceleration
 
+        if (this.behavior && this.behavior.maxRotation !== undefined) {
+        const maxR = this.behavior.maxRotation;
+        this.kinematic.rotation = Math.max(-maxR, Math.min(this.kinematic.rotation, maxR));
+        }
+        
         this.acceleration = steering.linear // update this movers own acceleration value
 
         if (getLength(this.kinematic.velocity) > maxSpeed) { // is this mover going above their max speed?
@@ -96,6 +103,8 @@ class Mover { // Holds all data and methods relevant to a behavior-based moving 
         }
     }
 }
+
+// ============================= Behavior Classes =============================
 
 class Continue { // Keep a character moving in its current trajectory; no change in orientation or velocity
     constructor(characterKinematic) { // identify which character is continuing (retaining initial values), and give max acceleration
@@ -201,8 +210,6 @@ class Pursue extends Seek { // Similar to seek, except predicts where target is 
     // REMINDER: k1 is the pursuer, k2 is the target (via Seek implementation)
     constructor(moverKinematic, targetKinematic, maxAcceleration, maxPrediction) {
         super(moverKinematic, targetKinematic, maxAcceleration)
-
-        console.log(this)
         this.maxPrediction = maxPrediction // Max prediction time, i.e. how far ahead to predict target's movement
         // Make new target obj to override Seek's with later
         this.pursuedTarget = {
@@ -249,10 +256,11 @@ function clampOreintation (orientation) { // Returns a clamped orientation value
     let result = (orientation) % (6.28) 
 
     if(Math.abs(result) > 3.14) {
-        sign = Math.sign(result)
+        let sign = Math.sign(result)
         result = result - (6.28) * sign
     }
     return result
+    
 }
 
 class Align { // Align the movement of one mover with the movement of another
@@ -263,22 +271,25 @@ class Align { // Align the movement of one mover with the movement of another
         this.maxRotation = maxRotation // The max rate of change of the orientation (in rads) of the mover to be aligned.
         this.slowThreshold = slowThreshold // When the focused mover's orientation is within this many rads of the target's, slow down rotation
         this.targetThreshold = targetThreshold // When the focused mover's orientation is within this many rads of the target's, stop rotating entirely
-        this.timeToTarget = 0.1 // Time over which to achieve target orientation (NOTE: could need tweaked/ made variable?)
+        // NOTE ABOUT THRESHOLD VALUES: These are important for making the behaviors "smooth"; my advice is to not make targetThreshold <0.2 and
+        // not to make slowThreshold <0.5. Their stability also depends on rotation speed/ acc; so be careful w/ those values too
+        this.timeToTarget = 0.4 // Time over which to achieve target orientation (NOTE: could need tweaked/ made variable?)
     }
 
     getSteering() { // output of this function used as an argument in update function of mover
-        let result = SteeringOutput() // initialize output
-
+        let result = new SteeringOutput() // initialize output
         // Get the naïve rotation to match the target
         let rotation = this.targetKinematic.orientation - this.moverKinematic.orientation
-
         // Clamp to [-pi, pi] 
         rotation = clampOreintation(rotation)
         let rotationSize = Math.abs(rotation)
-
         // Test for arrival
-        if (rotationSize < this.targetThreshold) {
-            return null
+        if (rotationSize <= this.targetThreshold) {
+            result.angular = 0
+            result.linear = [0, 0]
+            this.moverKinematic.orientation = this.targetKinematic.orientation // this is a sort of band-aid fix for overshooting
+            this.moverKinematic.rotation = 0 // this is (also) a sort of band-aid fix for overshooting;
+            return result
         }
 
         let targetRotation = 0
@@ -288,7 +299,7 @@ class Align { // Align the movement of one mover with the movement of another
             targetRotation = this.maxRotation
         }
         else { // Between intervals, scale rotation to slow down
-            targetRotation = this.maxRotation * rotationSize / slowRadius
+            targetRotation = this.maxRotation * rotationSize / this.slowThreshold
         }
         
         // make targetRotation combine speed and direction
@@ -305,7 +316,7 @@ class Align { // Align the movement of one mover with the movement of another
             result.angular *= this.maxAngularAcc // Set back to max
         }
 
-        result.linear = 0
+        result.linear = [0,0]
         return result
     }
 }
@@ -313,26 +324,35 @@ class Align { // Align the movement of one mover with the movement of another
 class Face extends Align { // Face a mover towards another mover
     constructor(moverKinematic, targetKinematic, maxAngularAcc, maxRotation, slowThreshold, targetThreshold) {
         // We just need to change the target field after calling Align (because we want to face towards it, not align with its movement); all else stays the same
+        // That is to say: constructor params serve the same prupose as they do in Align, so see Align's constructor for info on those
         super(moverKinematic, targetKinematic, maxAngularAcc, maxRotation, slowThreshold, targetThreshold)
     }
 
         getSteering() {
-            let direction = targetKinematic.pos - moverKinematic.pos // Direction and distance vector between subject mover and target mover
-
-            if (length(direction) == 0) {
-                let result = SteeringOutput(0, 0)
+            let direction = subtract(this.targetKinematic.pos, this.moverKinematic.pos) // Direction and distance vector between subject mover and target mover
+            if (getLength(direction) == 0) {
+                let result =  new SteeringOutput([0,0], 0)
                 return result
             }
-            faceTarget = this.targetKinematic
-            faceTarget.orientation = Math.atan2(direction[0], direction[1])
 
-            return super.getSteering()
+            let result =  new SteeringOutput()
+            let targetOrientation = Math.atan2(direction[1], direction[0])
+
+            let originalTargetOrientation = this.targetKinematic.orientation
+            this.targetKinematic.orientation = targetOrientation
+
+            result =  super.getSteering()
+
+            this.targetKinematic.orientation = originalTargetOrientation
+
+            return result
         }
 }
 
 
 class Wander extends Face {
-    constructor(moverKinematic, maxAcceleration, maxAngularAcc, maxRotation, slowThreshold, targetThreshold) { // note the lack of a target kinematic, since the "target" is a defined distance
+    constructor(moverKinematic, maxAcceleration, maxAngularAcc, maxRotation, slowThreshold, targetThreshold, maxSpeed) { // note the lack of a target kinematic, since the "target" is a defined distance
+        // Once more, see Align's constructor's comments for info on the constructor's args (maxSpeed included here since we introduce linear movement now)
         // Initiate target object for parent behaviors to use
         let target = {
             pos: [0,0],
@@ -340,34 +360,35 @@ class Wander extends Face {
         }
 
         super(moverKinematic, target, maxAngularAcc, maxRotation, slowThreshold, targetThreshold)
+        this.maxSpeed = maxSpeed // linear movement introduced, so a maximum speed is specified
 
-        // NOTE: hardcoded values; normally they'd be set by args of the constructor but rn im desperate to just FINISH this; might make sense for other args to  be hardcoded? idk
-        this.wanderOffset = 60 // forward offset from character of wander circle
-        this.wanderRadius = 10// radius of wander circle
-        this.wanderRate = 8 // maximum wander orientation change
+        // NOTE: hardcoded values; normally they'd be set by args of the constructor but this behavior should be more consistent 
+        this.wanderOffset = 10 // forward offset from character of wander circle
+        this.wanderRadius = 5 // radius of wander circle
+        this.wanderRate = 6 // maximum wander orientation change
         this.wanderOrientation = 0 // holds current orientation of wander target; init at 0? i think?
         this.maxAcceleration = maxAcceleration // max LINEAR acceleration; not used by super, rather by this specific behavior
     }
 
     getSteering() {
         // Update wander orientation
-        this.wanderOrientation += Math.random() * this.wanderRate
-
+        this.wanderOrientation += (Math.random() * 2 - 1) * this.wanderRate
+        
         // Get the orientation we want to achieve
         let targetOrientation = this.wanderOrientation + this.moverKinematic.orientation
 
         // Calculate center of wander circle's pos (remember the targetKinematic here is a self-provided, simplified, generic Object with pos/orientation properties)
-        this.targetKinematic.pos = this.moverKinematic.pos + this.wanderOffset * orientationToVector(this.moverKinematic.orientation)
+        this.targetKinematic.pos = add(this.moverKinematic.pos , scalarMult(orientationToVector(this.moverKinematic.orientation), this.wanderOffset))
 
         // From there, find the target's location
-        this.targetKinematic.position += this.wanderRadius * orientationToVector(targetOrientation)
-        
+        this.targetKinematic.pos = add(this.targetKinematic.pos ,scalarMult(orientationToVector(targetOrientation), this.wanderRadius))
+
         // Let Face take it from here
         let result = super.getSteering()
 
         // Add linear acceleration to the result (since Face only returns angular)
-        result.linear = this.maxAcceleration * orientationToVector(this.moverKinematic.orientation)
-
+        result.linear = scalarMult(orientationToVector(this.moverKinematic.orientation), this.maxAcceleration)
+        this.moverKinematic.velocity = scalarMult(orientationToVector(this.moverKinematic.orientation),this.maxSpeed)
         return result
     }
 }
@@ -375,14 +396,12 @@ class Wander extends Face {
     
 class FollowPath extends Seek { // Advance a mover along a Path
     constructor(path, pathOffset, currentParam, moverKinematic, maxAcceleration) {  // no target kinematic needed in init; determined by other data
+        let targetKinematic = new Kinematic([0,0], 0, [0,0], 0) // placeholder target kinematic so parent init can be called
+        super(moverKinematic, targetKinematic, maxAcceleration) // init parent class (Seek)
         this.path = path
         this.pathOffset = pathOffset
         this.currentParam = currentParam
         this.maxAcceleration = maxAcceleration
-
-        targetKinematic = new Kinematic([0,0], 0, [0,0], 0) // placeholder target kinematic so parent init can be called
-
-        super(moverKinematic, ) // init parent class (Seek)
     }
 
     getSteering() {
@@ -404,7 +423,7 @@ class Path {  // functions as the path data structure necessary to implement pat
     constructor(points, id) {
         this.id = id 
         this.points = points // will be a collection of Vectors
-        this.segments = length(points) - 1
+        this.segments = points.length - 1
         this.distances = new Array(this.segments + 1).fill(0)
         this.params = new Array(this.segments + 1).fill(0) // will hold parametrizations (0-1) of distances
         this.totalLength = 0 // used in parametrization
@@ -412,20 +431,21 @@ class Path {  // functions as the path data structure necessary to implement pat
 
     assemble() { // Iterates through this path's points and assigns values to data members accordingly
         for (let i = 1; i < this.params.length; i++ ) { // find length of each segment
-            let thisSeg = subtract(this.points[i], this.points.at(-1))
+            let thisSeg = subtract(this.points[i], this.points.at(i-1))
             let thisSegLength = getLength(thisSeg)
-            this.distances[i] = thisSegLength + this.distances.at(-1)
+            this.distances[i] = thisSegLength + this.distances[i-1]
         }
         this.totalLength = this.distances.at(-1) // last member of distances holds total path distance
 
-        for (i = 1; i < this.points.len; i++) { // get parametrized lengths
-            this.params[i] = this.distances[i] / this.totalLength // 0 - 1   
+        for (let i = 1; i < this.params.length; i++) { // get parametrized lengths
+            this.params[i] = this.distances[i] / this.totalLength // [0 - 1]
         } 
     }
 
     getPosition(param) { // return the vector that is the given parametrized distance along the given path
         // edge case handling
         if (param <= 0) {
+            
             return this.points[0]
         }
         if (param >= 1) {
@@ -446,10 +466,11 @@ class Path {  // functions as the path data structure necessary to implement pat
     }
     
     getParam(point) { // return the param of the path that corresponds to the point on the path that is closest to the given point
-        let leastDist = Math.inf // track the lowest distance seen
-        let closestPoint = [Math.inf, Math.inf] // track the closest point on the path to the given point
+        let leastDist = Infinity // track the lowest distance seen
+        let closestPoint = [Infinity, Infinity] // track the closest point on the path to the given point
         let closestSegIndex = 0 // track index of closest 
-        for (let i = 1; i < this.params.len; i++ ) { // find the closest point on the path
+        
+        for (let i = 1; i < this.params.length; i++ ) { // find the closest point on the path
             let p = closestPointOnSegment(point, this.points[i], this.points[i-1])
             let d = getLength(subtract(point, p))
             if (d < leastDist) {
@@ -460,58 +481,20 @@ class Path {  // functions as the path data structure necessary to implement pat
         }
         let A = this.points[closestSegIndex] // line AB is the segment the segment on which the closest point to the input point lies
         let B = this.points[closestSegIndex + 1]
-        let T = (closestPoint.subtract(A)).getLength() / (B.subtract(A)).getLength() // how far along this segment?
+        let T = getLength(subtract(closestPoint, A)) / getLength(subtract(B, A)) // how far along this segment?
         let C = this.params[closestSegIndex] + T * (this.params[closestSegIndex + 1] - this.params[closestSegIndex])
         return C
     }
 }
         
+
+// ============================= Export everything =============================
+// NOTE: import like this: 
+// import * as Behaviors from "../data/behaviors.js";
+// then instantiate/call like this: 
+// let testArriver = new Behaviors.Mover(...)
+// c = Behaviors.clampOreintation(...)
+
 export  {getLength, normalize, add, subtract, scalarMult, dotProduct, closestPointOnSegment, orientationToVector, clampOreintation, Mover, Kinematic, SteeringOutput, Seek, Flee,
     Arrive, Pursue, Path, FollowPath, Wander, Face, Align, Continue
 }
-
-// NOTE: Everything below this comment was an application of these behaviors from CS 330's program 2 (hence the python); in the future,
-// we may want to convert it to JS + use for testing functionality of behaviors; but for now it is all commented out.
-
-/* 
-// ============================= PART 2: Instantiate characters, movement behaviors, and timer; define data printing function =============================
-
-output = open("CS330 Assignment 2 output.txt", "w") // open output file to write to
-
-// Initialize timer
-TheTimer = Timer(0.5,250)
-
-// Initialize path to be followed
-followPath = Path([Vector(0, 90), Vector(-20, 65), Vector(20, 40), Vector(-40, 15), Vector(40, -10), Vector(-60, -35), Vector(60, -60), Vector(0, -85)], 1)
-followPath.assemble()
-
-// mover //1: Demonstrates Follow Path behavior on followpath
-Kinematic1 = Kinematic(Vector(20,95),0,Vector(0,0),0)
-PathFollower = mover(Kinematic1,Vector(0,0),4,1,2701,11)
-FollowPathBehavior = FollowPath(followPath, 0.04, followPath.getParam(Kinematic1.pos), Kinematic1, 2) 
-
-
-// functionine function to print data for a mover to the output file
-function printData(mover):
-    output.write(str((TheTimer.step)*TheTimer.stepDelay)) // 1: write the simulation time
-    output.write("," + str(mover.number)) //2: write mover number
-    output.write("," + str(mover.kinematic.pos.x)) //3: write mover's x pos
-    output.write("," + str(mover.kinematic.pos.z)) //4: write mover's z pos
-    output.write("," + str(mover.kinematic.velocity.x)) //5: write mover's x velocity
-    output.write("," + str(mover.kinematic.velocity.z)) //6: write mover's z velocity
-    output.write("," + str(mover.acceleration.x)) //7: write mover's x acceleration
-    output.write("," + str(mover.acceleration.z)) //8: write mover's z acceleration
-    output.write("," + str(mover.kinematic.orientation)) //9: write mover's orientation
-    output.write("," + str(mover.behavior)) //10: write mover's behavior ID (1 = continue, 6 = seek, 7 = flee, 8 = arrive)
-    output.write("," + str(mover.isCollided) + "\n") //11: write mover's collision status (true/false)
-
-
-// ============================= PART 3: Update in a loop =============================
-for step in range(TheTimer.maxSteps + 1):
-    printData(PathFollower) // first, output data for each mover
-    PathFollower.update(FollowPathBehavior.getSteering(), PathFollower.maxSpeed, TheTimer.stepDelay) // next, update movers' movement
-    time.sleep(TheTimer.stepDelay) // wait for one timestep as functionined by timer object
-    TheTimer.step += 1 // increment timestep
-
-
-*/
