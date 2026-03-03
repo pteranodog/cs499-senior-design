@@ -5,7 +5,8 @@ import Col from 'react-bootstrap/Col';
 import Card from 'react-bootstrap/Card';
 import Dropdown from 'react-bootstrap/Dropdown';
 
-function Controls() 
+function Controls()
+function Controls({ pointsOfInterest = [], onStartCenterPointChange } = {}) 
 {
   // STATES
   const [seconds, setSeconds] = useState(0);
@@ -26,6 +27,10 @@ function Controls()
   const [startHour, setStartHour] = useState("");
   const [startMinute, setStartMinute] = useState("");
 
+   // SKELETON: this stores a chosen POI id from the Start modal.
+  // Later can persist this in the global sim config instead of the local component state.
+  const [startCenterPointId, setStartCenterPointId] = useState("");
+  
   // LIVE METRICS COUNTING (DROPDOWN)
   const [entries, setEntries] = useState(0);
   const [exits, setExits] = useState(0);
@@ -148,11 +153,28 @@ function Controls()
 
     return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
   };
+  
+  // SKELETON: resolves selected POI id into the full point object.
+  // This keeps the UI simple and lets PirateMap own actual map movement behavior.
+  const resolveStartCenterPoint = () => {
+    if (!startCenterPointId) {
+      return null;
+    }
+
+    return pointsOfInterest.find((point) => point.id === startCenterPointId) || null;
+  };
 
   // ACTION HANDLER FOR START BUTTON
   const handleStart = () => 
   {
     if (!isSetupValid) return;
+
+     // SKELETON CONTRACT:
+    // - null => keep existing center
+    // - point object => center map on selected POI
+    // TODO: replace with a single start-config payload when simulation config is centralized.
+    if (typeof onStartCenterPointChange === 'function') {
+      onStartCenterPointChange(resolveStartCenterPoint());
 
     // SET INITIAL TIME OF DAY IMMEDIATELY
     const initialHour = Number(startHour);
@@ -391,6 +413,24 @@ return (
                 <option value="Storm">Storm</option>
                 <option value="Fog">Fog</option>
                </select>
+            </div>
+
+              {/* SKELETON UI: choose optional map center point for start */}
+            <div className = "mb-3">
+              <label className = "form-label">Center map on Start (optional)</label>
+              <select
+                className = "form-select"
+                value = {startCenterPointId}
+                onChange = {(e) => setStartCenterPointId(e.target.value)}
+                disabled = {isRunning}
+              >
+                <option value="">Keep current center</option>
+                {pointsOfInterest.map((point) => (
+                  <option key={point.id} value={point.id}>
+                    {point.name || point.id}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* INLINE WARNING FOR SLIDER PERCENTAGES SUM*/}
