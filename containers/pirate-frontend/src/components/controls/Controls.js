@@ -497,9 +497,9 @@ return (
                 <div><strong>Duration: </strong>{duration} minutes</div>
                 <div><strong>Region:</strong> {region}</div>
                 <div><strong>Weather:</strong> {weather}</div>
-                <div><strong>Merchant Presence:</strong></div>
-                <div><strong>Pirate Presence:</strong></div>
-                <div><strong>Security Presence:</strong></div>
+                <div><strong>Merchant Presence:</strong> {merchantRate}%</div>
+                <div><strong>Pirate Presence:</strong> {pirateRate}%</div>
+                <div><strong>Security Presence:</strong> {securityRate}%</div>
               </Card.Body>
             </Card>
           </Col>
@@ -515,15 +515,16 @@ return (
         <button 
           className="btn btn-primary btn-sm"
           onClick = {() => setIsRunning(prev => !prev)}
+          disabled = {showStartScreen}
           >
-            {isRunning ? "Pause" : "Resume"}
+            {showStartScreen ? "Pause" : isRunning ? "Pause" : "Resume"}
         </button>
 
         {/* STEP BUTTON (ONE STEP PER CLICK) */}
         <button 
           className="btn btn-primary btn-sm"
           onClick = {handleStep}
-          disabled = {isRunning}
+          disabled = {isRunning || showStartScreen}
         >
           Step
         </button>
@@ -532,6 +533,7 @@ return (
         <button 
           className="btn btn-warning btn-sm"
           onClick={handleSpeed}
+          disabled = {showStartScreen}
         >
           Speed ({speed}x)
         </button>
@@ -540,6 +542,7 @@ return (
         <button 
           className="btn btn-danger btn-sm" 
           onClick = {handleTerminate}
+          disabled = {showStartScreen}
         >
           Terminate
         </button>
