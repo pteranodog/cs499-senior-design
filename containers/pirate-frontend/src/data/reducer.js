@@ -1,50 +1,105 @@
-// This file is NOT YET the reducer function.
-// Temporarily using it to store code that isn't needed in classes.js
+import './classes.js';
+import './regions.json';
+import './stepRun.js';
 
-function releaseSkiff(id) {
-  if (this.heldSkiffs) {    
-    releasedSkiff = new PirateShip(id, this.pos, "small")
-    this.crewSize -= 7
-    this.heldSkiffs -= 1
-    return this.releaseSkiff // Return this new ship so it can be added to the state data
-  }
-  else {
-    console.log("Pirate ship w/ id " + this.id + " has no skiffs to release.")
+function reducer(state, action) {
+  switch (action.type) {
+    case 'initialize':
+    case 'reset':
+      return appStartState();
+    case 'display-region':
+      return displayRegion(state, action.id);
+    case 'display-run':
+      return displayRun(state, action.index);
+    case 'step-run':
+      return stepRun(state, action.index);
+    case 'create-run':
+      return createRun(state);
+    case 'load-run':
+      return loadRun(state, action.filePath);
+    case 'modify-run':
+      return modifyRun(state, action.index, action.runInfo);
+    case 'delete-run':
+      return deleteRun(state, action.index);
+    default:
+      console.warning('Action type "' + action.type + '" not found.');
+      return state;
   }
 }
 
-// TODO: Remove this once it's in the reducer function
-// Add method to release small patrol ships (for large patrol ships)
-function releaseSmallPatrolShip(id) {
-  if (this.carriedSmallPatrols) {   
-    releasedPatrol = new PatrolShip(id, this.pos, "small")
-    this.crewSize -= 4
-    this.carriedSmallPatrols -= 1
-    return releasedPatrol // Return this new ship so it can be added to the state data
+function appStartState() {
+  // TODO: Generate start state (Build regions but no runs)
+  return {};
+}
+
+function displayRegion(state, id) {
+  return {
+    regions: state.regions,
+    runs: state.runs,
+    display: {
+      type: 'region',
+      index: id
+    }
   }
-  else {
-    console.log("Patrol ship w/ id " + this.id + " has no small patrol ships to release.")
+}
+
+function displayRun(state, index) {
+  return {
+    regions: state.regions,
+    runs: state.runs,
+    display: {
+      type: 'run',
+      index: index
+    }
   }
 }
 
-// TODO: Reducer function
-// Spawn a new merchant ship at this port's location.
-function spawnMerchant(id, size) {
-  thisMerchant = new MerchantShip(id, this.pos, size, this)
-  return thisMerchant
+function stepRun(state, index) {
+  return {
+    regions: state.regions,
+    runs: state.runs.map((run, runIndex) => {
+      if (runIndex === index) {
+        // TODO: Make step function elsewhere
+        return step(run);
+      }
+      return run;
+    }),
+    display: state.display
+  }
 }
 
-// TODO: Reducer function
-// Spawn a new patrol ship at this port's location.
-function spawnPatrol(id, size) {
-  thisPatrol = new PatrolShip(id, this.pos, size, this)
-  return thisPatrol
+function createRun(state) {
+  return {
+    regions: state.regions,
+    // TODO: Figure out where and what newRun is
+    runs: [...state.runs, newRun()],
+    display: state.display
+  }
 }
 
+function loadRun(state, filePath) {
+  // TODO: Load run
+  return state;
+}
 
-// TODO: Reducer function
-// Spawn a new pirate ship at this cove's location.
-function spawnPirate(id, size) {
-  thisPirate = new PirateShip(id, this.pos, size, this)
-  return thisPirate
+function modifyRun(state, index, runInfo) {
+  return {
+    regions: state.regions,
+    runs: state.runs.map((run, runIndex) => {
+      if (runIndex === index) {
+        return runInfo;
+      }
+      return run;
+    }),
+    display: state.display
+  }
+}
+
+// TODO: Guard code
+function deleteRun(state, index) {
+  return {
+    regions: state.regions,
+    runs: state.runs.toSpliced(index, 1),
+    display: state.display
+  }
 }
