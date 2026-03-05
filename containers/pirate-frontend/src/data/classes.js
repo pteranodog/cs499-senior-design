@@ -9,9 +9,8 @@ const fs = require("fs")
 
 // ================= Ship Objects =================
 /** The base class for all simulated vessels in the simulation. */
-function newShip(id, type, startPos, size, sightRange, crewSize, armament, durability){
+function newShip(type, startPos, size, sightRange, crewSize, armament, durability){
   return {
-    id: id,
     type: type,
     pos: startPos, 
     size: size, // String expected; small, medium, or large
@@ -29,15 +28,20 @@ function newShip(id, type, startPos, size, sightRange, crewSize, armament, durab
 /** Subclass of Ships that seek + attack merchant Ships, and
  * flee from patrol ships.
  */
-function newPirateShip(id, startPos, size, homeCove) {
+function newPirateShip(startPos, size, homeCove) {
   // Using ? operator for shorthand if-else, since current research only mentions two sizes of pirate ships
   let crewSize = (size === "small" ? 7 : 19);
   let durability = (size === "small" ? 15 : 30); // assumed
   let armament = (size === "small" ? 45 : 15);
   let sightRange = (size === "small" ? 10 : 20);
-  let heldSkiffs = (size === "small" ? 0 : 2); // assumed-ish
+  let heldSkiffs = {};
+  if (size !== "small") {
+    for (let i = 0; i < 2; i++) {
+      heldSkiffs[crypto.randomUUID()] = newPirateShip(startPos, "small", homeCove);
+    }
+  }
 
-  let ship = newShip(id, "Pirate", startPos, size, sightRange, crewSize, armament, durability);
+  let ship = newShip("Pirate", startPos, size, sightRange, crewSize, armament, durability);
   ship.heldSkiffs = heldSkiffs;
   ship.homeCove = homeCove; // Spawn point. PirateCove object expected.
   return ship;
@@ -46,14 +50,14 @@ function newPirateShip(id, startPos, size, homeCove) {
 /** Subclass of Ships that seek + attack merchant Pirates, and
  * seek + defend distressed Merchants.
  */
-function newPatrolShip(id, startPos, size, homePort) {
+function newPatrolShip(startPos, size, homePort) {
 
   // Before calling super, initialize size-dependent ship properties
   let crewSize = 0
   let durability = 0
   let armament = 0
   let sightRange = 0
-  let carriedSmallPatrols = 0
+  let carriedSmallPatrols = {}
 
   switch (size) {
     case "small": // Will spawn from large patrol ships
@@ -73,7 +77,9 @@ function newPatrolShip(id, startPos, size, homePort) {
       durability = 40 // estimated
       armament = 60 // estimated
       sightRange = 3 // estimated
-      carriedSmallPatrols = 4 // uinique to large control ships; needs function to release them
+      for (let i = 0; i < 4; i++) {
+        carriedSmallPatrols[crypto.randomUUID()] = newPatrolShip(startPos, "small", homePort);
+      }
       break;
     default: // identical to small
       crewSize = 4
@@ -84,7 +90,7 @@ function newPatrolShip(id, startPos, size, homePort) {
   }
 
   // Call super with the inferred size-specific stats
-  let ship = newShip(id, "Patrol", startPos, size, sightRange, crewSize, armament, durability)
+  let ship = newShip("Patrol", startPos, size, sightRange, crewSize, armament, durability)
   ship.carriedSmallPatrols = carriedSmallPatrols      
   ship.homePort= homePort // Spawn point / "Point A" in this ship's trade route. Port object expected
   return ship;
@@ -93,7 +99,7 @@ function newPatrolShip(id, startPos, size, homePort) {
 /** Subclass of Ships that follow defined trade routes, flee from Pirates,
  * and send distress calls to nearby Patrol Ships when fleeing.
  */
-function newMerchantShip(id, startPos, size, homePort) {
+function newMerchantShip(startPos, size, homePort) {
   // Before calling super, initialize size-dependent ship properties
   // TODO: Currently only have research for one size of merchant; more to come?
   let crewSize = 21;
@@ -103,7 +109,7 @@ function newMerchantShip(id, startPos, size, homePort) {
 
   // switch/if-else statement here for sizes if last comment is correct
 
-  let ship = newShip(id, "Merchant", startPos, size, sightRange, crewSize, armament, durability);
+  let ship = newShip("Merchant", startPos, size, sightRange, crewSize, armament, durability);
   ship.homePort = homePort; // Spawn point / "Point A" of patrol path. Port object expected.
   return ship;
 }
@@ -115,10 +121,9 @@ function newMerchantShip(id, startPos, size, homePort) {
  *  - Persists between Runs.
  *  - pointsArr is assumed to be an array of all points within the region boundaries
  */
-function newRegion(center, pointsArr, regionId, regionName, length, width) {
+function newRegion(center, pointsArr, regionName, length, width) {
   return {
     name: regionName,
-    id: regionId,
     points: pointsArr, // array of Point instances
     center: center, // two-tuple of x/y coords
     length: length,
@@ -127,9 +132,8 @@ function newRegion(center, pointsArr, regionId, regionName, length, width) {
 }
 
 /** Base class for any important points within the simulation regions(s). */
-function newPoint(pointId, pointType, pointPos) {
+function newPoint(pointType, pointPos) {
   return {
-    id: pointId,
     type: pointType,
     pos: pointPos // two-tuple of x/y coords
   };
@@ -140,9 +144,9 @@ function newPoint(pointId, pointType, pointPos) {
  * new merchant ships (this functionality will be added once additional key
  * decisions regarding combat, trade routes, and ship data are made)
  */
-function newPort(PointId, portPos, merchantSpawnChance, toPorts, fromPorts)
+function newPort(portPos, merchantSpawnChance, toPorts, fromPorts)
 {
-  let point = newPoint(PointId, "Port", portPos)
+  let point = newPoint("Port", portPos)
 
   // Probability at each step that this Port spawns a brand new Merchant
   // (NOTE: merchant count should not exceed a certain maximum)
@@ -159,9 +163,9 @@ function newPort(PointId, portPos, merchantSpawnChance, toPorts, fromPorts)
 
 /** Subclass of Points; each instance represents a point from which
  * Pirates emerge. */
-function newPirateCove(PointId, covePos, pirateSpawnChance)
+function newPirateCove(covePos, pirateSpawnChance)
 {
-  let point = newPoint(PointId, "PirateCove", covePos)
+  let point = newPoint("PirateCove", covePos)
 
   // Probability at each step that this Cove spawns a new Pirate 
   // (NOTE: pirate count should not exceed a certain maximum)
@@ -175,8 +179,9 @@ function newPirateCove(PointId, covePos, pirateSpawnChance)
 /** Holds the configuration data that the user sets prior to starting the run.
  * TODO: probably needs more arguments, will refer to docs + update to include 
  * all the user settings */
-function newConfig(duration, weatherType, maxPirates, maxMerchants, maxPatrols) {
+function newConfig(seed, duration, weatherType, maxPirates, maxMerchants, maxPatrols) {
   return {
+    seed: seed,
     duration: duration,
     weatherType: weatherType,
     maxPirates: maxPirates,
@@ -188,10 +193,10 @@ function newConfig(duration, weatherType, maxPirates, maxMerchants, maxPatrols) 
 /** Used to record data from each session of the simulation:
  * Starting configuration, chosen region and statistics
  */
-function newRun(runConfig, runId, regionId) {
+function newRun(name, runConfig, regionId) {
   // Set up basic unchanging run properties
   return {
-    runId: runId,
+    name: name,
     config: runConfig, // Config object
     regionId: regionId, // Region ID
     // Infer initial run state info from config. currentState is comprised of all the CHANGING values of this run:
@@ -202,51 +207,76 @@ function newRun(runConfig, runId, regionId) {
         rescues: 0,
         sinks: 0
       },
-      // Ships is an array of all active Ship objects.
-      ships: []
+      // Ships is an ID-indexed object of all active Ship objects.
+      ships: {}
     }
   }
 }
 
+// ================= Helpful Functions For Testing  =================
 
-// ================= Helpful Functions  =================
-
-function printData(file, regions, runs) {
-  fs.writeFile(file, JSON.stringify([{regions}, {runs}], null, "\t"), err => {
+function printData(file, dataStructure) {
+  fs.writeFile(file, JSON.stringify(dataStructure, null, "\t"), err => {
     if (err) {
       console.error("Could not find " + file)
     }
   })
 }
 
+function addWithID(targetObj, newObj) {
+  const newUUID = crypto.randomUUID();
+  targetObj[newUUID] = newObj;
+  return newUUID;
+}
 
 // ================= Testing the above =================
-var Points = []
-var Ships = []
+var Points = {}
+var Ships = {}
 
-var Regions = []
+var Regions = {}
 var Runs = []
 
-testPort1 = newPort(12, [0,0], 0.01, [18, 31], [17,81])
-testPort2 = newPort(22, [30,10], 0.01, [55,70,61], [12,15])
-testCove = newPirateCove(67, [-10, 5], 0.02)
+testPort1 = newPort([0,0], 0.01, [], [])
+testPort2 = newPort([30,10], 0.01, [], [])
+testCove = newPirateCove([-10, 5], 0.02)
 
-Points.push(testPort1, testPort2, testCove)
+// Add points
+tp1id = addWithID(Points, testPort1);
+tp2id = addWithID(Points, testPort2);
+tcid = addWithID(Points, testCove);
 
-testRegion = newRegion([0,0], Points, 15, "The fiery pits of hell", 20, 10)
+Points[tp1id].toPorts.push(tp2id);
+Points[tp1id].fromPorts.push(tp2id);
+Points[tp2id].fromPorts.push(tp1id);
+Points[tp2id].toPorts.push(tp1id);
 
-Regions.push(testRegion)
+testRegion = newRegion([0,0], Points, "The fiery pits of hell", 20, 10)
 
-testShip1 = newPirateShip(20, [50.8, -40.7], "medium"),
-testShip2 = newMerchantShip(30, [75, 55], "medium"),
-testShip3 = newPatrolShip(40, [-32.1, 12.9], "medium")
+trid = addWithID(Regions, testRegion);
 
-Ships.push(testShip1, testShip2, testShip3)
+testShip1 = newPirateShip([50.8, -40.7], "medium", tcid);
+testShip2 = newMerchantShip([75, 55], "medium", tp1id);
+testShip3 = newPatrolShip([-32.1, 12.9], "large", tp2id);
 
-testConfig = newConfig(1500, "clear", 200, 500, 400)
-testRun = newRun(testConfig, 1, 15)
-testRun.currentState.ships.push(testShip1, testShip2, testShip3)
+ts1id = addWithID(Ships, testShip1);
+ts2id = addWithID(Ships, testShip2);
+ts3id = addWithID(Ships, testShip3);
 
-Runs.push(testRun)
+testConfig = newConfig(0, 1500, "clear", 200, 500, 400)
+testRun = newRun("Run 1", testConfig, trid)
 
-printData("data.json", Regions, Runs)
+testRun.currentState.ships = {...Ships}
+
+Runs.push(testRun);
+
+dataStructure = {
+  regions: Regions,
+  runs: Runs,
+  display: {
+    // Default to 'region' on startup; no runs yet
+    type: 'region',
+    index: trid
+  }
+};
+
+printData("data.json", dataStructure);
