@@ -5,7 +5,7 @@
 // (would be called on each ship at every step of the sim)
 // - create classes/functions for steering behaviors (flee, pursue, evade, wander...)
 
-const fs = require("fs")
+// const fs = require("fs")
 
 // ================= Ship Objects =================
 /** The base class for all simulated vessels in the simulation. */
@@ -132,8 +132,9 @@ function newRegion(center, pointsArr, regionName, length, width) {
 }
 
 /** Base class for any important points within the simulation regions(s). */
-function newPoint(pointType, pointPos) {
+function newPoint(name, pointType, pointPos) {
   return {
+    name: name,
     type: pointType,
     pos: pointPos // two-tuple of x/y coords
   };
@@ -144,9 +145,9 @@ function newPoint(pointType, pointPos) {
  * new merchant ships (this functionality will be added once additional key
  * decisions regarding combat, trade routes, and ship data are made)
  */
-function newPort(portPos, merchantSpawnChance, toPorts, fromPorts)
+function newPort(name, portPos, merchantSpawnChance, toPorts, fromPorts)
 {
-  let point = newPoint("Port", portPos)
+  let point = newPoint(name, "Port", portPos)
 
   // Probability at each step that this Port spawns a brand new Merchant
   // (NOTE: merchant count should not exceed a certain maximum)
@@ -163,9 +164,9 @@ function newPort(portPos, merchantSpawnChance, toPorts, fromPorts)
 
 /** Subclass of Points; each instance represents a point from which
  * Pirates emerge. */
-function newPirateCove(covePos, pirateSpawnChance)
+function newPirateCove(name, covePos, pirateSpawnChance)
 {
-  let point = newPoint("PirateCove", covePos)
+  let point = newPoint(name, "PirateCove", covePos)
 
   // Probability at each step that this Cove spawns a new Pirate 
   // (NOTE: pirate count should not exceed a certain maximum)
@@ -215,6 +216,7 @@ function newRun(name, runConfig, regionId) {
 
 // ================= Helpful Functions For Testing  =================
 
+/*
 function printData(file, dataStructure) {
   fs.writeFile(file, JSON.stringify(dataStructure, null, "\t"), err => {
     if (err) {
@@ -222,54 +224,58 @@ function printData(file, dataStructure) {
     }
   })
 }
+*/
 
+/*
 function addWithID(targetObj, newObj) {
   const newUUID = crypto.randomUUID();
   targetObj[newUUID] = newObj;
   return newUUID;
 }
+*/
 
 // ================= Testing the above =================
+/*
 var Points = {}
 var Ships = {}
 
 var Regions = {}
 var Runs = []
 
-testPort1 = newPort([0,0], 0.01, [], [])
-testPort2 = newPort([30,10], 0.01, [], [])
-testCove = newPirateCove([-10, 5], 0.02)
+let testPort1 = newPort("Port One", [0,0], 0.01, [], [])
+let testPort2 = newPort("Port Two", [30,10], 0.01, [], [])
+let testCove = newPirateCove("Pirate Cove One", [-10, 5], 0.02)
 
 // Add points
-tp1id = addWithID(Points, testPort1);
-tp2id = addWithID(Points, testPort2);
-tcid = addWithID(Points, testCove);
+let tp1id = addWithID(Points, testPort1);
+let tp2id = addWithID(Points, testPort2);
+let tcid = addWithID(Points, testCove);
 
 Points[tp1id].toPorts.push(tp2id);
 Points[tp1id].fromPorts.push(tp2id);
 Points[tp2id].fromPorts.push(tp1id);
 Points[tp2id].toPorts.push(tp1id);
 
-testRegion = newRegion([0,0], Points, "The fiery pits of hell", 20, 10)
+let testRegion = newRegion([0,0], Points, "The fiery pits of hell", 20, 10)
 
-trid = addWithID(Regions, testRegion);
+let trid = addWithID(Regions, testRegion);
 
-testShip1 = newPirateShip([50.8, -40.7], "medium", tcid);
-testShip2 = newMerchantShip([75, 55], "medium", tp1id);
-testShip3 = newPatrolShip([-32.1, 12.9], "large", tp2id);
+let testShip1 = newPirateShip([50.8, -40.7], "medium", tcid);
+let testShip2 = newMerchantShip([75, 55], "medium", tp1id);
+let testShip3 = newPatrolShip([-32.1, 12.9], "large", tp2id);
 
-ts1id = addWithID(Ships, testShip1);
-ts2id = addWithID(Ships, testShip2);
-ts3id = addWithID(Ships, testShip3);
+let ts1id = addWithID(Ships, testShip1);
+let ts2id = addWithID(Ships, testShip2);
+let ts3id = addWithID(Ships, testShip3);
 
-testConfig = newConfig(0, 1500, "clear", 200, 500, 400)
-testRun = newRun("Run 1", testConfig, trid)
+let testConfig = newConfig(0, 1500, "clear", 200, 500, 400)
+let testRun = newRun("Run 1", testConfig, trid)
 
 testRun.currentState.ships = {...Ships}
 
 Runs.push(testRun);
 
-dataStructure = {
+let dataStructure = {
   regions: Regions,
   runs: Runs,
   display: {
@@ -280,3 +286,6 @@ dataStructure = {
 };
 
 printData("data.json", dataStructure);
+*/
+
+export { newPirateShip, newPatrolShip, newMerchantShip, newRegion, newPort, newPirateCove, newConfig, newRun };

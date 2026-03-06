@@ -1,133 +1,223 @@
-[
-	{
-		"regions": [
-			{
-				"name": "The fiery pits of hell",
-				"id": 15,
-				"points": [
-					{
-						"id": 12,
-						"type": "Port",
-						"pos": [
-							0,
-							0
-						],
-						"merchantSpawnChance": 0.01,
-						"toPorts": [
-							18,
-							31
-						],
-						"fromPorts": [
-							17,
-							81
-						]
-					},
-					{
-						"id": 22,
-						"type": "Port",
-						"pos": [
-							30,
-							10
-						],
-						"merchantSpawnChance": 0.01,
-						"toPorts": [
-							55,
-							70,
-							61
-						],
-						"fromPorts": [
-							12,
-							15
-						]
-					},
-					{
-						"id": 67,
-						"type": "PirateCove",
-						"pos": [
-							-10,
-							5
-						],
-						"pirateSpawnChance": 0.02
-					}
-				],
-				"center": [
-					0,
-					0
-				],
-				"length": 20,
-				"width": 10
-			}
-		]
-	},
-	{
-		"runs": [
-			{
-				"runId": 1,
-				"config": {
-					"duration": 1500,
-					"weatherType": "clear",
-					"maxPirates": 200,
-					"maxMerchants": 500,
-					"maxPatrols": 400
-				},
-				"regionId": 15,
-				"currentState": {
-					"stats": {
-						"captures": 0,
-						"rescues": 0,
-						"sinks": 0
-					},
-					"ships": [
-						{
-							"id": 20,
-							"type": "Pirate",
-							"pos": [
-								50.8,
-								-40.7
-							],
-							"size": "medium",
-							"sightRange": 20,
-							"crewSize": 19,
-							"armament": 15,
-							"durability": 30,
-							"state": 1,
-							"fuel": 100,
-							"heldSkiffs": 2
-						},
-						{
-							"id": 30,
-							"type": "Merchant",
-							"pos": [
-								75,
-								55
-							],
-							"size": "medium",
-							"sightRange": 1,
-							"crewSize": 21,
-							"armament": 25,
-							"durability": 70,
-							"state": 1,
-							"fuel": 100
-						},
-						{
-							"id": 40,
-							"type": "Patrol",
-							"pos": [
-								-32.1,
-								12.9
-							],
-							"size": "medium",
-							"sightRange": 2,
-							"crewSize": 10,
-							"armament": 60,
-							"durability": 20,
-							"state": 1,
-							"fuel": 100,
-							"carriedSmallPatrols": 0
-						}
+{
+	"regions": {
+		"372a845f-bb7c-432f-8195-4bbd42452655": {
+			"name": "The fiery pits of hell",
+			"points": {
+				"1fe2619b-85af-4ac9-bfa9-ffab2c9674a2": {
+					"type": "Port",
+					"pos": [
+						0,
+						0
+					],
+					"merchantSpawnChance": 0.01,
+					"toPorts": [
+						"c787b860-70f5-4d4c-81e6-847f4fcd31ad"
+					],
+					"fromPorts": [
+						"c787b860-70f5-4d4c-81e6-847f4fcd31ad"
 					]
+				},
+				"c787b860-70f5-4d4c-81e6-847f4fcd31ad": {
+					"type": "Port",
+					"pos": [
+						30,
+						10
+					],
+					"merchantSpawnChance": 0.01,
+					"toPorts": [
+						"1fe2619b-85af-4ac9-bfa9-ffab2c9674a2"
+					],
+					"fromPorts": [
+						"1fe2619b-85af-4ac9-bfa9-ffab2c9674a2"
+					]
+				},
+				"d23b7093-8272-44f6-97ad-e4d75296484a": {
+					"type": "PirateCove",
+					"pos": [
+						-10,
+						5
+					],
+					"pirateSpawnChance": 0.02
+				}
+			},
+			"center": [
+				0,
+				0
+			],
+			"length": 20,
+			"width": 10
+		}
+	},
+	"runs": [
+		{
+			"name": "Run 1",
+			"config": {
+				"seed": 0,
+				"duration": 1500,
+				"weatherType": "clear",
+				"maxPirates": 200,
+				"maxMerchants": 500,
+				"maxPatrols": 400
+			},
+			"regionId": "372a845f-bb7c-432f-8195-4bbd42452655",
+			"currentState": {
+				"stats": {
+					"captures": 0,
+					"rescues": 0,
+					"sinks": 0
+				},
+				"ships": {
+					"5c9689fe-9465-4e27-b7c7-a6a7ee4b1258": {
+						"type": "Pirate",
+						"pos": [
+							50.8,
+							-40.7
+						],
+						"size": "medium",
+						"sightRange": 20,
+						"crewSize": 19,
+						"armament": 15,
+						"durability": 30,
+						"state": 1,
+						"fuel": 100,
+						"heldSkiffs": {
+							"a68efa68-e301-43d8-baf1-fe592b01d5af": {
+								"type": "Pirate",
+								"pos": [
+									50.8,
+									-40.7
+								],
+								"size": "small",
+								"sightRange": 10,
+								"crewSize": 7,
+								"armament": 45,
+								"durability": 15,
+								"state": 1,
+								"fuel": 100,
+								"heldSkiffs": {},
+								"homeCove": "d23b7093-8272-44f6-97ad-e4d75296484a"
+							},
+							"f66a02fe-c6d3-4813-84a1-21964dc59a56": {
+								"type": "Pirate",
+								"pos": [
+									50.8,
+									-40.7
+								],
+								"size": "small",
+								"sightRange": 10,
+								"crewSize": 7,
+								"armament": 45,
+								"durability": 15,
+								"state": 1,
+								"fuel": 100,
+								"heldSkiffs": {},
+								"homeCove": "d23b7093-8272-44f6-97ad-e4d75296484a"
+							}
+						},
+						"homeCove": "d23b7093-8272-44f6-97ad-e4d75296484a"
+					},
+					"c1e2efa6-e64e-46fe-bc56-7dcacecc6921": {
+						"type": "Merchant",
+						"pos": [
+							75,
+							55
+						],
+						"size": "medium",
+						"sightRange": 1,
+						"crewSize": 21,
+						"armament": 25,
+						"durability": 70,
+						"state": 1,
+						"fuel": 100,
+						"homePort": "1fe2619b-85af-4ac9-bfa9-ffab2c9674a2"
+					},
+					"45493371-a5a5-42fa-a617-51b15cd6e8d4": {
+						"type": "Patrol",
+						"pos": [
+							-32.1,
+							12.9
+						],
+						"size": "large",
+						"sightRange": 3,
+						"crewSize": 30,
+						"armament": 60,
+						"durability": 40,
+						"state": 1,
+						"fuel": 100,
+						"carriedSmallPatrols": {
+							"35aa05b7-d611-4900-961d-476ecc0ebe1c": {
+								"type": "Patrol",
+								"pos": [
+									-32.1,
+									12.9
+								],
+								"size": "small",
+								"sightRange": 1,
+								"crewSize": 4,
+								"armament": 30,
+								"durability": 10,
+								"state": 1,
+								"fuel": 100,
+								"carriedSmallPatrols": {},
+								"homePort": "c787b860-70f5-4d4c-81e6-847f4fcd31ad"
+							},
+							"29426d47-8343-4806-b0fd-608775778a9a": {
+								"type": "Patrol",
+								"pos": [
+									-32.1,
+									12.9
+								],
+								"size": "small",
+								"sightRange": 1,
+								"crewSize": 4,
+								"armament": 30,
+								"durability": 10,
+								"state": 1,
+								"fuel": 100,
+								"carriedSmallPatrols": {},
+								"homePort": "c787b860-70f5-4d4c-81e6-847f4fcd31ad"
+							},
+							"17e7678a-8668-46fc-838e-07798bdf8ca7": {
+								"type": "Patrol",
+								"pos": [
+									-32.1,
+									12.9
+								],
+								"size": "small",
+								"sightRange": 1,
+								"crewSize": 4,
+								"armament": 30,
+								"durability": 10,
+								"state": 1,
+								"fuel": 100,
+								"carriedSmallPatrols": {},
+								"homePort": "c787b860-70f5-4d4c-81e6-847f4fcd31ad"
+							},
+							"0e8128e8-4ec1-4cf8-8837-6c0aebd10c27": {
+								"type": "Patrol",
+								"pos": [
+									-32.1,
+									12.9
+								],
+								"size": "small",
+								"sightRange": 1,
+								"crewSize": 4,
+								"armament": 30,
+								"durability": 10,
+								"state": 1,
+								"fuel": 100,
+								"carriedSmallPatrols": {},
+								"homePort": "c787b860-70f5-4d4c-81e6-847f4fcd31ad"
+							}
+						},
+						"homePort": "c787b860-70f5-4d4c-81e6-847f4fcd31ad"
+					}
 				}
 			}
-		]
+		}
+	],
+	"display": {
+		"type": "region",
+		"index": "372a845f-bb7c-432f-8195-4bbd42452655"
 	}
-]
+}

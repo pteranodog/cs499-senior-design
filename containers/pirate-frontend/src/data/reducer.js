@@ -1,8 +1,8 @@
 import './classes.js';
-import './regions.json';
-import './stepRun.js';
+import { defaultRegions } from './regions.js';
+// import './stepRun.js';
 
-function reducer(state, action) {
+function simStateReducer(state, action) {
   switch (action.type) {
     case 'initialize':
     case 'reset':
@@ -28,8 +28,14 @@ function reducer(state, action) {
 }
 
 function appStartState() {
-  // TODO: Generate start state (Build regions but no runs)
-  return {};
+  return {
+    regions: defaultRegions(),
+    runs: [],
+    display: {
+      type: 'region',
+      index: '331541d6-617d-4464-b7d0-9b346b87f41c'
+    }
+  };
 }
 
 function displayRegion(state, id) {
@@ -103,3 +109,8 @@ function deleteRun(state, index) {
     display: state.display
   }
 }
+
+function step() {};
+function newRun() {};
+
+export { simStateReducer };

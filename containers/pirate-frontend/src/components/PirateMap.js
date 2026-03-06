@@ -1,13 +1,14 @@
 // containers/pirate-frontend/src/components/PirateMap.js
 
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useReducer } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import { simulationPointsToLeaflet } from '../utils/coords';
 import Controls from './controls/Controls';
 import ShipIcons from './render/ShipIcons.js';
 import PointIcons from './render/PointIcons.js';
+
+import { simStateReducer } from '../data/reducer.js';
 
 const shipList = [
   {type: "pirate", lat: 10, lon: 60},
@@ -18,62 +19,57 @@ const shipList = [
   {type: "patrol", lat: 13, lon: 61}
 ];
 
-const pointList = [
-  {type: "port", lat: 31.268591553342564, lon: 32.3080159013517, name: "Port Said (Egypt)"},
-  {type: "port", lat: -4.0717176235876895, lon: 39.67302089897652, name: "Mombasa (Kenya)"},
-  {type: "port", lat: -6.764025272071542, lon: 39.27479457164424, name: "Dar es Salaam (Tanzania)"},
-  {type: "port", lat: 11.604819989415411, lon: 43.14977135115654, name: "Djibouti"},
-  {type: "pirateCove", lat: 11.170546041737072, lon: 47.404807848330168},
-  {type: "pirateCove", lat: 5.065907743093423, lon: 48.297863487974084},
-  {type: "patrolBase", lat: 11.543419592150114, lon: 43.17903502125963, name: "Camp Lemonnier (U.S.A.)"}
-]
-
 // Stable IDs for start-focus selection in Controls.
 // TODO: replace this local mapping with API-provided POI IDs once backend data is connected.
-const pointListWithIds = pointList.map((point, index) => ({
-  ...point,
-  id: `${point.type}-${index}`
-}));
-
+// const pointListWithIds = pointList.map((point, index) => ({
+//   ...point,
+//   id: `${point.type}-${index}`
+// }));
+// 
 const transformConfig = {
   originLat: 34.7190616534629,
   originLon: -86.64664978111168,
   metersPerUnit: 1,
   headingDegrees: 0,
 };
-
-
-
-function StartPointFocus({ selectedPoint }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!selectedPoint) {
-      return;
-    }
-
-    // Skeleton behavior:
-    // 1) Controls chooses a POI by id.
-    // 2) PirateMap resolves it and stores the full point object in state.
-    // 3) This hook focuses the map as soon as that state changes.
-    // TODO: add configurable zoom level, animation duration, and user preference persistence.
-    map.flyTo([selectedPoint.lat, selectedPoint.lon], map.getZoom());
-  }, [map, selectedPoint]);
-
-  return null;
-}
-
-const simulationTrack = [
-  { id: 'start', x: 0, y: 0, label: 'Simulation origin (0, 0)' },
-  { id: 'wp1', x: 90, y: 30, label: 'Waypoint 1 (90, 30)' },
-  { id: 'wp2', x: 180, y: 60, label: 'Waypoint 2 (180, 60)' },
-  { id: 'wp3', x: 240, y: -20, label: 'Waypoint 3 (240, -20)' },
-];
+// 
+// 
+// 
+// function StartPointFocus({ selectedPoint }) {
+//   const map = useMap();
+// 
+//   useEffect(() => {
+//     if (!selectedPoint) {
+//       return;
+//     }
+// 
+//     // Skeleton behavior:
+//     // 1) Controls chooses a POI by id.
+//     // 2) PirateMap resolves it and stores the full point object in state.
+//     // 3) This hook focuses the map as soon as that state changes.
+//     // TODO: add configurable zoom level, animation duration, and user preference persistence.
+//     map.flyTo([selectedPoint.lat, selectedPoint.lon], map.getZoom());
+//   }, [map, selectedPoint]);
+// 
+//   return null;
+// }
+// 
+// const simulationTrack = [
+//   { id: 'start', x: 0, y: 0, label: 'Simulation origin (0, 0)' },
+//   { id: 'wp1', x: 90, y: 30, label: 'Waypoint 1 (90, 30)' },
+//   { id: 'wp2', x: 180, y: 60, label: 'Waypoint 2 (180, 60)' },
+//   { id: 'wp3', x: 240, y: -20, label: 'Waypoint 3 (240, -20)' },
+// ];
 
 function PirateMap() {
   const [startCenterPoint, setStartCenterPoint] = useState(null);
-  const mappedTrack = simulationPointsToLeaflet(simulationTrack, transformConfig);
-  const polylinePoints = mappedTrack.map(({ latLng }) => [latLng.lat, latLng.lng]);
+  const [simState, updateSim] = useReducer({}, simStateReducer, (state) => simStateReducer(state, {type: 'initialize'}));
+  // const mappedTrack = simulationPointsToLeaflet(simulationTrack, transformConfig);
+  // const polylinePoints = mappedTrack.map(({ latLng }) => [latLng.lat, latLng.lng]);
+
+  useEffect(() => {
+    console.log(simState);
+  }, []);
 
   return (
     <MapContainer
@@ -91,13 +87,15 @@ function PirateMap() {
         <Popup>Simulation Origin</Popup>
       </Marker>
 
-      <PointIcons pointList={pointList}/>
+      {simState.display.type === 'region' ? <PointIcons pointList={Object.values(simState.regions[simState.display.index].points)} /> : <></>}
       <ShipIcons shipList={shipList}/>
       
       {/* Track line */}
+      {/*
       <Polyline positions={polylinePoints} />
-
+      */}
       {/* Markers for each simulation point */}
+      {/*
       {mappedTrack.map((point) => (
         <Marker key={point.id} position={[point.latLng.lat, point.latLng.lng]}>
           <Popup>
@@ -111,13 +109,16 @@ function PirateMap() {
       ))}
       
       <StartPointFocus selectedPoint={startCenterPoint} />
+      */}
 
       {/* Controls that float above the map in the top right */}
       <Controls/>
+      {/*
       <Controls
         pointsOfInterest={pointListWithIds}
         onStartCenterPointChange={setStartCenterPoint}
-      />
+      /> 
+      */}
     </MapContainer>
   );
 }
