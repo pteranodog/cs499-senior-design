@@ -1,6 +1,6 @@
 import Control from 'react-leaflet-custom-control';
-import Card from 'react-bootstrap/Card';
-import Dropdown from 'react-bootstrap/Dropdown';
+import LiveCounts from './LiveCounts';
+import ElapsedTime from './ElapsedTime';
 
 export default function StartScreen ({
   // These are all the props that need passing from Controls.js:
@@ -227,25 +227,23 @@ export default function StartScreen ({
             </div>
           )}
 
-          <Card bg="light" text="dark" className="mb-2 p-2 small">
-            <div>
-              <strong>Time Elapsed:</strong> {formatTime(seconds)}
-            </div>
-          </Card>
+          {/*<ElapsedTime 
+          seconds={seconds}
+          formatTime = {formatTime}
+          >
 
-          <Dropdown>
-            <Dropdown.Toggle variant="light" size="sm">
-              View Live Counts
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item disabled>Entries: {entries}</Dropdown.Item>
-              <Dropdown.Item disabled>Exits: {exits}</Dropdown.Item>
-              <Dropdown.Item disabled>Captures: {captures}</Dropdown.Item>
-              <Dropdown.Item disabled>Defeats: {defeats}</Dropdown.Item>
-              <Dropdown.Item disabled>Rescues: {rescues}</Dropdown.Item>
-              <Dropdown.Item disabled>Evasions: {evasions}</Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
+          </ElapsedTime>
+
+          <LiveCounts 
+          entries={entries}
+          exits={exits}
+          captures={captures}
+          defeats={defeats}
+          rescues={rescues}
+          evasions={evasions}
+          >
+          </LiveCounts>*/}
+
         </div>
       </Control>
     )

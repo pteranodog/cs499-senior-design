@@ -2,14 +2,14 @@ import Control from 'react-leaflet-custom-control';
 
 export default function StepRateControls(
   // These are all the props that need passing from Controls.js:
-  isRunning,
+  {isRunning,
   setIsRunning,
   speed,
   showStartScreen,
   showEndScreen,
   handleStep,
   handleSpeed,
-  handleTerminate) {
+  handleTerminate}) {
   return (  
     <Control prepend position="bottomright">
       <div onClick={(e) => e.stopPropagation()} className="d-flex gap-2">

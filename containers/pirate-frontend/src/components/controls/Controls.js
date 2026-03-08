@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react';
-import Control from 'react-leaflet-custom-control';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
-import Card from 'react-bootstrap/Card';
-import Dropdown from 'react-bootstrap/Dropdown';
 
 import EndScreen from './EndScreen';
 import StartScreen from './StartScreen';
 import ConfigDisplay from './ConfigDisplay';
 import Legend from './Legend';
 import StepRateControls from './StepRateControls';
+import LiveCounts from './LiveCounts';
+import ElapsedTime from './ElapsedTime';
 
 function Controls({
   pointsOfInterest = [],
@@ -396,6 +393,24 @@ Evasions,${evasions}`;
       handleRestart={handleRestart}
       >
       </EndScreen>
+
+      <ElapsedTime
+        seconds={seconds}
+        formatTime={formatTime}
+      >
+
+    
+      </ElapsedTime>
+
+      <LiveCounts
+        entries={entries}
+        exits={exits}
+        captures={captures}
+        defeats={defeats}
+        rescues={rescues}
+        evasions={evasions}
+      >
+      </LiveCounts>
     </>
   );
 }
