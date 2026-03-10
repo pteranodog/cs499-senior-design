@@ -10,22 +10,23 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange } = {})
 {
   // STATES
   const [seconds, setSeconds] = useState(0);
-  const [timeOfDay, setTimeOfDay] = useState("Day");
+  const [timeOfDay, setTimeOfDay] = useState('Day');
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [speed, setSpeed] = useState(1);
 
-  // CONFIGURATION STATE FIELDS
-  const [simName, setSimName] = useState("");
-  const [region, setRegion] = useState("");
-  const [duration, setDuration] = useState("");
+  // CONFIGURATION STATE
+  const [simName, setSimName] = useState('');
+  const [region, setRegion] = useState('');
+  const [duration, setDuration] = useState('');
   const [merchantRate, setMerchantRate] = useState(50);
   const [pirateRate, setPirateRate] = useState(50);
-  const [securityRate, setSecurityRate] = useState(50);
-  const [weather, setWeather] = useState("");
-  const [startHour, setStartHour] = useState("");
-  const [startMinute, setStartMinute] = useState("");
+  const [securityRate, setSecurityRate] = useState(0);
+  const [weather, setWeather] = useState('');
+  const [startHour, setStartHour] = useState('');
+  const [startMinute, setStartMinute] = useState('');
+  const [startCenterPointId, setStartCenterPointId] = useState('');
 
    // SKELETON: this stores a chosen POI id from the Start modal.
   // Later can persist this in the global sim config instead of the local component state.
@@ -38,120 +39,126 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange } = {})
   const [defeats, setDefeats] = useState(0);
   const [rescues, setRescues] = useState(0);
   const [evasions, setEvasions] = useState(0);
- 
-  // BOUNDS FOR SIM POPULATION AND DURATION
-  const totalPercentage = merchantRate + pirateRate + securityRate;
-  const percentValid = totalPercentage <= 100;
+
   const minDuration = 1;
   const maxDuration = 180;
-  
-  // DURATION INPUT VALIDATION
-  const durationValid = 
-    duration !== "" &&
+  const totalPercentage = merchantRate + pirateRate + securityRate;
+  const percentValid = totalPercentage <= 100;
+
+  const durationValid =
+    duration !== '' &&
     Number(duration) >= minDuration &&
     Number(duration) <= maxDuration;
 
-  // TIME INPUT VALIDATION
   const startTimeValid =
-    startHour !== "" &&
-    startMinute !== "" &&
+    startHour !== '' &&
+    startMinute !== '' &&
     Number(startHour) >= 0 &&
     Number(startHour) <= 23 &&
     Number(startMinute) >= 0 &&
     Number(startMinute) <= 59;
 
-  // ALL INPUT VALIDATION
-  const isSetupValid = 
-    simName.trim() !== "" &&
-    region !== "" &&
+  const isSetupValid =
+    simName.trim() !== '' &&
+    region !== '' &&
     durationValid &&
     startTimeValid &&
-    weather !== "" &&
+    weather !== '' &&
     percentValid;
 
-  useEffect ( () => 
-  {
-    if (!isRunning) return;
+  const resetMetrics = () => {
+    setEntries(0);
+    setExits(0);
+    setCaptures(0);
+    setDefeats(0);
+    setRescues(0);
+    setEvasions(0);
+  };
+
+  const applyMetricTick = () => {
+    setEntries((prev) => prev + Math.floor(Math.random() * 2));
+    setExits((prev) => prev + Math.floor(Math.random() * 2));
+    setCaptures((prev) => prev + Math.floor(Math.random() * 2));
+    setDefeats((prev) => prev + Math.floor(Math.random() * 2));
+    setRescues((prev) => prev + Math.floor(Math.random() * 2));
+    setEvasions((prev) => prev + Math.floor(Math.random() * 2));
+  };
+
+  const resolveStartCenterPoint = () => {
+    if (!startCenterPointId) {
+      return null;
+    }
+
+    return pointsOfInterest.find((point) => point.id === startCenterPointId) || null;
+  };
+
+  useEffect(() => {
+    if (!isRunning) {
+      return undefined;
+    }
 
     const durationInSeconds = Number(duration) * 60;
-
-    const interval = setInterval ( () => {
+    const interval = setInterval(() => {
       setSeconds((prev) => {
-        const newSeconds = prev + 1;
-
-        //AUTO TERMINATE WHEN DURATION IS REACHED
-        if (durationInSeconds > 0 && newSeconds >= durationInSeconds) {
-          clearInterval(interval);
+        const next = prev + 1;
+        if (durationInSeconds > 0 && next >= durationInSeconds) {
           setIsRunning(false);
           setShowEndScreen(true);
           return durationInSeconds;
         }
-
-        return newSeconds;
+        return next;
       });
 
-      // RANDOM COUNTS FOR TESTING. REPLACE LATER W/ REAL LOGIC
-      setEntries((prev) => prev + Math.floor(Math.random() * 2));
-      setExits((prev) => prev + Math.floor(Math.random() * 2));
-      setCaptures((prev) => prev + Math.floor(Math.random() * 2));
-      setDefeats((prev) => prev + Math.floor(Math.random() * 2));
-      setRescues((prev) => prev + Math.floor(Math.random() * 2));
-      setEvasions((prev) => prev + Math.floor(Math.random() * 2));
-
+      applyMetricTick();
     }, 1000 / speed);
-    return () => clearInterval(interval);
 
+    return () => clearInterval(interval);
   }, [isRunning, duration, speed]);
 
-  // USEEFFECT FOR WARNING ON CLOSE
   useEffect(() => {
+    if (!isRunning && !showEndScreen) {
+      return undefined;
+    }
+
     const handleBeforeUnload = (e) => {
       e.preventDefault();
-      e.returnValue = "";
+      e.returnValue = '';
     };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, []);
 
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isRunning, showEndScreen]);
 
-  // USEEFFECT FOR TIME OF DAY
-  useEffect ( () => 
-  {
-    if (startHour === "" || startMinute === "") return;
+  useEffect(() => {
+    if (startHour === '' || startMinute === '') {
+      return;
+    }
 
-    const totalSimulatedMinutes = Number(startHour) * 60 + Number(startMinute) + Math.floor(seconds / 60);
+    const totalSimulatedMinutes =
+      Number(startHour) * 60 + Number(startMinute) + Math.floor(seconds / 60);
     const simulatedHour = Math.floor(totalSimulatedMinutes / 60) % 24;
-
     const night = simulatedHour < 6 || simulatedHour >= 18;
-    setTimeOfDay(night ? "Night" : "Day");
-    //setIsNight(night);
-  }, [seconds, startHour, startMinute])
+    setTimeOfDay(night ? 'Night' : 'Day');
+  }, [seconds, startHour, startMinute]);
 
-  // TIME FORMATTING  
-  const formatTime = (s) => 
-  {
-    const hrs = String(Math.floor(s / 3600)).padStart(2, "0");
-    const mins = String(Math.floor(s % 3600 / 60)).padStart(2, "0");
-    const secs = String(s % 60).padStart(2, "0");
+  const formatTime = (value) => {
+    const hrs = String(Math.floor(value / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((value % 3600) / 60)).padStart(2, '0');
+    const secs = String(value % 60).padStart(2, '0');
     return `${hrs}:${mins}:${secs}`;
   };
 
-  // CLOCK LOGIC FOR AUTO DAY/NIGHT SWITCH
-  const getSimulatedClock = () => 
-  {
-    if (startHour === "" || startMinute === "") return "00:00";
+  const getSimulatedClock = () => {
+    if (startHour === '' || startMinute === '') {
+      return '00:00';
+    }
 
     const totalSimulatedMinutes =
-      Number(startHour) * 60 +
-      Number(startMinute) +
-      Math.floor(seconds / 60);
-
+      Number(startHour) * 60 + Number(startMinute) + Math.floor(seconds / 60);
     const hour = Math.floor(totalSimulatedMinutes / 60) % 24;
     const minute = totalSimulatedMinutes % 60;
 
-    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
   };
   
   // SKELETON: resolves selected POI id into the full point object.
@@ -164,10 +171,10 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange } = {})
     return pointsOfInterest.find((point) => point.id === startCenterPointId) || null;
   };
 
-  // ACTION HANDLER FOR START BUTTON
-  const handleStart = () => 
-  {
-    if (!isSetupValid) return;
+  const handleStart = () => {
+    if (!isSetupValid) {
+      return;
+    }
 
      // SKELETON CONTRACT:
     // - null => keep existing center
@@ -180,99 +187,109 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange } = {})
     const initialHour = Number(startHour);
     setTimeOfDay(initialHour >= 6 && initialHour < 18 ? "Day" : "Night");
 
+    if (typeof onSimulationStart === 'function') {
+      onSimulationStart({
+        simulationName: simName.trim(),
+        region,
+        weather,
+        durationMinutes: Number(duration),
+        startTime: `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`,
+        populationDistribution: {
+          merchant: merchantRate,
+          pirate: pirateRate,
+          security: securityRate,
+        },
+        startCenterPoint: selectedPoint,
+      });
+    }
+
+    const initialHour = Number(startHour);
+    setTimeOfDay(initialHour >= 6 && initialHour < 18 ? 'Day' : 'Night');
+    resetMetrics();
+    setSeconds(0);
+    setShowEndScreen(false);
     setShowStartScreen(false);
     setIsRunning(true);
   };
 
-  // TERMINATION HANDLING W/ MESSAGE
   const handleTerminate = () => {
-    const confirm = window.confirm(
-      "Are you sure you want to terminate this run?\nBy terminating, this simulation will end and your summary outcome will be presented."
+    const confirmed = window.confirm(
+      'Are you sure you want to terminate this run?\nBy terminating, this simulation will end and your summary outcome will be presented.',
     );
-
-    if(!confirm) return;
+    if (!confirmed) {
+      return;
+    }
 
     setIsRunning(false);
     setShowEndScreen(true);
-  }
-  const handleRestart = () => {
-    const confirm = window.confirm(
-      "Are you sure you wish to restart? You will be unable to save the current simulation after."
-    );
-
-    if(!confirm) return;
-
-    setSeconds(0);
-    setEntries(0);
-    setExits(0);
-    setCaptures(0);
-    setDefeats(0);
-    setRescues(0);
-    setEvasions(0);
-    setShowEndScreen(false);
-    setShowStartScreen(true);
-  }
-
-  // STEP BUTTON HANDLING
-  const handleStep = () => {
-    if (isRunning) return;
-
-    setSeconds(prev => {
-      const newSeconds = prev + 1;
-
-      return newSeconds;
-    });
-
-    // RUN ONE TICK AT A TIME
-    setEntries(prev => prev + Math.floor(Math.random() * 2));
-    setExits(prev => prev + Math.floor(Math.random() * 2));
-    setCaptures(prev => prev + Math.floor(Math.random() * 2));
-    setDefeats(prev => prev + Math.floor(Math.random() * 2));
-    setRescues(prev => prev + Math.floor(Math.random() * 2));
-    setEvasions(prev => prev + Math.floor(Math.random() * 2));
-  }
-
-    const handleSpeed = () => {
-    setSpeed(prev => {
-      if (prev === 1) return 2;
-      if (prev ===2) return 4;
-      return 1;
-    })
-  }
-
-// CSV/JSON EXPORT HANDLING
-const handleExport = (format = "json") => {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-
-  const runData = {
-    simulationName: simName,
-    region,
-    weather,
-    durationMinutes: duration,
-    elapsedTime: formatTime(seconds),
-    outcomes: {
-      entries,
-      exits,
-      captures,
-      defeats,
-      rescues,
-      evasions
-    }
   };
 
-  let fileContent;
-  let fileType;
-  let fileExtension;
+  const handleRestart = () => {
+    const confirmed = window.confirm(
+      'Are you sure you wish to restart? You will be unable to save the current simulation after.',
+    );
+    if (!confirmed) {
+      return;
+    }
 
-  if (format === "json") {
-    fileContent = JSON.stringify(runData, null, 2);
-    fileType = "application/json";
-    fileExtension = "json";
-  }
+    setIsRunning(false);
+    setShowEndScreen(false);
+    setShowStartScreen(true);
+    setSeconds(0);
+    resetMetrics();
+  };
 
-  if (format === "csv") {
-    fileContent =
-`Simulation Name,${simName}
+  const handleStep = () => {
+    if (isRunning || showStartScreen || showEndScreen) {
+      return;
+    }
+
+    const durationInSeconds = Number(duration) * 60;
+    setSeconds((prev) => {
+      const next = prev + 1;
+      if (durationInSeconds > 0 && next >= durationInSeconds) {
+        setShowEndScreen(true);
+        return durationInSeconds;
+      }
+      return next;
+    });
+
+    applyMetricTick();
+  };
+
+  const handleSpeed = () => {
+    setSpeed((prev) => {
+      if (prev === 1) {
+        return 2;
+      }
+      if (prev === 2) {
+        return 4;
+      }
+      return 1;
+    });
+  };
+
+  const handleExport = (format = 'json') => {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const runData = {
+      simulationName: simName,
+      region,
+      weather,
+      durationMinutes: Number(duration),
+      elapsedTime: formatTime(seconds),
+      outcomes: { entries, exits, captures, defeats, rescues, evasions },
+    };
+
+    let fileContent = '';
+    let fileType = '';
+    let fileExtension = '';
+
+    if (format === 'json') {
+      fileContent = JSON.stringify(runData, null, 2);
+      fileType = 'application/json';
+      fileExtension = 'json';
+    } else if (format === 'csv') {
+      fileContent = `Simulation Name,${simName}
 Region,${region}
 Weather,${weather}
 Duration (minutes),${duration}
@@ -283,6 +300,21 @@ Captures,${captures}
 Defeats,${defeats}
 Rescues,${rescues}
 Evasions,${evasions}`;
+      fileType = 'text/csv';
+      fileExtension = 'csv';
+    }
+
+    const blob = new Blob([fileContent], { type: fileType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = `${simName || 'simulation'}-${timestamp}.${fileExtension}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
     fileType = "text/csv";
     fileExtension = "csv";
@@ -595,104 +627,74 @@ return (
         className="bg-light text-dark p-3 rounded shadow"
         style={{ minWidth: "160px"}}
       >
-        <h5 className = "mb-2">Legend</h5>
+      </StartScreen>
 
-        {/* MERCHANTS */}
-        <div className="d-flex align-items-center mb-1">
-          <div
-            style={{
-              width: "20px",
-              height: "20px",
-              backgroundColor: "green",
-              marginRight: "8px",
-            }}
-          ></div>
-            <span>Merchants</span>
-          </div>
+      <ConfigDisplay 
+      simName={simName}
+      region={region}
+      weather={weather}
+      duration={duration}
 
-          {/* PIRATES */}
-          <div className="d-flex align-items-center mb-1">
-            <div
-              style={{
-                width: "20px",
-                height: "20px",
-                backgroundColor: "red",
-                marginRight: "8px",
-              }}
-            ></div>
-            <span>Pirates</span>
-          </div>
+      merchantRate={merchantRate}
+      pirateRate={pirateRate}
+      securityRate={securityRate}
 
-          {/* Security Ships */}
-          <div className="d-flex align-items-center mb-1">
-            <div
-              style={{
-                width: "20px",
-                height: "20px",
-                backgroundColor: "blue",
-                marginRight: "8px",
-              }}
-            ></div>
-            <span>Security</span>
-          </div>
-        </div>
-    </Control>  
-
-    {/* SIMULATION END SCREEN */}
-    {showEndScreen && (
-      <div
-        className="position-fixed top-50 start-50 translate-middle bg-dark text-light p-4 rounded shadow"
-        style={{ zIndex: 2000, minWidth: "400px" }}
+      timeOfDay={timeOfDay}
+      getSimulatedClock={getSimulatedClock}
       >
-        <h5 className="mb-3">Simulation Complete</h5>
-            
-        {/* DISPLAY FINAL METRICS */}
-        <p><strong>Simulation Name:</strong> {simName}</p>
-        <p><strong>Region:</strong> {region}</p>
-        <p><strong>Elapsed Time:</strong> {formatTime(seconds)}</p>
+      </ConfigDisplay>
 
-        <hr />
+      <StepRateControls 
+      isRunning={isRunning}
+      setIsRunning={setIsRunning}
+      speed={speed}
+      showStartScreen={showStartScreen}
+      showEndScreen={showEndScreen}
+      handleStep={handleStep}
+      handleSpeed={handleSpeed}
+      handleTerminate={handleTerminate}
+      >
+      </StepRateControls>
 
-        <p><strong>Entries:</strong> {entries}</p>
-        <p><strong>Exits:</strong> {exits}</p>
-        <p><strong>Captures:</strong> {captures}</p>
-        <p><strong>Defeats:</strong> {defeats}</p>
-        <p><strong>Rescues:</strong> {rescues}</p>
-        <p><strong>Evasions:</strong> {evasions}</p>
+      <Legend/>
 
-        {/* EXPORT AS JSON BUTTON */}
-        <div className = "d-grid gap-2">
-          <button
-            className = "btn btn-success"
-            onClick = {() => {
-              handleExport("json");                 
-            }}
-          >
-            Export as JSON
-          </button>
+      <EndScreen 
+      showEndScreen={showEndScreen}
+      simName={simName}
+      region={region}
+      seconds={seconds}
+      formatTime={formatTime}
+      entries={entries}
+      exits={exits}
 
-          {/* EXPORT AS CSV BUTTON */}
-          <button
-            className = "btn btn-success"
-            onClick = {() => {
-              handleExport("csv")
-            }}
-          >
-            Export as CSV
-          </button>
+      captures={captures}
+      defeats={defeats}
+      rescues={rescues}
+      evasions={evasions}
+      handleExport={handleExport}
+      handleRestart={handleRestart}
+      >
+      </EndScreen>
 
-          {/* MAKE RESET BUTTON AND RESET COUNTS ON CLICK */}
-          <button
-            className = "btn btn-success"
-            onClick = {handleRestart}
-          >
-            Restart
-          </button>
-        </div>
-      </div>
-    )}
-  </>
- );
+      <ElapsedTime
+        seconds={seconds}
+        formatTime={formatTime}
+      >
+
+    
+      </ElapsedTime>
+
+      <LiveCounts
+        entries={entries}
+        exits={exits}
+        captures={captures}
+        defeats={defeats}
+        rescues={rescues}
+        evasions={evasions}
+      >
+      </LiveCounts>
+    </>
+  );
 }
 
 export default Controls;
