@@ -1,7 +1,9 @@
-// containers/pirate-frontend/src/components/PirateMap.jsx
+// containers/pirate-frontend/src/components/PirateMap.js
 
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import { simulationPointsToLeaflet } from '../utils/coords';
 import Controls from './controls/Controls';
 import ShipIcons from './render/ShipIcons.js';
@@ -26,12 +28,40 @@ const pointList = [
   {type: "patrolBase", lat: 11.543419592150114, lon: 43.17903502125963, name: "Camp Lemonnier (U.S.A.)"}
 ]
 
+// Stable IDs for start-focus selection in Controls.
+// TODO: replace this local mapping with API-provided POI IDs once backend data is connected.
+const pointListWithIds = pointList.map((point, index) => ({
+  ...point,
+  id: `${point.type}-${index}`
+}));
+
 const transformConfig = {
   originLat: 34.7190616534629,
   originLon: -86.64664978111168,
   metersPerUnit: 1,
   headingDegrees: 0,
 };
+
+
+
+function StartPointFocus({ selectedPoint }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!selectedPoint) {
+      return;
+    }
+
+    // Skeleton behavior:
+    // 1) Controls chooses a POI by id.
+    // 2) PirateMap resolves it and stores the full point object in state.
+    // 3) This hook focuses the map as soon as that state changes.
+    // TODO: add configurable zoom level, animation duration, and user preference persistence.
+    map.flyTo([selectedPoint.lat, selectedPoint.lon], map.getZoom());
+  }, [map, selectedPoint]);
+
+  return null;
+}
 
 const simulationTrack = [
   { id: 'start', x: 0, y: 0, label: 'Simulation origin (0, 0)' },
@@ -41,6 +71,7 @@ const simulationTrack = [
 ];
 
 function PirateMap() {
+  const [startCenterPoint, setStartCenterPoint] = useState(null);
   const mappedTrack = simulationPointsToLeaflet(simulationTrack, transformConfig);
   const polylinePoints = mappedTrack.map(({ latLng }) => [latLng.lat, latLng.lng]);
 
@@ -79,8 +110,14 @@ function PirateMap() {
         </Marker>
       ))}
       
+      <StartPointFocus selectedPoint={startCenterPoint} />
+
       {/* Controls that float above the map in the top right */}
       <Controls/>
+      <Controls
+        pointsOfInterest={pointListWithIds}
+        onStartCenterPointChange={setStartCenterPoint}
+      />
     </MapContainer>
   );
 }
