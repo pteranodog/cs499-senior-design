@@ -1,6 +1,5 @@
-import Control from 'react-leaflet-custom-control';
-import LiveCounts from './LiveCounts';
-import ElapsedTime from './ElapsedTime';
+//import LiveCounts from './LiveCounts';
+//import ElapsedTime from './ElapsedTime';
 
 export default function StartScreen ({
   // These are all the props that need passing from Controls.js:
@@ -57,7 +56,6 @@ export default function StartScreen ({
   evasions}) {
 
     return (
-      <Control prepend position="topright">
         <div onClick={(e) => e.stopPropagation()}>
           {showStartScreen && (
             <div
@@ -231,7 +229,6 @@ export default function StartScreen ({
           seconds={seconds}
           formatTime = {formatTime}
           >
-
           </ElapsedTime>
 
           <LiveCounts 
@@ -245,6 +242,5 @@ export default function StartScreen ({
           </LiveCounts>*/}
 
         </div>
-      </Control>
     )
 }
