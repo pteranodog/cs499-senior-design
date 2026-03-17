@@ -638,14 +638,6 @@ return (
             Export as CSV
           </button>
 
-          {/* MAKE SHOW GRAPH BUTTON THAT SHOWS A TABLE FOR THE CURRENT SUMMARY*/}
-          <button
-            className = "btn btn-success"
-            onClick = {showGraph}
-          >
-            Show Graph
-          </button>
-
           {/* MAKE RESET BUTTON AND RESET COUNTS ON CLICK */}
           <button
             className = "btn btn-success"
