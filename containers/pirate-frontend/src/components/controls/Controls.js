@@ -9,6 +9,8 @@ function Controls({
   pointsOfInterest = [],
   onStartCenterPointChange,
   onSimulationStart,
+  onSimulationStop,
+  onConfigTimeChange,
 } = {}) {
   // SIMULATION RUNTIME STATE
   const [seconds, setSeconds] = useState(0);
@@ -102,6 +104,9 @@ function Controls({
         if (durationInSeconds > 0 && next >= durationInSeconds) {
           setIsRunning(false);
           setShowEndScreen(true);
+          if (typeof onSimulationStop === 'function') {
+            onSimulationStop();
+          }
           return durationInSeconds;
         }
         return next;
@@ -111,7 +116,7 @@ function Controls({
     }, 1000 / speed);
 
     return () => clearInterval(interval);
-  }, [isRunning, duration, speed]);
+  }, [isRunning, duration, speed, onSimulationStop]);
 
   useEffect(() => {
     if (!isRunning && !showEndScreen) {
@@ -176,6 +181,7 @@ function Controls({
         weather,
         durationMinutes: Number(duration),
         startTime: `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`,
+        startTimeMinutes: Number(startHour) * 60 + Number(startMinute),
         populationDistribution: {
           merchant: merchantRate,
           pirate: pirateRate,
@@ -204,6 +210,9 @@ function Controls({
 
     setIsRunning(false);
     setShowEndScreen(true);
+    if (typeof onSimulationStop === 'function') {
+      onSimulationStop();
+    }
   };
 
   const handleRestart = () => {
@@ -219,6 +228,9 @@ function Controls({
     setShowStartScreen(true);
     setSeconds(0);
     resetMetrics();
+    if (typeof onSimulationStop === 'function') {
+      onSimulationStop();
+    }
   };
 
   const handleStep = () => {
@@ -330,7 +342,17 @@ Evasions,${evasions}`;
                     min="0"
                     max="23"
                     value={startHour}
-                    onChange={(e) => setStartHour(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setStartHour(value);
+                      if (onConfigTimeChange) {
+                        const hour = value === '' ? 0 : Number(value);
+                        const minute = startMinute === '' ? 0 : Number(startMinute);
+                        if (!Number.isNaN(hour) && !Number.isNaN(minute) && hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+                          onConfigTimeChange(hour * 60 + minute);
+                        }
+                      }
+                    }}
                     disabled={isRunning}
                   />
                   <span className="align-self-center">:</span>
@@ -341,7 +363,17 @@ Evasions,${evasions}`;
                     min="0"
                     max="59"
                     value={startMinute}
-                    onChange={(e) => setStartMinute(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setStartMinute(value);
+                      if (onConfigTimeChange) {
+                        const hour = startHour === '' ? 0 : Number(startHour);
+                        const minute = value === '' ? 0 : Number(value);
+                        if (!Number.isNaN(hour) && !Number.isNaN(minute) && hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+                          onConfigTimeChange(hour * 60 + minute);
+                        }
+                      }
+                    }}
                     disabled={isRunning}
                   />
                 </div>
@@ -508,9 +540,6 @@ Evasions,${evasions}`;
                   </div>
                   <div>
                     <strong>Sim Clock:</strong> {getSimulatedClock()}
-                  </div>
-                  <div>
-                    <strong>Mode:</strong> {timeOfDay}
                   </div>
                   <div>
                     <strong>Duration:</strong> {duration || 0} minutes

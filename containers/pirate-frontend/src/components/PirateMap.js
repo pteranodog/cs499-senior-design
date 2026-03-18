@@ -120,9 +120,18 @@ function MapViewportController({
   return null;
 }
 
+const DAY_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const DAY_TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+const NIGHT_TILE_URL = 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png';
+const NIGHT_TILE_ATTRIBUTION = '&copy; <a href="https://stadiamaps.com">Stadia Maps</a> contributors';
+
 function PirateMap() {
   const [startCenterPoint, setStartCenterPoint] = useState(null);
   const [simulationConfig, setSimulationConfig] = useState(null);
+  const [simulationTimeMinutes, setSimulationTimeMinutes] = useState(12 * 60); // 24h clock simulation time in minutes
+  const [previewStartTimeMinutes, setPreviewStartTimeMinutes] = useState(null);
+  const [isRunning, setIsRunning] = useState(false);
+
   const defaultCenter = useMemo(
     () => [transformConfig.originLat, transformConfig.originLon],
     [],
@@ -138,16 +147,91 @@ function PirateMap() {
     [mappedTrack],
   );
 
+  useEffect(() => {
+    if (!isRunning || !simulationConfig) {
+      return undefined;
+    }
+
+    const interval = setInterval(() => {
+      setSimulationTimeMinutes((prev) => (prev + 60) % (24 * 60));
+    }, 6000); // 6 seconds per simulated hour for live feel
+
+    return () => clearInterval(interval);
+  }, [isRunning, simulationConfig]);
+
+  const activeTimeMinutes =
+    simulationConfig?.startTimeMinutes ??
+    (previewStartTimeMinutes !== null ? previewStartTimeMinutes : simulationTimeMinutes);
+  const activeTimeHour = Math.floor(activeTimeMinutes / 60);
+  const isDay = activeTimeHour >= 6 && activeTimeHour < 18;
+  const activeMode = isDay ? 'day' : 'night';
+  const tileUrl = activeMode === 'day' ? DAY_TILE_URL : NIGHT_TILE_URL;
+  const attribution = activeMode === 'day' ? DAY_TILE_ATTRIBUTION : NIGHT_TILE_ATTRIBUTION;
+
+  const topBadgeStyle = {
+    position: 'absolute',
+    top: 8,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: 1000,
+    padding: '0.5rem 0.9rem',
+    borderRadius: '999px',
+    backgroundColor: activeMode === 'day' ? 'rgba(255,255,255,0.90)' : 'rgba(0,0,0,0.7)',
+    color: activeMode === 'day' ? '#222' : '#fff',
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.6rem',
+    boxShadow: '0 0 20px rgba(0,0,0,0.35)',
+  };
+
+  const backgroundTint = {
+    position: 'absolute',
+    inset: 0,
+    pointerEvents: 'none',
+    background: isDay ? 'transparent' : 'rgba(0, 18, 45, 0.22)',
+    zIndex: 450,
+  };
+
+  const handleConfigTimeChange = (minuteOfDay) => {
+    setPreviewStartTimeMinutes(minuteOfDay);
+  };
+
+  const handleSimulationStart = (config) => {
+    setSimulationConfig(config);
+    if (config && typeof config.startTimeMinutes === 'number') {
+      const value = config.startTimeMinutes % (24 * 60);
+      setSimulationTimeMinutes(value);
+    } else {
+      setSimulationTimeMinutes(12 * 60);
+    }
+    setIsRunning(true);
+    setPreviewStartTimeMinutes(null);
+  };
+
+  const handleSimulationStop = () => {
+    setIsRunning(false);
+    setSimulationConfig(null);
+    setSimulationTimeMinutes(12 * 60);
+    setPreviewStartTimeMinutes(null);
+  };
+
   return (
     <MapContainer
-      style={{ position: 'absolute', width: '100%', height: '100%' }}
+      style={{ position: 'absolute', width: '100%', height: '100%', filter: activeMode === 'day' ? 'none' : 'brightness(0.75) contrast(1.15)'}}
       center={[transformConfig.originLat, transformConfig.originLon]}
       zoom={16}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      <div style={backgroundTint} />
+
+      <div style={topBadgeStyle}>
+        <span style={{ fontSize: '2rem' }}>{activeMode === 'day' ? '☀️' : '🌙'}</span>
+        <span style={{ fontSize: '1.1rem' }}>
+          {activeMode === 'day' ? 'Day' : 'Night'}
+        </span>
+      </div>
+
+      <TileLayer attribution={attribution} url={tileUrl} />
 
       <Marker position={[transformConfig.originLat, transformConfig.originLon]}>
         <Popup>Simulation Origin</Popup>
@@ -180,7 +264,9 @@ function PirateMap() {
       <Controls
         pointsOfInterest={pointList}
         onStartCenterPointChange={setStartCenterPoint}
-        onSimulationStart={setSimulationConfig}
+        onSimulationStart={handleSimulationStart}
+        onSimulationStop={handleSimulationStop}
+        onConfigTimeChange={handleConfigTimeChange}
       />
     </MapContainer>
   );
