@@ -1,6 +1,18 @@
 function stepRun(state, runId) {
   newState = state;
-  currentRun = state.runs.
+  currentRun = state.runs.at(runId); // Started here
+  for (let i = 0; i <= currentRun.currentState.ships.size; i++) {
+    thisShip = currentRun.currentState.ships.at(i)
+    if(!thisShip.state.inCombat) { 
+      thisShip.behavior.update()
+      thisShip.pos = thisShip.behavior.kinematic.pos
+    }
+    else {
+      // TODO: combat functionality
+    }
+  }
+
+
 }
 
 

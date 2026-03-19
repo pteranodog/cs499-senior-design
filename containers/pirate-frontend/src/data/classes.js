@@ -1,3 +1,4 @@
+import * as behvaiors from './behaviors'
 // Class definitions; for ships, points, regions, runs
 // TODOs: 
 // - add "advance/move" methods? i.e. SomePirate.advance() will 
@@ -21,8 +22,9 @@ function newShip(type, startPos, size, sightRange, crewSize, armament, durabilit
     durability: durability,
 
     state: 1,
-    fuel: 100 // Default value; unit is gallons.
-  };
+    fuel: 100, // Default value; unit is gallons.
+    inCombat: false
+  }; 
 }
 
 /** Subclass of Ships that seek + attack merchant Ships, and
@@ -92,7 +94,7 @@ function newPatrolShip(startPos, size, homePort) {
   // Call super with the inferred size-specific stats
   let ship = newShip("Patrol", startPos, size, sightRange, crewSize, armament, durability)
   ship.carriedSmallPatrols = carriedSmallPatrols      
-  ship.homePort= homePort // Spawn point / "Point A" in this ship's trade route. Port object expected
+  ship.homePort = homePort // Spawn point / "Point A" in this ship's trade route. Port object expected
   return ship;
 }
 
