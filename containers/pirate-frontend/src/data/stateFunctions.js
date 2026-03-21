@@ -1,5 +1,5 @@
-import * as data from './classes'
-import * as behvaiors from './behaviors'
+import * as data from './classes.js'
+import * as behvaiors from './behaviors.js'
 
 function canSee(ship1, ship2) // can ship1 see ship 2?
 {
@@ -99,6 +99,7 @@ function checkForIdleTransition(thisShip, shipArray) { // Takes in a ship that i
     }
   }
 
-
-
+  let testPirate = data.newPirateShip([0,0], "medium", data.newPirateCove("testCove", [0,0], 0.1));
+  testPirate.behavior = behvaiors.
+  console.log(testPirate);
 

@@ -1,4 +1,4 @@
-import * as behvaiors from './behaviors'
+import * as behvaiors from './behaviors.js'
 // Class definitions; for ships, points, regions, runs
 // TODOs: 
 // - add "advance/move" methods? i.e. SomePirate.advance() will 
@@ -10,7 +10,7 @@ import * as behvaiors from './behaviors'
 
 // ================= Ship Objects =================
 /** The base class for all simulated vessels in the simulation. */
-function newShip(type, startPos, size, sightRange, crewSize, armament, durability){
+function newShip(type, startPos, size, sightRange, crewSize, armament, durability) {
   return {
     type: type,
     pos: startPos, 
