@@ -405,6 +405,7 @@ return (
 
     {/* THIS IS THE ELAPSED TIME AND DROPDOWN DISPLAY THAT IS SHOWN IN THE TOP RIGHT */}  
     <Control position="topright">
+      
         {/* SHOW ELAPSED TIME */}
         <Card bg="light" text="dark" className="mb-2 p-2 small">
           <div><strong>Time Elapsed:</strong> {formatTime(seconds)}</div>
