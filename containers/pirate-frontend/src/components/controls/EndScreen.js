@@ -1,4 +1,3 @@
-
 export default function EndScreen({
   // These are all the props that need passing from Controls.js:
   showEndScreen,

@@ -1,6 +1,5 @@
-import Control from 'react-leaflet-custom-control';
-import LiveCounts from './LiveCounts';
-import ElapsedTime from './ElapsedTime';
+//import LiveCounts from './LiveCounts';
+//import ElapsedTime from './ElapsedTime';
 
 export default function StartScreen ({
   // These are all the props that need passing from Controls.js:
@@ -57,7 +56,6 @@ export default function StartScreen ({
   evasions}) {
 
     return (
-      <Control prepend position="topright">
         <div onClick={(e) => e.stopPropagation()}>
           {showStartScreen && (
             <div
@@ -65,10 +63,15 @@ export default function StartScreen ({
               style={{ zIndex: 2000, minWidth: '400px' }}
             >
               <h5 className="mb-3">Configure Simulation</h5>
+              
 
+              {/* SIMULATION NAME TEXT BOX */}
               <div className="mb-3">
-                <label className="form-label">Simulation Name</label>
+                <label htmlFor="simName" className="form-label">
+                  Simulation Name
+                </label>
                 <input
+                  id="simName"
                   type="text"
                   className="form-control"
                   value={simName}
@@ -77,6 +80,8 @@ export default function StartScreen ({
                 />
               </div>
 
+
+              {/* START TIME INPUT (HH:MM) */}
               <div className="mb-3">
                 <label className="form-label">Start Time (HH:MM)</label>
                 <div className="d-flex gap-2">
@@ -104,9 +109,14 @@ export default function StartScreen ({
                 </div>
               </div>
 
+
+              {/* RUN TIME DURATION INPUT */}
               <div className="mb-3">
-                <label className="form-label">Duration (minutes)</label>
+                <label htmlFor="duration" className="form-label">
+                  Duration (minutes)
+                </label>
                 <input
+                  id="duration"
                   type="number"
                   className="form-control"
                   value={duration}
@@ -127,9 +137,14 @@ export default function StartScreen ({
                 )}
               </div>
 
+
+              {/* REGION SELECTION DROPDOWN */}
               <div className="mb-3">
-                <label className="form-label">Region</label>
+                <label htmlFor="region" className="form-label">
+                  Region
+                </label>
                 <select
+                  id="region"
                   className="form-select"
                   value={region}
                   onChange={(e) => setRegion(e.target.value)}
@@ -142,9 +157,14 @@ export default function StartScreen ({
                 </select>
               </div>
 
+
+              {/* WEATHER CONDTION SELECTION DROPDOWN */}
               <div className="mb-3">
-                <label className="form-label">Weather Condition</label>
+                <label  htmlFor="weather" className="form-label">
+                  Weather Condition
+                </label>
                 <select
+                  id="weather"
                   className="form-select"
                   value={weather}
                   onChange={(e) => setWeather(e.target.value)}
@@ -156,6 +176,7 @@ export default function StartScreen ({
                   <option value="Fog">Fog</option>
                 </select>
               </div>
+
 
               <div className="mb-3">
                 <label className="form-label">Center map on Start (optional)</label>
@@ -174,15 +195,22 @@ export default function StartScreen ({
                 </select>
               </div>
 
+
+              {/* DISPLAY MESSAGE AS LONG AS THE COMBINED PERCENTAGE IS MORE THAN 100% */}
               {!percentValid && (
                 <div className="text-danger small mb-2">
                   Total of Merchant, Pirate, and Security percentages cannot exceed 100%
                 </div>
               )}
 
+
+              {/* MERCHANT RATE SLIDER */}
               <div className="mb-3">
-                <label className="form-label">Merchant Presence: {merchantRate}%</label>
+                <label htmlFor="merchant" className="form-label">
+                  Merchant Presence: {merchantRate}%
+                </label>
                 <input
+                  id="merchant"
                   type="range"
                   min="0"
                   max="100"
@@ -193,9 +221,14 @@ export default function StartScreen ({
                 />
               </div>
 
+
+              {/* PIRATE PRESENCE SLIDER */}
               <div className="mb-3">
-                <label className="form-label">Pirate Presence: {pirateRate}%</label>
+                <label htmlFor="pirate" className="form-label">
+                  Pirate Presence: {pirateRate}%
+                </label>
                 <input
+                  id="pirate"
                   type="range"
                   min="0"
                   max="100"
@@ -206,9 +239,14 @@ export default function StartScreen ({
                 />
               </div>
 
+
+              {/* SECURITY PRESENCE SLIDER */}
               <div className="mb-3">
-                <label className="form-label">Security Presence: {securityRate}%</label>
+                <label htmlFor="security" className="form-label">
+                  Security Presence: {securityRate}%
+                </label>
                 <input
+                id="security"
                   type="range"
                   min="0"
                   max="100"
@@ -219,6 +257,8 @@ export default function StartScreen ({
                 />
               </div>
 
+
+              {/* START BUTTON (DISABLED TILL ALL FIELDS HAVE VALID INPUT */}
               <div className="d-grid mt-4">
                 <button className="btn btn-success" onClick={handleStart} disabled={!isSetupValid}>
                   Start Simulation
@@ -231,7 +271,6 @@ export default function StartScreen ({
           seconds={seconds}
           formatTime = {formatTime}
           >
-
           </ElapsedTime>
 
           <LiveCounts 
@@ -245,6 +284,5 @@ export default function StartScreen ({
           </LiveCounts>*/}
 
         </div>
-      </Control>
     )
 }

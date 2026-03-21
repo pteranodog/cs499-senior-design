@@ -1,9 +1,8 @@
 // containers/pirate-frontend/src/components/PirateMap.js
 
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap} from 'react-leaflet';
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import { simulationPointsToLeaflet } from '../utils/coords';
 import Controls from './controls/Controls';
 import ShipIcons from './render/ShipIcons.js';
@@ -113,7 +112,6 @@ function PirateMap() {
       <StartPointFocus selectedPoint={startCenterPoint} />
 
       {/* Controls that float above the map in the top right */}
-      <Controls/>
       <Controls
         pointsOfInterest={pointListWithIds}
         onStartCenterPointChange={setStartCenterPoint}
