@@ -5,8 +5,7 @@ import { simulationPointsToLeaflet } from '../utils/coords';
 import Controls from './controls/Controls';
 import ShipIcons from './render/ShipIcons.js';
 import PointIcons from './render/PointIcons.js';
-
-import { simStateReducer } from '../data/reducer.js';
+import { simStateReducer, appStartState } from '../data/reducer.js';
 
 const shipList = [
   { id: 'pirate-1', type: 'pirate', lat: 10, lon: 60 },
@@ -128,6 +127,7 @@ const NIGHT_TILE_URL = 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{
 const NIGHT_TILE_ATTRIBUTION = '&copy; <a href="https://stadiamaps.com">Stadia Maps</a> contributors';
 
 function PirateMap() {
+  const [simState, modifySimState] = useReducer(simStateReducer, {}, appStartState);
   const [startCenterPoint, setStartCenterPoint] = useState(null);
   const [simulationConfig, setSimulationConfig] = useState(null);
   const [simulationTimeMinutes, setSimulationTimeMinutes] = useState(12 * 60); // 24h clock simulation time in minutes
