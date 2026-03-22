@@ -1,10 +1,12 @@
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from 'react-leaflet';
+import { useEffect, useState, useReducer, useMemo } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import { simulationPointsToLeaflet } from '../utils/coords';
 import Controls from './controls/Controls';
 import ShipIcons from './render/ShipIcons.js';
 import PointIcons from './render/PointIcons.js';
+
+import { simStateReducer } from '../data/reducer.js';
 
 const shipList = [
   { id: 'pirate-1', type: 'pirate', lat: 10, lon: 60 },

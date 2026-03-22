@@ -39,7 +39,7 @@ function Controls({
   // SKELETON: this stores a chosen POI id from the Start modal.
   // Later can persist this in the global sim config instead of the local component state.
   const [startCenterPointId, setStartCenterPointId] = useState("");
-  
+
   // LIVE METRICS COUNTING (DROPDOWN)
   const [entries, setEntries] = useState(0);
   const [exits, setExits] = useState(0);
