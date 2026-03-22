@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react';
+import { useEffect, useState } from 'react';
 import Control from 'react-leaflet-custom-control';
 import Card from 'react-bootstrap/Card';
 import Dropdown from 'react-bootstrap/Dropdown';
@@ -8,10 +8,14 @@ import Legend from './Legend';
 import EndScreen from './EndScreen';
 import StartScreen from './StartScreen';
 
-
-function Controls({ pointsOfInterest = [], onStartCenterPointChange, onSimulationStart } = {}) 
-{
-  // STATES
+function Controls({
+  pointsOfInterest = [],
+  onStartCenterPointChange,
+  onSimulationStart,
+  onSimulationStop,
+  onConfigTimeChange,
+} = {}) {
+  // SIMULATION RUNTIME STATE
   const [seconds, setSeconds] = useState(0);
   const [timeOfDay, setTimeOfDay] = useState('Day');
   const [showStartScreen, setShowStartScreen] = useState(true);
@@ -79,7 +83,6 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange, onSimulatio
     setEvasions(0);
   };
 
-
   const applyMetricTick = () => {
     setEntries((prev) => prev + Math.floor(Math.random() * 2));
     setExits((prev) => prev + Math.floor(Math.random() * 2));
@@ -89,11 +92,19 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange, onSimulatio
     setEvasions((prev) => prev + Math.floor(Math.random() * 2));
   };
 
+  const resolveStartCenterPoint = () => {
+    if (!startCenterPointId) {
+      return null;
+    }
+
+    return pointsOfInterest.find((point) => point.id === startCenterPointId) || null;
+  };
 
   useEffect(() => {
     if (!isRunning) {
       return undefined;
     }
+
     const durationInSeconds = Number(duration) * 60;
     const interval = setInterval(() => {
       setSeconds((prev) => {
@@ -101,6 +112,9 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange, onSimulatio
         if (durationInSeconds > 0 && next >= durationInSeconds) {
           setIsRunning(false);
           setShowEndScreen(true);
+          if (typeof onSimulationStop === 'function') {
+            onSimulationStop();
+          }
           return durationInSeconds;
         }
         return next;
@@ -110,8 +124,7 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange, onSimulatio
     }, 1000 / speed);
 
     return () => clearInterval(interval);
-  }, [isRunning, duration, speed]);
-
+  }, [isRunning, duration, speed, onSimulationStop]);
 
   useEffect(() => {
     if (!isRunning && !showEndScreen) {
@@ -127,7 +140,6 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange, onSimulatio
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isRunning, showEndScreen]);
 
-
   useEffect(() => {
     if (startHour === '' || startMinute === '') {
       return;
@@ -140,14 +152,12 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange, onSimulatio
     setTimeOfDay(night ? 'Night' : 'Day');
   }, [seconds, startHour, startMinute]);
 
-
   const formatTime = (value) => {
     const hrs = String(Math.floor(value / 3600)).padStart(2, '0');
     const mins = String(Math.floor((value % 3600) / 60)).padStart(2, '0');
     const secs = String(value % 60).padStart(2, '0');
     return `${hrs}:${mins}:${secs}`;
   };
-
 
   const getSimulatedClock = () => {
     if (startHour === '' || startMinute === '') {
@@ -162,31 +172,16 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange, onSimulatio
     return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
   };
 
-  
-  // SKELETON: resolves selected POI id into the full point object.
-  // This keeps the UI simple and lets PirateMap own actual map movement behavior.
-  const resolveStartCenterPoint = () => {
-    if (!startCenterPointId) {
-      return null;
-    }
-
-    return pointsOfInterest.find((point) => point.id === startCenterPointId) || null;
-  };
-
-
   const handleStart = () => {
     if (!isSetupValid) {
       return;
     }
 
-    // SKELETON CONTRACT:
-    // - null => keep existing center
-    // - point object => center map on selected POI
-    // TODO: replace with a single start-config payload when simulation config is centralized.
+    const selectedPoint = resolveStartCenterPoint();
     if (typeof onStartCenterPointChange === 'function') {
-      onStartCenterPointChange(resolveStartCenterPoint());
+      onStartCenterPointChange(selectedPoint);
     }
-    
+
     if (typeof onSimulationStart === 'function') {
       onSimulationStart({
         simulationName: simName.trim(),
@@ -194,12 +189,13 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange, onSimulatio
         weather,
         durationMinutes: Number(duration),
         startTime: `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`,
+        startTimeMinutes: Number(startHour) * 60 + Number(startMinute),
         populationDistribution: {
           merchant: merchantRate,
           pirate: pirateRate,
           security: securityRate,
         },
-        startCenterPoint: resolveStartCenterPoint(),
+        startCenterPoint: selectedPoint,
       });
     }
 
@@ -223,8 +219,10 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange, onSimulatio
 
     setIsRunning(false);
     setShowEndScreen(true);
+    if (typeof onSimulationStop === 'function') {
+      onSimulationStop();
+    }
   };
-  */
 
   const handleRestart = () => {
     const confirmed = window.confirm(
@@ -239,9 +237,11 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange, onSimulatio
     setShowStartScreen(true);
     setSeconds(0);
     resetMetrics();
+    if (typeof onSimulationStop === 'function') {
+      onSimulationStop();
+    }
   };
 
-  /*
   const handleStep = () => {
     if (isRunning || showStartScreen || showEndScreen) {
       return;
@@ -259,9 +259,7 @@ function Controls({ pointsOfInterest = [], onStartCenterPointChange, onSimulatio
 
     applyMetricTick();
   };
-  */
 
-  /*
   const handleSpeed = () => {
     setSpeed((prev) => {
       if (prev === 1) {
@@ -411,8 +409,6 @@ return (
           <div><strong>Time Elapsed:</strong> {formatTime(seconds)}</div>
         </Card>
 
-        {/* DROPDOWN */}
-        <div>
           <Dropdown>
             <Dropdown.Toggle variant="light" size="sm">
               View Live Counts
