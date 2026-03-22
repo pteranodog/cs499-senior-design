@@ -260,7 +260,7 @@ function PirateMap() {
         defaultCenter={defaultCenter}
         defaultZoom={16}
       />
-
+      {/* Controls that float above the map in the top right */}
       <Controls
         pointsOfInterest={pointList}
         onStartCenterPointChange={setStartCenterPoint}

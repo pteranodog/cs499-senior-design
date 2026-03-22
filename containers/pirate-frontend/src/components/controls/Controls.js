@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import Control from 'react-leaflet-custom-control';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
 import Card from 'react-bootstrap/Card';
 import Dropdown from 'react-bootstrap/Dropdown';
+import ConfigDisplay from './ConfigDisplay';
+import StepRateControls from './StepRateControls';
+import Legend from './Legend';
+import EndScreen from './EndScreen';
+import StartScreen from './StartScreen';
 
 function Controls({
   pointsOfInterest = [],
@@ -18,7 +21,9 @@ function Controls({
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  // SET SPEED THROWING ERROR CURRENTLY. LOOK INTO LATER
+  const [speed, /*setSpeed*/] = useState(1);
+  const [stepRate, setStepRate] = useState(1);
 
   // CONFIGURATION STATE
   const [simName, setSimName] = useState('');
@@ -30,9 +35,12 @@ function Controls({
   const [weather, setWeather] = useState('');
   const [startHour, setStartHour] = useState('');
   const [startMinute, setStartMinute] = useState('');
-  const [startCenterPointId, setStartCenterPointId] = useState('');
 
-  // METRICS
+  // SKELETON: this stores a chosen POI id from the Start modal.
+  // Later can persist this in the global sim config instead of the local component state.
+  const [startCenterPointId, setStartCenterPointId] = useState("");
+  
+  // LIVE METRICS COUNTING (DROPDOWN)
   const [entries, setEntries] = useState(0);
   const [exits, setExits] = useState(0);
   const [captures, setCaptures] = useState(0);
@@ -200,6 +208,7 @@ function Controls({
     setIsRunning(true);
   };
 
+  /*
   const handleTerminate = () => {
     const confirmed = window.confirm(
       'Are you sure you want to terminate this run?\nBy terminating, this simulation will end and your summary outcome will be presented.',
@@ -262,6 +271,7 @@ function Controls({
       return 1;
     });
   };
+  */
 
   const handleExport = (format = 'json') => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -310,203 +320,94 @@ Evasions,${evasions}`;
     URL.revokeObjectURL(url);
   };
 
-  return (
-    <>
-      <Control prepend position="topright">
-        <div onClick={(e) => e.stopPropagation()}>
-          {showStartScreen && (
-            <div
-              className="position-fixed top-50 start-50 translate-middle bg-dark text-light p-4 rounded shadow"
-              style={{ zIndex: 2000, minWidth: '400px' }}
-            >
-              <h5 className="mb-3">Configure Simulation</h5>
 
-              <div className="mb-3">
-                <label className="form-label">Simulation Name</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={simName}
-                  onChange={(e) => setSimName(e.target.value)}
-                  disabled={isRunning}
-                />
-              </div>
+  const ElapsedTime = ({ seconds, formatTime }) => (
+  <div className="mb-2 small">
+    <strong>Elapsed:</strong> {formatTime(seconds)}
+  </div>
+  );
 
-              <div className="mb-3">
-                <label className="form-label">Start Time (HH:MM)</label>
-                <div className="d-flex gap-2">
-                  <input
-                    type="number"
-                    className="form-control"
-                    placeholder="HH"
-                    min="0"
-                    max="23"
-                    value={startHour}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setStartHour(value);
-                      if (onConfigTimeChange) {
-                        const hour = value === '' ? 0 : Number(value);
-                        const minute = startMinute === '' ? 0 : Number(startMinute);
-                        if (!Number.isNaN(hour) && !Number.isNaN(minute) && hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
-                          onConfigTimeChange(hour * 60 + minute);
-                        }
-                      }
-                    }}
-                    disabled={isRunning}
-                  />
-                  <span className="align-self-center">:</span>
-                  <input
-                    type="number"
-                    className="form-control"
-                    placeholder="MM"
-                    min="0"
-                    max="59"
-                    value={startMinute}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setStartMinute(value);
-                      if (onConfigTimeChange) {
-                        const hour = startHour === '' ? 0 : Number(startHour);
-                        const minute = value === '' ? 0 : Number(value);
-                        if (!Number.isNaN(hour) && !Number.isNaN(minute) && hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
-                          onConfigTimeChange(hour * 60 + minute);
-                        }
-                      }
-                    }}
-                    disabled={isRunning}
-                  />
-                </div>
-              </div>
+  /*
+  const LiveCounts = ({
+  entries,
+  exits,
+  captures,
+  defeats,
+  rescues,
+  evasions
+  }) => (
+  <div className="small">
+    <div>Entries: {entries}</div>
+    <div>Exits: {exits}</div>
+    <div>Captures: {captures}</div>
+    <div>Defeats: {defeats}</div>
+    <div>Rescues: {rescues}</div>
+    <div>Evasions: {evasions}</div>
+  </div>
+  );
+  */
 
-              <div className="mb-3">
-                <label className="form-label">Duration (minutes)</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={duration}
-                  min={minDuration}
-                  max={maxDuration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  disabled={isRunning}
-                />
-                {duration !== '' && Number(duration) < minDuration && (
-                  <div className="text-danger small">
-                    Duration must be at least {minDuration} minute{minDuration > 1 ? 's' : ''}
-                  </div>
-                )}
-                {duration !== '' && Number(duration) > maxDuration && (
-                  <div className="text-danger small">
-                    Duration cannot exceed {maxDuration} minutes
-                  </div>
-                )}
-              </div>
+return (
+  <>
+    {/* START SCREEN (CENTERED) AND LIVE METRIC TRACKING DROPDOWN (TOP RIGHT) */}
+    <StartScreen
+      showStartScreen={showStartScreen}
+      simName={simName}
+      setSimName={setSimName}
+      startHour={startHour}
+      setStartHour={setStartHour}
+      startMinute={startMinute}
+      setStartMinute={setStartMinute}
+      duration={duration}
+      setDuration={setDuration}
+      minDuration={minDuration}
+      maxDuration={maxDuration}
+      region={region}
+      setRegion={setRegion}
+      weather={weather}
+      setWeather={setWeather}
+      merchantRate={merchantRate}
+      setMerchantRate={setMerchantRate}
+      pirateRate={pirateRate}
+      setPirateRate={setPirateRate}
+      securityRate={securityRate}
+      setSecurityRate={setSecurityRate}
+      startCenterPointId={startCenterPointId}
+      setStartCenterPointId={setStartCenterPointId}
+      pointsOfInterest={pointsOfInterest}
+      isRunning={isRunning}
+      isSetupValid={isSetupValid}
+      handleStart={handleStart}
+    >
+    </StartScreen>
 
-              <div className="mb-3">
-                <label className="form-label">Region</label>
-                <select
-                  className="form-select"
-                  value={region}
-                  onChange={(e) => setRegion(e.target.value)}
-                  disabled={isRunning}
-                >
-                  <option value="">Select Region</option>
-                  <option value="Gulf of Guinea">Gulf of Guinea</option>
-                  <option value="Gulf of Aden/Somalian Coast">Gulf of Aden/Somalian Coast</option>
-                  <option value="Malacca Strait">Malacca Strait</option>
-                </select>
-              </div>
 
-              <div className="mb-3">
-                <label className="form-label">Weather Condition</label>
-                <select
-                  className="form-select"
-                  value={weather}
-                  onChange={(e) => setWeather(e.target.value)}
-                  disabled={isRunning}
-                >
-                  <option value="">Select Weather</option>
-                  <option value="Clear">Clear</option>
-                  <option value="Storm">Storm</option>
-                  <option value="Fog">Fog</option>
-                </select>
-              </div>
+    <EndScreen 
+      showEndScreen={showEndScreen}
+      simName={simName}
+      region={region}
+      seconds={seconds}
+      formatTime={formatTime}
+      entries={entries}
+      exits={exits}
 
-              <div className="mb-3">
-                <label className="form-label">Center map on Start (optional)</label>
-                <select
-                  className="form-select"
-                  value={startCenterPointId}
-                  onChange={(e) => setStartCenterPointId(e.target.value)}
-                  disabled={isRunning}
-                >
-                  <option value="">Keep current center</option>
-                  {pointsOfInterest.map((point) => (
-                    <option key={point.id} value={point.id}>
-                      {point.name || point.id}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      captures={captures}
+      defeats={defeats}
+      rescues={rescues}
+      evasions={evasions}
+      handleExport={handleExport}
+      handleRestart={handleRestart}
+    >
+    </EndScreen>   
 
-              {!percentValid && (
-                <div className="text-danger small mb-2">
-                  Total of Merchant, Pirate, and Security percentages cannot exceed 100%
-                </div>
-              )}
 
-              <div className="mb-3">
-                <label className="form-label">Merchant Presence: {merchantRate}%</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={merchantRate}
-                  className="form-range"
-                  onChange={(e) => setMerchantRate(Number(e.target.value))}
-                  disabled={isRunning}
-                />
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label">Pirate Presence: {pirateRate}%</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={pirateRate}
-                  className="form-range"
-                  onChange={(e) => setPirateRate(Number(e.target.value))}
-                  disabled={isRunning}
-                />
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label">Security Presence: {securityRate}%</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={securityRate}
-                  className="form-range"
-                  onChange={(e) => setSecurityRate(Number(e.target.value))}
-                  disabled={isRunning}
-                />
-              </div>
-
-              <div className="d-grid mt-4">
-                <button className="btn btn-success" onClick={handleStart} disabled={!isSetupValid}>
-                  Start Simulation
-                </button>
-              </div>
-            </div>
-          )}
-
-          <Card bg="light" text="dark" className="mb-2 p-2 small">
-            <div>
-              <strong>Time Elapsed:</strong> {formatTime(seconds)}
-            </div>
-          </Card>
+    {/* THIS IS THE ELAPSED TIME AND DROPDOWN DISPLAY THAT IS SHOWN IN THE TOP RIGHT */}  
+    <Control position="topright">
+      
+        {/* SHOW ELAPSED TIME */}
+        <Card bg="light" text="dark" className="mb-2 p-2 small">
+          <div><strong>Time Elapsed:</strong> {formatTime(seconds)}</div>
+        </Card>
 
           <Dropdown>
             <Dropdown.Toggle variant="light" size="sm">
@@ -522,181 +423,62 @@ Evasions,${evasions}`;
             </Dropdown.Menu>
           </Dropdown>
         </div>
-      </Control>
+    </Control>
 
-      <Control prepend position="topleft">
-        <div onClick={(e) => e.stopPropagation()}>
-          <Row className="mb-2">
-            <Col md="auto">
-              <Card
-                bg={timeOfDay === 'Night' ? 'dark' : 'light'}
-                text={timeOfDay === 'Night' ? 'light' : 'dark'}
-                className="rounded shadow"
-                style={{ minWidth: '100px' }}
-              >
-                <Card.Body className="p-2 small">
-                  <div>
-                    <strong>Sim Name:</strong> {simName}
-                  </div>
-                  <div>
-                    <strong>Sim Clock:</strong> {getSimulatedClock()}
-                  </div>
-                  <div>
-                    <strong>Duration:</strong> {duration || 0} minutes
-                  </div>
-                  <div>
-                    <strong>Region:</strong> {region || 'n/a'}
-                  </div>
-                  <div>
-                    <strong>Weather:</strong> {weather || 'n/a'}
-                  </div>
-                  <div>
-                    <strong>Merchant Presence:</strong> {merchantRate}%
-                  </div>
-                  <div>
-                    <strong>Pirate Presence:</strong> {pirateRate}%
-                  </div>
-                  <div>
-                    <strong>Security Presence:</strong> {securityRate}%
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-        </div>
-      </Control>
 
-      <Control prepend position="bottomright">
-        <div onClick={(e) => e.stopPropagation()} className="d-flex gap-2">
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={() => setIsRunning((prev) => !prev)}
-            disabled={showStartScreen || showEndScreen}
-          >
-            {isRunning ? 'Pause' : 'Resume'}
-          </button>
+    {/* ALWAYS VISIBLE STATUS DISPLAY (TOP LEFT) */}
+    <Control position = "topleft">
+      <ConfigDisplay
+        simName={simName}
+        getSimulatedClock={getSimulatedClock}
+        timeOfDay={timeOfDay}
+        duration={duration}
+        region={region}
+        weather={weather}
+        merchantRate={merchantRate}
+        pirateRate={pirateRate}
+        securityRate={securityRate}
+      />
+    </Control>
 
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={handleStep}
-            disabled={isRunning || showStartScreen || showEndScreen}
-          >
-            Step
-          </button>
 
-          <button
-            className="btn btn-warning btn-sm"
-            onClick={handleSpeed}
-            disabled={showStartScreen || showEndScreen}
-          >
-            Speed ({speed}x)
-          </button>
+    {/* BOTTOM RIGHT CONTROLS */}
+    <Control position="bottomright">
+      <StepRateControls
+        stepRate={stepRate}
+        setStepRate={setStepRate}
+        isRunning={isRunning}
+      />
+    </Control>
 
-          <button
-            className="btn btn-danger btn-sm"
-            onClick={handleTerminate}
-            disabled={showStartScreen || showEndScreen}
-          >
-            Terminate
-          </button>
-        </div>
-      </Control>
 
-      <Control prepend position="bottomleft">
-        <div className="bg-light text-dark p-3 rounded shadow" style={{ minWidth: '160px' }}>
-          <h5 className="mb-2">Legend</h5>
+    {/* LEGEND */}
+    <Control position = "bottomleft">
+      <Legend/>
+    </Control>
 
-          <div className="d-flex align-items-center mb-1">
-            <div
-              style={{
-                width: '20px',
-                height: '20px',
-                backgroundColor: 'green',
-                marginRight: '8px',
-              }}
-            />
-            <span>Merchants</span>
-          </div>
 
-          <div className="d-flex align-items-center mb-1">
-            <div
-              style={{
-                width: '20px',
-                height: '20px',
-                backgroundColor: 'red',
-                marginRight: '8px',
-              }}
-            />
-            <span>Pirates</span>
-          </div>
+    <ElapsedTime
+      seconds={seconds}
+      formatTime={formatTime}
+    >
+    </ElapsedTime>
 
-          <div className="d-flex align-items-center mb-1">
-            <div
-              style={{
-                width: '20px',
-                height: '20px',
-                backgroundColor: 'blue',
-                marginRight: '8px',
-              }}
-            />
-            <span>Security</span>
-          </div>
-        </div>
-      </Control>
 
-      {showEndScreen && (
-        <div
-          className="position-fixed top-50 start-50 translate-middle bg-dark text-light p-4 rounded shadow"
-          style={{ zIndex: 2000, minWidth: '400px' }}
-        >
-          <h5 className="mb-3">Simulation Complete</h5>
-
-          <p>
-            <strong>Simulation Name:</strong> {simName}
-          </p>
-          <p>
-            <strong>Region:</strong> {region}
-          </p>
-          <p>
-            <strong>Elapsed Time:</strong> {formatTime(seconds)}
-          </p>
-
-          <hr />
-
-          <p>
-            <strong>Entries:</strong> {entries}
-          </p>
-          <p>
-            <strong>Exits:</strong> {exits}
-          </p>
-          <p>
-            <strong>Captures:</strong> {captures}
-          </p>
-          <p>
-            <strong>Defeats:</strong> {defeats}
-          </p>
-          <p>
-            <strong>Rescues:</strong> {rescues}
-          </p>
-          <p>
-            <strong>Evasions:</strong> {evasions}
-          </p>
-
-          <div className="d-grid gap-2">
-            <button className="btn btn-success" onClick={() => handleExport('json')}>
-              Export as JSON
-            </button>
-            <button className="btn btn-success" onClick={() => handleExport('csv')}>
-              Export as CSV
-            </button>
-            <button className="btn btn-success" onClick={handleRestart}>
-              Restart
-            </button>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
+    {/* THIS IS TO KEEP TRACK OF THE REAL TIME STATS DURING A RUN (TO BE USED WHEN SIM LOGIC IS HOOKED UP!!!!) */}
+    {/*}
+    <LiveCounts
+      entries={entries}
+      exits={exits}
+      captures={captures}
+      defeats={defeats}
+      rescues={rescues}
+      evasions={evasions}
+    >
+    </LiveCounts>
+    */}
+  </>
+);
+};
 
 export default Controls;
