@@ -113,4 +113,4 @@ function deleteRun(state, index) {
 function step() {};
 function newRun() {};
 
-export { simStateReducer };
+export { simStateReducer, appStartState };
