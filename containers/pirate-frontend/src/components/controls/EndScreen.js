@@ -1,3 +1,6 @@
+
+import FileInputDisplay from '../../utils/fileInputDisplay'
+
 export default function EndScreen({
   // These are all the props that need passing from Controls.js:
   showEndScreen,
@@ -68,6 +71,7 @@ export default function EndScreen({
             <button className="btn btn-success" onClick={handleRestart}>
               Restart
             </button>
+            <FileInputDisplay />
           </div>
         </div>
       )}
