@@ -41,13 +41,13 @@
         let T = (dotProduct(AQ, AB)) / (dotProduct(AB, AB)) // how "far along" AB is AQ's projection?
 
         if (T <= 0) {
-            return A;
+            return A
         }
         else if (T >= 1) { 
-            return B;
+            return B
         }
         else {
-            return add(A, (scalarMult(AB, T)));
+            return add(A, (scalarMult(AB, T)))
         }
     }
 
