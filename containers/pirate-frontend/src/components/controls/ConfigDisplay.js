@@ -1,4 +1,3 @@
-import Control from 'react-leaflet-custom-control';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Card from 'react-bootstrap/Card';
@@ -19,7 +18,6 @@ export default function ConfigDisplay({
 }) {
 
     return (
-      <Control prepend position="topleft">
         <div onClick={(e) => e.stopPropagation()}>
           <Row className="mb-2">
             <Col md="auto">
@@ -62,6 +60,5 @@ export default function ConfigDisplay({
             </Col>
           </Row>
         </div>
-      </Control>
     )
 }

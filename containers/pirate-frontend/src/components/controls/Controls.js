@@ -1,20 +1,19 @@
 import { useEffect, useState } from 'react';
 import Control from 'react-leaflet-custom-control';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
 import Card from 'react-bootstrap/Card';
 import Dropdown from 'react-bootstrap/Dropdown';
-
+import ConfigDisplay from './ConfigDisplay';
+import StepRateControls from './StepRateControls';
+import Legend from './Legend';
 import EndScreen from './EndScreen';
 import StartScreen from './StartScreen';
-import ConfigDisplay from './ConfigDisplay';
-import Legend from './Legend';
-import StepRateControls from './StepRateControls';
 
 function Controls({
   pointsOfInterest = [],
   onStartCenterPointChange,
   onSimulationStart,
+  onSimulationStop,
+  onConfigTimeChange,
 } = {}) {
   // SIMULATION RUNTIME STATE
   const [seconds, setSeconds] = useState(0);
@@ -22,7 +21,9 @@ function Controls({
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  // SET SPEED THROWING ERROR CURRENTLY. LOOK INTO LATER
   const [speed, setSpeed] = useState(1);
+  const [stepRate, setStepRate] = useState(1);
 
   // CONFIGURATION STATE
   const [simName, setSimName] = useState('');
@@ -34,9 +35,12 @@ function Controls({
   const [weather, setWeather] = useState('');
   const [startHour, setStartHour] = useState('');
   const [startMinute, setStartMinute] = useState('');
-  const [startCenterPointId, setStartCenterPointId] = useState('');
 
-  // METRICS
+  // SKELETON: this stores a chosen POI id from the Start modal.
+  // Later can persist this in the global sim config instead of the local component state.
+  const [startCenterPointId, setStartCenterPointId] = useState("");
+
+  // LIVE METRICS COUNTING (DROPDOWN)
   const [entries, setEntries] = useState(0);
   const [exits, setExits] = useState(0);
   const [captures, setCaptures] = useState(0);
@@ -51,24 +55,24 @@ function Controls({
 
   const durationValid =
     duration !== '' &&
-    Number(duration) >= minDuration &&
-    Number(duration) <= maxDuration;
+      Number(duration) >= minDuration &&
+      Number(duration) <= maxDuration;
 
   const startTimeValid =
     startHour !== '' &&
-    startMinute !== '' &&
-    Number(startHour) >= 0 &&
-    Number(startHour) <= 23 &&
-    Number(startMinute) >= 0 &&
-    Number(startMinute) <= 59;
+      startMinute !== '' &&
+      Number(startHour) >= 0 &&
+      Number(startHour) <= 23 &&
+      Number(startMinute) >= 0 &&
+      Number(startMinute) <= 59;
 
   const isSetupValid =
     simName.trim() !== '' &&
-    region !== '' &&
-    durationValid &&
-    startTimeValid &&
-    weather !== '' &&
-    percentValid;
+      region !== '' &&
+      durationValid &&
+      startTimeValid &&
+      weather !== '' &&
+      percentValid;
 
   const resetMetrics = () => {
     setEntries(0);
@@ -108,6 +112,9 @@ function Controls({
         if (durationInSeconds > 0 && next >= durationInSeconds) {
           setIsRunning(false);
           setShowEndScreen(true);
+          if (typeof onSimulationStop === 'function') {
+            onSimulationStop();
+          }
           return durationInSeconds;
         }
         return next;
@@ -117,7 +124,7 @@ function Controls({
     }, 1000 / speed);
 
     return () => clearInterval(interval);
-  }, [isRunning, duration, speed]);
+  }, [isRunning, duration, speed, onSimulationStop]);
 
   useEffect(() => {
     if (!isRunning && !showEndScreen) {
@@ -182,6 +189,7 @@ function Controls({
         weather,
         durationMinutes: Number(duration),
         startTime: `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`,
+        startTimeMinutes: Number(startHour) * 60 + Number(startMinute),
         populationDistribution: {
           merchant: merchantRate,
           pirate: pirateRate,
@@ -210,6 +218,9 @@ function Controls({
 
     setIsRunning(false);
     setShowEndScreen(true);
+    if (typeof onSimulationStop === 'function') {
+      onSimulationStop();
+    }
   };
 
   const handleRestart = () => {
@@ -225,6 +236,9 @@ function Controls({
     setShowStartScreen(true);
     setSeconds(0);
     resetMetrics();
+    if (typeof onSimulationStop === 'function') {
+      onSimulationStop();
+    }
   };
 
   const handleStep = () => {
@@ -304,100 +318,164 @@ Evasions,${evasions}`;
     URL.revokeObjectURL(url);
   };
 
+
+  const ElapsedTime = ({ seconds, formatTime }) => (
+    <div className="mb-2 small">
+      <strong>Elapsed:</strong> {formatTime(seconds)}
+    </div>
+  );
+
+  /*
+  const LiveCounts = ({
+  entries,
+  exits,
+  captures,
+  defeats,
+  rescues,
+  evasions
+  }) => (
+  <div className="small">
+    <div>Entries: {entries}</div>
+    <div>Exits: {exits}</div>
+    <div>Captures: {captures}</div>
+    <div>Defeats: {defeats}</div>
+    <div>Rescues: {rescues}</div>
+    <div>Evasions: {evasions}</div>
+  </div>
+  );
+  */
+
   return (
     <>
-      <StartScreen 
-      showStartScreen={showStartScreen}
-      isRunning={isRunning}
-
-      simName={simName}
-      setSimName={setSimName}
-      startHour={startHour}
-      setStartHour={setStartHour}
-      startMinute={startMinute}
-      setStartMinute={setStartMinute}
-      duration={duration}
-      setDuration={setDuration}
-      region={region}
-      setRegion={setRegion}
-      weather={weather}
-      setWeather={setWeather}
-      startCenterPointId={startCenterPointId}
-      setStartCenterPointId={setStartCenterPointId}
-      merchantRate={merchantRate}
-      setMerchantRate={setMerchantRate}
-      pirateRate={pirateRate}
-      setPirateRate={setPirateRate}
-      securityRate={securityRate}
-      setSecurityRate={setSecurityRate}
-
-      percentValid={percentValid}
-      isSetupValid={isSetupValid}
-      minDuration={minDuration}
-      maxDuration={maxDuration}
-      pointsOfInterest={pointsOfInterest}
-
-      handleStart={handleStart}
-
-      seconds={seconds}
-      formatTime={formatTime}
-      entries={entries}
-      exits={exits}
-      captures={captures}
-      defeats={defeats}
-      rescues={rescues}
-      evasions={evasions}
+      {/* START SCREEN (CENTERED) AND LIVE METRIC TRACKING DROPDOWN (TOP RIGHT) */}
+      <StartScreen
+        showStartScreen={showStartScreen}
+        simName={simName}
+        setSimName={setSimName}
+        startHour={startHour}
+        setStartHour={setStartHour}
+        startMinute={startMinute}
+        setStartMinute={setStartMinute}
+        duration={duration}
+        setDuration={setDuration}
+        minDuration={minDuration}
+        maxDuration={maxDuration}
+        region={region}
+        setRegion={setRegion}
+        weather={weather}
+        setWeather={setWeather}
+        merchantRate={merchantRate}
+        setMerchantRate={setMerchantRate}
+        pirateRate={pirateRate}
+        setPirateRate={setPirateRate}
+        securityRate={securityRate}
+        setSecurityRate={setSecurityRate}
+        startCenterPointId={startCenterPointId}
+        setStartCenterPointId={setStartCenterPointId}
+        pointsOfInterest={pointsOfInterest}
+        isRunning={isRunning}
+        isSetupValid={isSetupValid}
+        handleStart={handleStart}
       >
       </StartScreen>
 
-      <ConfigDisplay 
-      simName={simName}
-      region={region}
-      weather={weather}
-      duration={duration}
-
-      merchantRate={merchantRate}
-      pirateRate={pirateRate}
-      securityRate={securityRate}
-
-      timeOfDay={timeOfDay}
-      getSimulatedClock={getSimulatedClock}
-      >
-      </ConfigDisplay>
-
-      <StepRateControls 
-      isRunning={isRunning}
-      setIsRunning={setIsRunning}
-      speed={speed}
-      showStartScreen={showStartScreen}
-      showEndScreen={showEndScreen}
-      handleStep={handleStep}
-      handleSpeed={handleSpeed}
-      handleTerminate={handleTerminate}
-      >
-      </StepRateControls>
-
-      <Legend/>
 
       <EndScreen 
-      showEndScreen={showEndScreen}
-      simName={simName}
-      region={region}
-      seconds={seconds}
-      formatTime={formatTime}
+        showEndScreen={showEndScreen}
+        simName={simName}
+        region={region}
+        seconds={seconds}
+        formatTime={formatTime}
+        entries={entries}
+        exits={exits}
+
+        captures={captures}
+        defeats={defeats}
+        rescues={rescues}
+        evasions={evasions}
+        handleExport={handleExport}
+        handleRestart={handleRestart}
+      >
+      </EndScreen>   
+
+
+      {/* THIS IS THE ELAPSED TIME AND DROPDOWN DISPLAY THAT IS SHOWN IN THE TOP RIGHT */}  
+      <Control position="topright">
+
+        {/* SHOW ELAPSED TIME */}
+        <Card bg="light" text="dark" className="mb-2 p-2 small">
+          <div><strong>Time Elapsed:</strong> {formatTime(seconds)}</div>
+        </Card>
+
+        <Dropdown>
+          <Dropdown.Toggle variant="light" size="sm">
+            View Live Counts
+          </Dropdown.Toggle>
+          <Dropdown.Menu>
+            <Dropdown.Item disabled>Entries: {entries}</Dropdown.Item>
+            <Dropdown.Item disabled>Exits: {exits}</Dropdown.Item>
+            <Dropdown.Item disabled>Captures: {captures}</Dropdown.Item>
+            <Dropdown.Item disabled>Defeats: {defeats}</Dropdown.Item>
+            <Dropdown.Item disabled>Rescues: {rescues}</Dropdown.Item>
+            <Dropdown.Item disabled>Evasions: {evasions}</Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
+      </Control>
+
+
+      {/* ALWAYS VISIBLE STATUS DISPLAY (TOP LEFT) */}
+      <Control position = "topleft">
+        <ConfigDisplay
+          simName={simName}
+          getSimulatedClock={getSimulatedClock}
+          timeOfDay={timeOfDay}
+          duration={duration}
+          region={region}
+          weather={weather}
+          merchantRate={merchantRate}
+          pirateRate={pirateRate}
+          securityRate={securityRate}
+        />
+      </Control>
+
+
+      {/* BOTTOM RIGHT CONTROLS */}
+      <Control position="bottomright">
+        <StepRateControls
+          stepRate={stepRate}
+          setStepRate={setStepRate}
+          isRunning={isRunning}
+        />
+      </Control>
+
+
+      {/* LEGEND */}
+      <Control position = "bottomleft">
+        <Legend/>
+      </Control>
+
+
+      <ElapsedTime
+        seconds={seconds}
+        formatTime={formatTime}
+      >
+      </ElapsedTime>
+
+
+      {/* THIS IS TO KEEP TRACK OF THE REAL TIME STATS DURING A RUN (TO BE USED WHEN SIM LOGIC IS HOOKED UP!!!!) */}
+      {/*}
+    <LiveCounts
       entries={entries}
       exits={exits}
-
       captures={captures}
       defeats={defeats}
       rescues={rescues}
       evasions={evasions}
-      handleExport={handleExport}
-      handleRestart={handleRestart}
-      >
-      </EndScreen>
+    >
+    </LiveCounts>
+    */}
     </>
   );
-}
+};
 
 export default Controls;

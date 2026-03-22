@@ -1,8 +1,5 @@
-import Control from 'react-leaflet-custom-control';
-
 export default function Legend() { // TODO: replace colors w/ actual icons
   return (
-    <Control prepend position="bottomleft">
       <div className="bg-light text-dark p-3 rounded shadow" style={{ minWidth: '160px' }}>
         <h5 className="mb-2">Legend</h5>
 
@@ -42,6 +39,5 @@ export default function Legend() { // TODO: replace colors w/ actual icons
           <span>Security</span>
         </div>
       </div>
-    </Control>
   )
 }
