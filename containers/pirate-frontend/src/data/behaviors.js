@@ -27,23 +27,27 @@
         
     
     function dotProduct(vector1, vector2) { // return the dot product of these two vectors
-        return (vector1[0] * vector2[0]) + (vector1[1] + vector2[1])
+        return (vector1[0] * vector2[0]) + (vector1[1] * vector2[1])
     }
     
     function closestPointOnSegment(vector, A, B){ // return the point on line segment A,B that is closest to the X and Y of this vector
-        AB = subtract(B, A)
-        AQ = subtract(vector, A)
+        let AB = subtract(B, A);
+        let AQ = subtract(vector, A);
 
-        T = (dotProduct(AQ, AB)) / (dotProduct(AB, AB)) // how "far along" AB is AQ's projection?
+        if (dotProduct(AB, AB) === 0) {
+            return A; // prevent division by 0
+        }
+
+        let T = (dotProduct(AQ, AB)) / (dotProduct(AB, AB)) // how "far along" AB is AQ's projection?
 
         if (T <= 0) {
-            return 
+            return A;
         }
         else if (T >= 1) { 
-            return B
+            return B;
         }
         else {
-            return add(A, (scalarMult(AB, T)))
+            return add(A, (scalarMult(AB, T)));
         }
     }
 
@@ -93,16 +97,16 @@ function updateMover(mover, steering, maxSpeed, time) { // returns an updated ve
 
         updatedMover.acceleration = steering.linear; // update this movers own acceleration value
 
-        if (getLength(this.kinematic.velocity) > maxSpeed) { // is this mover going above their max speed?
+        if (getLength(updatedMover.kinematic.velocity) > maxSpeed) { // is this mover going above their max speed?
             updatedMover.kinematic.velocity = normalize(updatedMover.kinematic.velocity);
             updatedMover.kinematic.velocity = scalarMult(updatedMover.kinematic.velocity, maxSpeed); // if so, return to max speed
         }
     return updatedMover;
 }
 
-function newContinue(moverKinematic) { // behavior obj; a mover keeping its current trajectory; no change in orientation or velocity
+function newContinue(k1) { // behavior obj; a mover keeping its current trajectory; no change in orientation or velocity
     return {
-        k1 : characterKinematic // k1 = character to continue
+        k1 : k1 // k1 = character to continue
     }
 }
 
@@ -111,11 +115,11 @@ function getContinueSteering(continueBehavior) {
 }
 
 
-function newSeek(moverKinematic, targetKinematic, maxAcceleration) { // Mover advances directly towards a target
+function newSeek(k1, k2, maxAcceleration) { // Mover advances directly towards a target
     // identify which mover is seeking to which, and give max acceleration
     return {
-        moverKinematic: moverKinematic,
-        targetKinematic: targetKinematic,
+        k1: k1,
+        k2: k2,
         maxAcceleration: maxAcceleration
     }
 }
@@ -126,18 +130,18 @@ function getSeekSteering(seekBehavior) {
     let angular;
 
     linear = subtract(seekBehavior.k2.pos, seekBehavior.k1.pos); // get difference between target pos and pos of mover we want to steer
-    linear = normalize(result.linear);
-    linear = scalarMult(result.linear, seekBehavior.maxAcceleration); // set the magnitude of this acceleration vector to the maximum
+    linear = normalize(linear);
+    linear = scalarMult(linear, seekBehavior.maxAcceleration); // set the magnitude of this acceleration vector to the maximum
 
     angular = 0;
 
     return newSteeringOutput(linear, angular); // initialize output
 }
 
-function newFlee(moverKinematic, targetKinematic, maxAcceleration) { // Mover travels directly away from a target
+function newFlee(k1, k2, maxAcceleration) { // Mover travels directly away from a target
     return { // identify which mover is fleeing from which
-        k1 : moverKinematic, // k1 = mover that will be fleeing
-        k2 : targetKinematic, // k2 = target (mover being fled from)
+        k1 : k1, // k1 = mover that will be fleeing
+        k2 : k2, // k2 = target (mover being fled from)
         maxAcceleration : maxAcceleration
     }
 }
@@ -148,17 +152,17 @@ function getFleeSteering(fleeBehavior) {
     let angular;
 
     linear = subtract(fleeBehavior.k1.pos, fleeBehavior.k2.pos); // get difference between target pos and pos of mover we want to steer (inverted args between seek/flee)
-    linear = normalize(result.linear);
-    linear = scalarMult(result.linear, fleeBehavior.maxAcceleration); // set the magnitude of this acceleration vector to the maximum
+    linear = normalize(linear);
+    linear = scalarMult(linear, fleeBehavior.maxAcceleration); // set the magnitude of this acceleration vector to the maximum
 
     angular = 0;
     return newSteeringOutput(linear, angular)
 }
     
-function newArrive(moverKinematic, targetKinematic, maxAcceleration, maxSpeed, targetRadius, slowRadius) { // Send a mover towards a target, slowing down as it gets close to the target
+function newArrive(k1, k2, maxAcceleration, maxSpeed, targetRadius, slowRadius) { // Send a mover towards a target, slowing down as it gets close to the target
     return { // identify which mover is arriving to which; give radii and max speed/acceleration
-        k1 : moverKinematic, //k1 = mover to steer
-        k2 : targetKinematic, //k2 = target
+        k1 : k1, //k1 = mover to steer
+        k2 : k2, //k2 = target
         maxAcceleration : maxAcceleration,
         maxSpeed : maxSpeed,
         targetRadius : targetRadius,
@@ -205,16 +209,16 @@ function getArriveSteering(arriveBheavior) {
     return newSteeringOutput(linear, angular);
 }
 
-function newPursue (moverKinematic, targetKinematic, maxAcceleration, maxPrediction) { //extends Seek  // Similar to seek, except predicts where target is going and sends the subject mover towards that point
+function newPursue (k1, k2, maxAcceleration, maxPrediction) { //extends Seek  // Similar to seek, except predicts where target is going and sends the subject mover towards that point
     // REMINDER: k1 is the pursuer, k2 is the target (via Seek implementation)
-    let result = newSeek(moverKinematic, targetKinematic, maxAcceleration);
+    let result = newSeek(k1, k2, maxAcceleration);
     // Make new target obj to override Seek's with later
     let pursuedTarget = {
             pos: [0,0],
             orientation: 0
         }
-    result.newProperty(pursuedTarget);
-    result.newProperty(maxPrediction);
+    result.pursuedTarget = pursuedTarget;
+    result.maxPrediction = maxPrediction;
     return result;
 }
 
@@ -244,6 +248,7 @@ function getPursueSteering(pursueBehavior) {
         pursueBehavior.predictedPos = add(pursueBehavior.k2.pos, scalarMult(pursueBehavior.k2.velocity, prediction));
 
         // finally, set the fields accordingly
+        pursueBehavior.pursuedTarget.pos = pursueBehavior.predictedPos;
         pursueBehavior.temp = pursueBehavior.k2;
         pursueBehavior.k2 = pursueBehavior.pursuedTarget; // switch to new target obj so Seek can do the rest of the steering work
 
@@ -261,7 +266,7 @@ function clampOreintation (orientation) { // Returns a clamped orientation value
     let result = (orientation) % (6.28);
 
     if(Math.abs(result) > 3.14) {
-        sign = Math.sign(result);
+        let sign = Math.sign(result);
         result = result - (6.28) * sign;
     }
     return result;
@@ -269,10 +274,10 @@ function clampOreintation (orientation) { // Returns a clamped orientation value
 
 
 
-function newAlign(moverKinematic, targetKinematic, maxAngularAcc, maxRotation, slowThreshold, targetThreshold) { // Align the movement of one mover with the movement of another
+function newAlign(k1, k2, maxAngularAcc, maxRotation, slowThreshold, targetThreshold) { // Align the movement of one mover with the movement of another
     return {
-        moverKinematic : moverKinematic, // The Kinematic of the mover to be aligned. (Henceforth called "Focused Mover")
-        targetKinematic : targetKinematic, // The Kinematic of mover whose orientation is being aligned to by the previous.
+        k1 : k1, // The Kinematic of the mover to be aligned. (Henceforth called "Focused Mover")
+        k2 : k2, // The Kinematic of mover whose orientation is being aligned to by the previous.
         maxAngularAcc : maxAngularAcc, // The max rate of change of the rotation rate of the mover to be aligned.
         maxRotation : maxRotation, // The max rate of change of the orientation (in rads) of the mover to be aligned.
         slowThreshold : slowThreshold, // When the focused mover's orientation is within this many rads of the target's, slow down rotation
@@ -289,17 +294,17 @@ function getAlignSteering(alignBehavior) {
     let angular;
 
     // Get the naïve rotation to match the target
-    let rotation = alignBehavior.targetKinematic.orientation - alignBehavior.moverKinematic.orientation;
+    let rotation = alignBehavior.k2.orientation - alignBehavior.k1.orientation;
     // Clamp to [-pi, pi] 
     rotation = clampOreintation(rotation);
     let rotationSize = Math.abs(rotation);
     // Test for arrival
     if (rotationSize <= alignBehavior.targetThreshold) {
-        result.angular = 0;
-        result.linear = [0, 0];
-        alignBehavior.moverKinematic.orientation = alignBehavior.targetKinematic.orientation; // this is a sort of band-aid fix for overshooting
-        alignBehavior.moverKinematic.rotation = 0; // this is (also) a sort of band-aid fix for overshooting;
-        return result;
+        angular = 0;
+        linear = [0, 0];
+        alignBehavior.k1.orientation = alignBehavior.k2.orientation; // this is a sort of band-aid fix for overshooting
+        alignBehavior.k1.rotation = 0; // this is (also) a sort of band-aid fix for overshooting;
+        return newSteeringOutput(linear, angular);
     }
 
     let targetRotation = 0;
@@ -316,44 +321,44 @@ function getAlignSteering(alignBehavior) {
     targetRotation *= rotation/rotationSize;
 
     // Accelerate to target rotation
-    result.angular = targetRotation - alignBehavior.moverKinematic.rotation;
-    result.angular /= alignBehavior.timeToTarget;
+    angular = targetRotation - alignBehavior.k1.rotation;
+    angular /= alignBehavior.timeToTarget;
 
     // Test for > max acceleration
-    let angAcc = Math.abs(result.angular);
+    let angAcc = Math.abs(angular);
     if (angAcc > alignBehavior.maxAngularAcc) {
-        result.angular /= angAcc; // Set to magnitude 1, keeping sign
-        result.angular *= alignBehavior.maxAngularAcc; // Set back to max
+        angular /= angAcc; // Set to magnitude 1, keeping sign
+        angular *= alignBehavior.maxAngularAcc; // Set back to max
     }
 
-    result.linear = [0,0];
-    return result;
+    linear = [0,0];
+    return newSteeringOutput(linear, angular);
 }
 
-function newFace(moverKinematic, targetKinematic, maxAngularAcc, maxRotation, slowThreshold, targetThreshold) { // Face a mover towards another mover
+function newFace(k1, k2, maxAngularAcc, maxRotation, slowThreshold, targetThreshold) { // Face a mover towards another mover
     // We just need to change the target field after calling Align (because we want to face towards it, not align with its movement); all else stays the same
     // That is to say: constructor params serve the same prupose as they do in Align, so see Align's constructor for info on those
-    return newAlign(moverKinematic, targetKinematic, maxAngularAcc, maxRotation, slowThreshold, targetThreshold)
+    return newAlign(k1, k2, maxAngularAcc, maxRotation, slowThreshold, targetThreshold)
 }
 
 function getFaceSteering(faceBehavior) {
-    let direction = subtract(faceBehavior.targetKinematic.pos, faceBehavior.moverKinematic.pos); // Direction and distance vector between subject mover and target mover
+    let direction = subtract(faceBehavior.k2.pos, faceBehavior.k1.pos); // Direction and distance vector between subject mover and target mover
     if (getLength(direction) == 0) {
         return(newSteeringOutput([0,0], 0));
     }
 
     let targetOrientation = Math.atan2(direction[1], direction[0]);
 
-    let originalTargetOrientation = faceBehavior.targetKinematic.orientation;
-    faceBehavior.targetKinematic.orientation = targetOrientation;
+    let originalTargetOrientation = faceBehavior.k2.orientation;
+    faceBehavior.k2.orientation = targetOrientation;
 
-    result = getAlignSteering(faceBehavior);
+    let result = getAlignSteering(faceBehavior);
 
-    faceBehavior.targetKinematic.orientation = originalTargetOrientation;
+    faceBehavior.k2.orientation = originalTargetOrientation;
 
     return result;
 }
-function newWander(moverKinematic, maxAcceleration, maxAngularAcc, maxRotation, slowThreshold, targetThreshold, maxSpeed) {
+function newWander(k1, maxAcceleration, maxAngularAcc, maxRotation, slowThreshold, targetThreshold, maxSpeed) {
     // note the lack of a target kinematic, since the "target" is a defined distance
     // Once more, see Align's constructor's comments for info on the constructor's args (maxSpeed included here since we introduce linear movement now)
     // Initiate target object for parent behaviors to use
@@ -362,7 +367,7 @@ function newWander(moverKinematic, maxAcceleration, maxAngularAcc, maxRotation, 
         orientation: 0
     }
 
-    result = newFace(moverKinematic, target, maxAngularAcc, maxRotation, slowThreshold, targetThreshold);
+    let result = newFace(k1, target, maxAngularAcc, maxRotation, slowThreshold, targetThreshold);
     result.maxSpeed = maxSpeed; // linear movement introduced, so a maximum speed is specified
 
     // NOTE: hardcoded values; normally they'd be set by args of the constructor but this behavior should be more consistent 
@@ -381,27 +386,27 @@ function getWanderSteering(wanderBehavior) {
     wanderBehavior.wanderOrientation += (Math.random() * 2 - 1) * wanderBehavior.wanderRate;
     
     // Get the orientation we want to achieve
-    let targetOrientation = wanderBehavior.wanderOrientation + wanderBehavior.moverKinematic.orientation;
+    let targetOrientation = wanderBehavior.wanderOrientation + wanderBehavior.k1.orientation;
 
-    // Calculate center of wander circle's pos (remember the targetKinematic here is a self-provided, simplified, generic Object with pos/orientation properties)
-    wanderBehavior.targetKinematic.pos = add(wanderBehavior.moverKinematic.pos, scalarMult(orientationToVector(wanderBehavior.moverKinematic.orientation), wanderBehavior.wanderOffset))
+    // Calculate center of wander circle's pos (remember the k2 here is a self-provided, simplified, generic Object with pos/orientation properties)
+    wanderBehavior.k2.pos = add(wanderBehavior.k1.pos, scalarMult(orientationToVector(wanderBehavior.k1.orientation), wanderBehavior.wanderOffset))
 
     // From there, find the target's location
-    wanderBehavior.targetKinematic.pos = add(wanderBehavior.targetKinematic.pos, scalarMult(orientationToVector(targetOrientation), wanderBehavior.wanderRadius));
+    wanderBehavior.k2.pos = add(wanderBehavior.k2.pos, scalarMult(orientationToVector(targetOrientation), wanderBehavior.wanderRadius));
 
     // Let Face take it from here
     let result = getFaceSteering(wanderBehavior);
 
     // Add linear acceleration to the result (since Face only returns angular)
-    result.linear = scalarMult(orientationToVector(wanderBehavior.moverKinematic.orientation), wanderBehavior.maxAcceleration);
-    wanderBehavior.moverKinematic.velocity = scalarMult(orientationToVector(wanderBehavior.moverKinematic.orientation),wanderBehavior.maxSpeed);
+    result.linear = scalarMult(orientationToVector(wanderBehavior.k1.orientation), wanderBehavior.maxAcceleration);
+    wanderBehavior.k1.velocity = scalarMult(orientationToVector(wanderBehavior.k1.orientation),wanderBehavior.maxSpeed);
     return result;
 }
     
-function newFollowPath(path, pathOffset, currentParam, moverKinematic, maxAcceleration) { // Advance a mover along a Path
+function newFollowPath(path, pathOffset, currentParam, k1, maxAcceleration) { // Advance a mover along a Path
     // no target kinematic needed in init; determined by other data
-    let targetKinematic = newKinematic([0,0], 0, [0,0], 0); // placeholder target kinematic so parent init can be called
-    let result = newSeek(moverKinematic, targetKinematic, maxAcceleration); // init parent behavior (Seek)
+    let k2 = newKinematic([0,0], 0, [0,0], 0); // placeholder target kinematic so parent init can be called
+    let result = newSeek(k1, k2, maxAcceleration); // init parent behavior (Seek)
     result.path = path; // output from newPath()
     result.pathOffset = pathOffset; // wait what does this do again im dumb
     result.currentParam = currentParam; // parametrized distance along the path, being "aimed at"
@@ -428,8 +433,8 @@ function newPath(points, id) {  // functions as the path data structure necessar
         id : id, // simple numerical identifier
         points : points, // will be a collection of Vectors
         segments : points.length - 1, // NUMBER OF segments
-        distances : new Array(this.segments + 1).fill(0), // at each point, the sum of segment lengths leading up to that point
-        params : new Array(this.segments + 1).fill(0), // will hold parametrizations (0-1) of distances
+        distances : new Array(points.length).fill(0), // at each point, the sum of segment lengths leading up to that point
+        params : new Array(points.length).fill(0), // will hold parametrizations (0-1) of distances
         totalLength : 0 // used in parametrization
     }
 }
@@ -480,7 +485,7 @@ function getPathPosition(path, param) {
         return path.points.at(-1); // so js doesnt have normal negative arr indexing like python but the at method does??? why???
     }
     let segIndex = 0; // index of this Path's param that is directly ahead of the given param (i.e. given param lies between params[this] and params[this + 1])
-    for (let i = 1; i < path.params.len; i++ ) {  // find which params the given param lies between
+    for (let i = 1; i < path.params.length; i++ ) {  // find which params the given param lies between
         if (path.params[i] > param) {
             segIndex = i - 1;
             break;
@@ -500,6 +505,8 @@ function getPathPosition(path, param) {
 // let testArriver = new Behaviors.Mover(...)
 // c = Behaviors.clampOreintation(...)
 
-export  {getLength, normalize, add, subtract, scalarMult, dotProduct, closestPointOnSegment, orientationToVector, clampOreintation, Mover, Kinematic, SteeringOutput, Seek, Flee,
-    Arrive, Pursue, Path, FollowPath, Wander, Face, Align, Continue
+export  {getLength, normalize, add, subtract, scalarMult, dotProduct, closestPointOnSegment, orientationToVector, clampOreintation, newMover, newKinematic, newSteeringOutput, newSeek, newFlee,
+    newArrive, newPursue, newPath, newFollowPath, newWander, newFace, newAlign, newContinue
 }
+
+console.log("hey");
