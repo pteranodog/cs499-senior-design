@@ -11,9 +11,15 @@ function ShipIcons({ type, lat, lon }) {
   } else if (type === "patrol") {
     markerText = "This is a patrol vessel!";
   }
+  
+  const iconMap = {
+    pirate: '/pirate-icon.png',
+    merchant: '/merchant-icon.png',
+    patrol: '/patrol-icon.png'
+  };
 
   const shipIcon = L.icon({
-    iconUrl: 'boat-icon.png',
+    iconUrl: iconMap[type] || 'boat-icon.png',
     iconSize: [40, 40],
     shadowSize: [40, 40],
     iconAnchor: [0, 0],
