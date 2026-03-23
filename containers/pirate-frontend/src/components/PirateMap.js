@@ -134,6 +134,10 @@ function PirateMap() {
   const [previewStartTimeMinutes, setPreviewStartTimeMinutes] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
 
+  useEffect(() => {
+    console.log(simState);
+  }, [simState])
+
   const defaultCenter = useMemo(
     () => [transformConfig.originLat, transformConfig.originLon],
     [],
@@ -231,6 +235,8 @@ function PirateMap() {
         <span style={{ fontSize: '1.1rem' }}>
           {activeMode === 'day' ? 'Day' : 'Night'}
         </span>
+        {/* TEMPORARY BUTTON FOR TESTING CREATE-RUN */}
+        <button onClick={() => modifySimState({"type": "create-run"})}>Create Run</button>
       </div>
 
       <TileLayer attribution={attribution} url={tileUrl} />
