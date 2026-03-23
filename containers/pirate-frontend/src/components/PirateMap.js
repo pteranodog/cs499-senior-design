@@ -79,6 +79,15 @@ const regionView = {
   'Malacca Strait': { center: [3.0, 101.5], zoom: 7 },
 };
 
+function getTimezoneOffsetHours(longitude) {
+  // Each 15° of longitude corresponds to roughly 1 hour offset from UTC
+  return Math.round(longitude / 15);
+}
+
+function normalizeMinutes(minutes) {
+  return ((minutes % (24 * 60)) + 24 * 60) % (24 * 60);
+}
+
 const transformConfig = {
   originLat: 34.7190616534629,
   originLon: -86.64664978111168,
@@ -169,10 +178,25 @@ function PirateMap() {
     simulationConfig?.startTimeMinutes ??
     (previewStartTimeMinutes !== null ? previewStartTimeMinutes : simulationTimeMinutes);
   const activeTimeHour = Math.floor(activeTimeMinutes / 60);
-  const isDay = activeTimeHour >= 6 && activeTimeHour < 18;
-  const activeMode = isDay ? 'day' : 'night';
-  const tileUrl = activeMode === 'day' ? DAY_TILE_URL : NIGHT_TILE_URL;
-  const attribution = activeMode === 'day' ? DAY_TILE_ATTRIBUTION : NIGHT_TILE_ATTRIBUTION;
+  const isGlobalDay = activeTimeHour >= 6 && activeTimeHour < 18;
+  const activeMode = isGlobalDay ? 'day' : 'night';
+
+  const selectedRegion = simulationConfig?.region || '';
+  const selectedRegionView = regionView[selectedRegion] || { center: defaultCenter, zoom: 16 };
+  const regionLongitude = selectedRegionView.center[1];
+  const timezoneOffsetHours = getTimezoneOffsetHours(regionLongitude);
+
+  const localTimeMinutes = normalizeMinutes(activeTimeMinutes + timezoneOffsetHours * 60);
+  const localHour = Math.floor(localTimeMinutes / 60);
+  const isRegionDay = localHour >= 6 && localHour < 18;
+  const regionMode = isRegionDay ? 'day' : 'night';
+
+  const regionLabel = selectedRegion || 'Default';
+  const regionTimeString = `${String(localHour).padStart(2, '0')}:${String(localTimeMinutes % 60).padStart(2, '0')}`;
+  const zoneLabel = `UTC${timezoneOffsetHours >= 0 ? '+' : ''}${timezoneOffsetHours}`;
+
+  const tileUrl = regionMode === 'day' ? DAY_TILE_URL : NIGHT_TILE_URL;
+  const attribution = regionMode === 'day' ? DAY_TILE_ATTRIBUTION : NIGHT_TILE_ATTRIBUTION;
 
   const topBadgeStyle = {
     position: 'absolute',
@@ -182,8 +206,8 @@ function PirateMap() {
     zIndex: 1000,
     padding: '0.5rem 0.9rem',
     borderRadius: '999px',
-    backgroundColor: activeMode === 'day' ? 'rgba(255,255,255,0.90)' : 'rgba(0,0,0,0.7)',
-    color: activeMode === 'day' ? '#222' : '#fff',
+    backgroundColor: regionMode === 'day' ? 'rgba(255,255,255,0.90)' : 'rgba(0,0,0,0.7)',
+    color: regionMode === 'day' ? '#222' : '#fff',
     fontWeight: 700,
     display: 'flex',
     alignItems: 'center',
@@ -195,7 +219,7 @@ function PirateMap() {
     position: 'absolute',
     inset: 0,
     pointerEvents: 'none',
-    background: isDay ? 'transparent' : 'rgba(0, 18, 45, 0.22)',
+    background: isRegionDay ? 'transparent' : 'rgba(0, 18, 45, 0.22)',
     zIndex: 450,
   };
 
@@ -224,22 +248,26 @@ function PirateMap() {
 
   return (
     <MapContainer
-      style={{ position: 'absolute', width: '100%', height: '100%', filter: activeMode === 'day' ? 'none' : 'brightness(0.75) contrast(1.15)'}}
+      style={{ position: 'absolute', width: '100%', height: '100%', filter: isRegionDay ? 'none' : 'brightness(0.75) contrast(1.15)'}}
       center={[transformConfig.originLat, transformConfig.originLon]}
       zoom={16}
     >
       <div style={backgroundTint} />
 
       <div style={topBadgeStyle}>
-        <span style={{ fontSize: '2rem' }}>{activeMode === 'day' ? '☀️' : '🌙'}</span>
+        <span style={{ fontSize: '2rem' }}>{regionMode === 'day' ? '☀️' : '🌙'}</span>
         <span style={{ fontSize: '1.1rem' }}>
-          {activeMode === 'day' ? 'Day' : 'Night'}
+          {regionMode === 'day' ? 'Day' : 'Night'} @ {regionLabel} ({zoneLabel}) {regionTimeString}
         </span>
         {/* TEMPORARY BUTTON FOR TESTING CREATE-RUN */}
         <button onClick={() => modifySimState({"type": "create-run"})}>Create Run</button>
       </div>
 
-      <TileLayer attribution={attribution} url={tileUrl} />
+      <TileLayer
+        key={`${regionMode}-${timezoneOffsetHours}-${tileUrl}`}
+        attribution={attribution}
+        url={tileUrl}
+      />
 
       <Marker position={[transformConfig.originLat, transformConfig.originLon]}>
         <Popup>Simulation Origin</Popup>

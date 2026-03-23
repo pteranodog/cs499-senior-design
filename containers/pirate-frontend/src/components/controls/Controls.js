@@ -48,6 +48,12 @@ function Controls({
   const [rescues, setRescues] = useState(0);
   const [evasions, setEvasions] = useState(0);
 
+  const timezoneOffsetsByRegion = {
+    'Gulf of Guinea': 0,
+    'Gulf of Aden/Somalian Coast': 3,
+    'Malacca Strait': 7,
+  };
+
   const minDuration = 1;
   const maxDuration = 180;
   const totalPercentage = merchantRate + pirateRate + securityRate;
@@ -147,10 +153,12 @@ function Controls({
 
     const totalSimulatedMinutes =
       Number(startHour) * 60 + Number(startMinute) + Math.floor(seconds / 60);
-    const simulatedHour = Math.floor(totalSimulatedMinutes / 60) % 24;
+    const regionOffset = timezoneOffsetsByRegion[region] || 0;
+    const localSimulatedMinutes = (totalSimulatedMinutes + regionOffset * 60 + 24 * 60) % (24 * 60);
+    const simulatedHour = Math.floor(localSimulatedMinutes / 60);
     const night = simulatedHour < 6 || simulatedHour >= 18;
     setTimeOfDay(night ? 'Night' : 'Day');
-  }, [seconds, startHour, startMinute]);
+  }, [seconds, startHour, startMinute, region]);
 
   const formatTime = (value) => {
     const hrs = String(Math.floor(value / 3600)).padStart(2, '0');
@@ -200,7 +208,9 @@ function Controls({
     }
 
     const initialHour = Number(startHour);
-    setTimeOfDay(initialHour >= 6 && initialHour < 18 ? 'Day' : 'Night');
+    const regionOffset = timezoneOffsetsByRegion[region] || 0;
+    const localInitialHour = Math.floor((initialHour + regionOffset + 24) % 24);
+    setTimeOfDay(localInitialHour >= 6 && localInitialHour < 18 ? 'Day' : 'Night');
     resetMetrics();
     setSeconds(0);
     setShowEndScreen(false);
