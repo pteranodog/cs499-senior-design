@@ -1,10 +1,29 @@
 import * as behvaiors from './behaviors.js'
 // Class definitions; for ships, points, regions, runs
 // TODOs: 
-// - add "advance/move" methods? i.e. SomePirate.advance() will 
-// cause SomePirate to "make the next move" based on its own fields/ target info/ environment
-// (would be called on each ship at every step of the sim)
-// - create classes/functions for steering behaviors (flee, pursue, evade, wander...)
+// fill out const values for accelerations/speeds of ships
+// finish assigning initial behaviors to all ships 
+// make predetermined Paths for patrols and merchants?
+
+
+const MAX_SMALL_PIRATE_SPEED = 10;
+const MAX_MED_PIRATE_SPEED = 10;
+const MAX_SMALL_MERCHANT_SPEED = 10;
+const MAX_MED_MERCHANT_SPEED = 10;
+const MAX_SMALL_PATROL_SPEED = 10;
+const MAX_MED_PATROL_SPEED = 10;
+const MAX_LARGE_PATROL_SPEED = 10;
+
+const MAX_SMALL_PIRATE_ACC = 10;
+const MAX_MED_PIRATE_ACC = 10;
+const MAX_SMALL_MERCHANT_ACC = 10;
+const MAX_MED_MERCHANT_ACC = 10;
+const MAX_SMALL_PATROL_ACC = 10;
+const MAX_MED_PATROL_ACC = 10;
+const MAX_LARGE_PATROL_ACC = 10;
+
+const GLOBAL_MAX_ANGULAR_ACC = 5;
+const GLOBAL_MAX_ROTATION = 20;
 
 // const fs = require("fs")
 
@@ -32,6 +51,9 @@ function newShip(type, startPos, size, sightRange, crewSize, armament, durabilit
  */
 function newPirateShip(startPos, size, homeCove) {
   // Using ? operator for shorthand if-else, since current research only mentions two sizes of pirate ships
+  // NEW: speed/acc
+  let maxAcc = (size === "small" ? MAX_SMALL_PIRATE_ACC : MAX_MED_MERCHANT_ACC);
+  let maxSpeed = (size === "small" ? MAX_SMALL_PIRATE_SPEED : MAX_MED_MERCHANT_SPEED);
   let crewSize = (size === "small" ? 7 : 19);
   let durability = (size === "small" ? 15 : 30); // assumed
   let armament = (size === "small" ? 45 : 15);
@@ -46,6 +68,11 @@ function newPirateShip(startPos, size, homeCove) {
   let ship = newShip("Pirate", startPos, size, sightRange, crewSize, armament, durability);
   ship.heldSkiffs = heldSkiffs;
   ship.homeCove = homeCove; // Spawn point. PirateCove object expected.
+
+  // NEW: assign behavior stuff
+  ship.kinematic = behvaiors.newKinematic(ship.pos, 0, 0, 0);
+  ship.behvaior = behvaiors.newWander(ship.kinematic, maxAcc, GLOBAL_MAX_ANGULAR_ACC, GLOBAL_MAX_ROTATION, 0.2, 0.5, maxSpeed);
+  ship.mover = behvaiors.newMover(ship.kinematic, ship.maxAcc, ship.maxSpeed, ship.behvaior);
   return ship;
 }
 

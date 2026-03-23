@@ -14,7 +14,7 @@ function canSee(ship1, ship2) // can ship1 see ship 2?
   }
 }
 
-function processShipStates(shipArray) {
+function processShipStates(shipArray, timeStep) {
   for (let i = 0; i < shipArray.length; i++) {
     const thisShip = shipArray[i];
 
@@ -30,16 +30,14 @@ function processShipStates(shipArray) {
     advanceCombat(thisShip);
 
     // Finally, call all behavior updates and increment time
-  
-
+    updateShipBehavior(thisShip, timeStep);
   }
 }
 
 function checkForIdleTransition(thisShip, shipArray) { // Takes in a ship that is idle (state 1) 
 // and checks if it should transition to another state. This requires checking info on every other ship
 
-  if (thisShip.state != 1) { // If this ship isn't idle, this function is misused
-    console.log("attempted to check for idle transition on non-idle ship");
+  if (thisShip.state != 1) { // If this ship isn't idle, this function has nothing to do
     return;
   }
 
@@ -112,8 +110,8 @@ function advanceCombat (thisShip) { // Have each ship in the array "take its tur
   if (thisShip.state != 10) { // ignore ships not in combat
     return;
   }
-
-  // TODO: decide hp impact of this ship's attack based on this ships power and its victims armament
+  let atk = thisShip.armament * (thisShip.crewSize * 0.5);
+  thisShip.currentEnemy.hp -= atk / (thisShip.currentEnemy.durability / 2);
 }
 
 function checkForCombatScenario(ship, shipArray) {
@@ -128,11 +126,16 @@ function checkForCombatScenario(ship, shipArray) {
     const otherShip = shipArray[i];
     let dist = behvaiors.getLength(behvaiors.subtract(ship.pos, otherShip.pos))
     if (dist <= COMBAT_RANGE) { // NOTE: THIS NUMBER MAY NEED TWEAKED! Once ships are this close together they enter combat with each other (and stop moving)
-      // Set up combat scenario
+      // Set up combat scenario for both ships
       ship.inCombat = true;
       ship.state = 10;
       ship.currentEnemy = otherShip;
       ship.hp = 100; // this is a %age
+
+      otherShip.inCombat = true;
+      otherShip.state = 10;
+      otherShip.currentEnemy = otherShip;
+      otherShip.hp = 100; // this is a %age
       return true
     }
     else {
@@ -153,9 +156,8 @@ function checkForPortArrival(ship, port) {
 }
 
 
-function updateShipBehaviors(shipArray, time) {
-  for (let i = 0; i < shipArray.length; i++) {
-    const thisShip = shipArray[i];
-    thisShip.mover = behvaiors.updateMover(thisShip.mover, behvaiors.getSteering(thisShip.behavior), thisShip.maxSpeed, time);
+function updateShipBehavior(ship, timeStep) {
+  if (ship.state < 10)  { // only move if not in combat
+    ship.mover = behvaiors.updateMover(ship.mover, behvaiors.getSteering(ship.behavior), ship.maxSpeed, timeStep);
   }
 }
