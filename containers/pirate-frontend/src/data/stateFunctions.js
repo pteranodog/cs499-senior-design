@@ -1,6 +1,8 @@
 import * as data from './classes.js'
 import * as behvaiors from './behaviors.js'
 
+const COMBAT_RANGE = 40;
+
 function canSee(ship1, ship2) // can ship1 see ship 2?
 {
   let dist = behvaiors.getLength(behvaiors.subtract(ship1.pos, ship2.pos))
@@ -16,16 +18,19 @@ function processShipStates(shipArray) {
   for (let i = 0; i < shipArray.length; i++) {
     const thisShip = shipArray[i];
 
-    // First, check the "idle" (state = 1, symbolizing default behavior) ships for transition cases
+    // First, check the "idle" (state = 1, symbolizing default behavior) ships for transition cases 
     checkForIdleTransition(thisShip, shipArray);
 
-    // Second, check the "seeking/pursuing" (state = 2) ships for transition cases
+    // Second, check the "seeking/pursuing" (state = 2) ships for transition cases (out of sight range or in combat range)
+    checkForCombatScenario(thisShip, shipArray);
+    // Third, check the "fleeing/evading" (state = 3) ships for transition cases (out of sight range or in combat range.. anyhting else?)
 
-    // Third, check the "fleeing/evading" (state = 3) ships for transition cases
 
-    // Fourth, advnace combating (state = 10) ships through their fight
+    // Fourth, advance combating (state = 10) ships through their fight
+    advanceCombat(thisShip);
 
     // Finally, call all behavior updates and increment time
+  
 
   }
 }
@@ -103,3 +108,54 @@ function checkForIdleTransition(thisShip, shipArray) { // Takes in a ship that i
   testPirate.behavior = behvaiors.
   console.log(testPirate);
 
+function advanceCombat (thisShip) { // Have each ship in the array "take its turn" in combat
+  if (thisShip.state != 10) { // ignore ships not in combat
+    return;
+  }
+
+  // TODO: decide hp impact of this ship's attack based on this ships power and its victims armament
+}
+
+function checkForCombatScenario(ship, shipArray) {
+  if((ship.state === 10) || (ship.state === 1)) {
+    // If this ship is already in combat, or idle, then this function has nothing to do
+    return;
+  }
+
+  // So, for ships that are fleeing or pursuing, check if they are close enough to engage in combat:
+
+  for (let i = 0; i < shipArray.length; i++) {
+    const otherShip = shipArray[i];
+    let dist = behvaiors.getLength(behvaiors.subtract(ship.pos, otherShip.pos))
+    if (dist <= COMBAT_RANGE) { // NOTE: THIS NUMBER MAY NEED TWEAKED! Once ships are this close together they enter combat with each other (and stop moving)
+      // Set up combat scenario
+      ship.inCombat = true;
+      ship.state = 10;
+      ship.currentEnemy = otherShip;
+      ship.hp = 100; // this is a %age
+      return true
+    }
+    else {
+      return false;
+    }
+    
+  }
+}
+
+function checkForPortArrival(ship, port) {
+  if (behvaiors.length(behvaiors.subtract(ship.pos, ship.homePort.pos)) <= COMBAT_RANGE) {
+    // Perform dropoff; set course to home port
+    ship.behavior.path.points = reverse(ship.behavior.path.points);
+    ship.behavior.path.distances = reverse(ship.behavior.path.distances);
+    ship.behavior.path.segments = reverse(ship.behavior.path.segments);
+    ship.behavior.path.params = reverse(ship.behavior.path.params);
+  }
+}
+
+
+function updateShipBehaviors(shipArray, time) {
+  for (let i = 0; i < shipArray.length; i++) {
+    const thisShip = shipArray[i];
+    thisShip.mover = behvaiors.updateMover(thisShip.mover, behvaiors.getSteering(thisShip.behavior), thisShip.maxSpeed, time);
+  }
+}
