@@ -198,9 +198,8 @@ function newConfig(seed, duration, weatherType, maxPirates, maxMerchants, maxPat
  */
 function newRun(name, runConfig, regionId) {
   // Set up basic unchanging run properties
-  return {
+  let run = {
     name: name,
-    config: runConfig, // Config object
     regionId: regionId, // Region ID
     // Infer initial run state info from config. currentState is comprised of all the CHANGING values of this run:
     currentState: {
@@ -214,6 +213,7 @@ function newRun(name, runConfig, regionId) {
       ships: {}
     }
   }
+  return {...runConfig, ...run};
 }
 
 // ================= Helpful Functions For Testing  =================

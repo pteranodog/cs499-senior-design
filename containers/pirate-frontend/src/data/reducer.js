@@ -18,7 +18,7 @@ function simStateReducer(state, action) {
     case 'load-run':
       return loadRun(state, action.filePath);
     case 'modify-run':
-      return modifyRun(state, action.index, action.runInfo);
+      return modifyRun(state, action.index, action.setting, action.value);
     case 'delete-run':
       return deleteRun(state, action.index);
     default:
@@ -96,11 +96,13 @@ function loadRun(state, filePath) {
   return state;
 }
 
-function modifyRun(state, index, runInfo) {
+function modifyRun(state, index, setting, value) {
   return {
     regions: state.regions,
     runs: state.runs.map((run, runIndex) => {
       if (runIndex === index) {
+        let runInfo = {...run};
+        runInfo[setting] = value;
         return runInfo;
       }
       return run;
@@ -132,6 +134,7 @@ function buildNewRun() {
   let defaultRunName = "Untitled Run";
   let defaultRegion = "331541d6-617d-4464-b7d0-9b346b87f41c"; // Somalia
   let run = newRun(defaultRunName, config, defaultRegion);
+  run.uuid = crypto.randomUUID();
   return run;
 };
 

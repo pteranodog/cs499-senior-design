@@ -347,39 +347,6 @@ Evasions,${evasions}`;
 
   return (
     <>
-      {/* START SCREEN (CENTERED) AND LIVE METRIC TRACKING DROPDOWN (TOP RIGHT) */}
-      <StartScreen
-        showStartScreen={showStartScreen}
-        simName={simName}
-        setSimName={setSimName}
-        startHour={startHour}
-        setStartHour={setStartHour}
-        startMinute={startMinute}
-        setStartMinute={setStartMinute}
-        duration={duration}
-        setDuration={setDuration}
-        minDuration={minDuration}
-        maxDuration={maxDuration}
-        region={region}
-        setRegion={setRegion}
-        weather={weather}
-        setWeather={setWeather}
-        merchantRate={merchantRate}
-        setMerchantRate={setMerchantRate}
-        pirateRate={pirateRate}
-        setPirateRate={setPirateRate}
-        securityRate={securityRate}
-        setSecurityRate={setSecurityRate}
-        startCenterPointId={startCenterPointId}
-        setStartCenterPointId={setStartCenterPointId}
-        pointsOfInterest={pointsOfInterest}
-        isRunning={isRunning}
-        isSetupValid={isSetupValid}
-        handleStart={handleStart}
-      >
-      </StartScreen>
-
-
       <EndScreen 
         showEndScreen={showEndScreen}
         simName={simName}

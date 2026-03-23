@@ -3,6 +3,7 @@ import { useEffect, useState, useReducer, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import { simulationPointsToLeaflet } from '../utils/coords';
 import Controls from './controls/Controls';
+import StartScreen from './controls/StartScreen';
 import ShipIcons from './render/ShipIcons.js';
 import PointIcons from './render/PointIcons.js';
 import { simStateReducer, appStartState } from '../data/reducer.js';
@@ -167,7 +168,7 @@ function PirateMap() {
 
   const activeTimeMinutes =
     simulationConfig?.startTimeMinutes ??
-    (previewStartTimeMinutes !== null ? previewStartTimeMinutes : simulationTimeMinutes);
+      (previewStartTimeMinutes !== null ? previewStartTimeMinutes : simulationTimeMinutes);
   const activeTimeHour = Math.floor(activeTimeMinutes / 60);
   const isDay = activeTimeHour >= 6 && activeTimeHour < 18;
   const activeMode = isDay ? 'day' : 'night';
@@ -223,60 +224,73 @@ function PirateMap() {
   };
 
   return (
-    <MapContainer
-      style={{ position: 'absolute', width: '100%', height: '100%', filter: activeMode === 'day' ? 'none' : 'brightness(0.75) contrast(1.15)'}}
-      center={[transformConfig.originLat, transformConfig.originLon]}
-      zoom={16}
-    >
-      <div style={backgroundTint} />
+    <>
+      <MapContainer
+        style={{ position: 'absolute', width: '100%', height: '100%', filter: activeMode === 'day' ? 'none' : 'brightness(0.75) contrast(1.15)'}}
+        center={[transformConfig.originLat, transformConfig.originLon]}
+        zoom={16}
+      >
+        <div style={backgroundTint} />
 
-      <div style={topBadgeStyle}>
-        <span style={{ fontSize: '2rem' }}>{activeMode === 'day' ? '☀️' : '🌙'}</span>
-        <span style={{ fontSize: '1.1rem' }}>
-          {activeMode === 'day' ? 'Day' : 'Night'}
-        </span>
-        {/* TEMPORARY BUTTON FOR TESTING CREATE-RUN */}
-        <button onClick={() => modifySimState({"type": "create-run"})}>Create Run</button>
-      </div>
+        <div style={topBadgeStyle}>
+          <span style={{ fontSize: '2rem' }}>{activeMode === 'day' ? '☀️' : '🌙'}</span>
+          <span style={{ fontSize: '1.1rem' }}>
+            {activeMode === 'day' ? 'Day' : 'Night'}
+          </span>
+          {/* TEMPORARY BUTTON FOR TESTING CREATE-RUN */}
+          <button onClick={() => modifySimState({type: "create-run"})}>Create Run</button>
+        </div>
 
-      <TileLayer attribution={attribution} url={tileUrl} />
+        <TileLayer attribution={attribution} url={tileUrl} />
 
-      <Marker position={[transformConfig.originLat, transformConfig.originLon]}>
-        <Popup>Simulation Origin</Popup>
-      </Marker>
-
-      <PointIcons pointList={pointList} />
-      <ShipIcons shipList={shipList} />
-
-      <Polyline positions={polylinePoints} />
-
-      {mappedTrack.map((point) => (
-        <Marker key={point.id} position={[point.latLng.lat, point.latLng.lng]}>
-          <Popup>
-            <strong>{point.label}</strong>
-            <br />
-            Sim XY: ({point.x}, {point.y})
-            <br />
-            Lat/Lon: {point.latLng.lat.toFixed(6)}, {point.latLng.lng.toFixed(6)}
-          </Popup>
+        <Marker position={[transformConfig.originLat, transformConfig.originLon]}>
+          <Popup>Simulation Origin</Popup>
         </Marker>
+
+        <PointIcons pointList={pointList} />
+        <ShipIcons shipList={shipList} />
+
+        <Polyline positions={polylinePoints} />
+
+        {mappedTrack.map((point) => (
+          <Marker key={point.id} position={[point.latLng.lat, point.latLng.lng]}>
+            <Popup>
+              <strong>{point.label}</strong>
+              <br />
+              Sim XY: ({point.x}, {point.y})
+              <br />
+              Lat/Lon: {point.latLng.lat.toFixed(6)}, {point.latLng.lng.toFixed(6)}
+            </Popup>
+          </Marker>
+        ))}
+
+        <MapViewportController
+          selectedPoint={startCenterPoint}
+          simulationRegion={simulationConfig?.region || ''}
+          defaultCenter={defaultCenter}
+          defaultZoom={16}
+        />
+        <Controls
+          pointsOfInterest={pointList}
+          onStartCenterPointChange={setStartCenterPoint}
+          onSimulationStart={handleSimulationStart}
+          onSimulationStop={handleSimulationStop}
+          onConfigTimeChange={handleConfigTimeChange}
+        />
+      </MapContainer>
+
+      {(simState.runs || []).map((runValue, runIndex) => (
+        <StartScreen
+          key={runValue.uuid}
+          runID={runIndex}
+          runSettings={runValue}
+          regions={simState.regions}
+          modifySimState={modifySimState}
+        />
       ))}
 
-      <MapViewportController
-        selectedPoint={startCenterPoint}
-        simulationRegion={simulationConfig?.region || ''}
-        defaultCenter={defaultCenter}
-        defaultZoom={16}
-      />
       {/* Controls that float above the map in the top right */}
-      <Controls
-        pointsOfInterest={pointList}
-        onStartCenterPointChange={setStartCenterPoint}
-        onSimulationStart={handleSimulationStart}
-        onSimulationStop={handleSimulationStop}
-        onConfigTimeChange={handleConfigTimeChange}
-      />
-    </MapContainer>
+    </>
   );
 }
 
