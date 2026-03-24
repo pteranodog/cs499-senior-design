@@ -1,4 +1,4 @@
-export default function RunSettingsSummary({ runSettings, regions }) {
+export default function RunSettingsSummary({ runSettings, regions, reason }) {
   const region = (regions || {})[runSettings.regionId];
 
   return (
@@ -31,7 +31,7 @@ export default function RunSettingsSummary({ runSettings, regions }) {
       </div>
 
       <div className="alert alert-warning py-1 px-2 small mb-0">
-        ⚠️ Settings are locked once a run has started. Duplicate this run to try different settings.
+        ⚠️ {reason}
       </div>
     </div>
   );

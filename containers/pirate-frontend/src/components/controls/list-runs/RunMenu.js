@@ -5,7 +5,15 @@ import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import { useEffect, useRef } from 'react';
 
 export default function RunMenu ({ simState, modifySimState }) {
-  const selectedCount = (simState.runs || []).filter(r => r.selected).length;
+  const selectedRuns = (simState.runs || []).filter(r => r.selected);
+  const selectedCount = selectedRuns.length;
+  const selectedRegionIds = new Set(selectedRuns.map(r => r.regionId));
+  const allowSelect = (run) => {
+    if (run.selected) return true; // always show button if already selected
+    if (selectedCount >= 2) return false;
+    if (selectedCount === 0) return true;
+    return selectedRegionIds.has(run.regionId);
+  };
   const selectionTextOptions = {
     0: "No Selection",
     1: "View",
@@ -18,7 +26,6 @@ export default function RunMenu ({ simState, modifySimState }) {
   }
   const selectionText = selectionTextOptions[selectedCount] || "Too Many Selections!";
   const selectionColor = selectionColorOptions[selectedCount] || 'danger';
-  const allowSelect = selectedCount < 2;
   const scrollRef = useRef(null);
   const itemRefs = useRef({});
 
@@ -26,6 +33,19 @@ export default function RunMenu ({ simState, modifySimState }) {
     const newKey = simState.controls.selectedRun === eventKey ? null : eventKey;
     modifySimState({ type: 'select-run', run: newKey });
   };
+
+  const handleViewCompare = () => {
+    if (selectedCount === 0) {
+      console.warn("Should be unable to click this button (none selected)");
+    } else if (selectedCount === 1) {
+      let runIndex = simState.runs.findIndex((item) => (item.selected === true));
+      modifySimState({ type: 'view-run-controls', run: runIndex});
+    } else if (selectedCount === 2) {
+      alert("UNIMPLEMENTED");
+    } else {
+      console.warn("Should be unable to click this button (>2 selected)")
+    }
+  }
 
   useEffect(() => {
     const key = simState.controls.selectedRun;
@@ -48,40 +68,48 @@ export default function RunMenu ({ simState, modifySimState }) {
 
   return (
     <div
-      className="bg-dark rounded"
+      className="bg-dark"
       style={{
         position: 'absolute',
-        top: '80px',
-        left: '50%',
-        transform: 'translateX(-50%)',
+        top: '0',
+        left: '0',
         zIndex: 1001,
-        width: '500px',
-        height: '85vh',
+        width: '600px',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         padding: '4px',
       }}>
-      <Accordion
-        ref={scrollRef}
-        activeKey={simState.controls.selectedRun}
-        onSelect={handleToggle}
-        style={{ overflowY: 'auto', flex: 1 }}
-      >
-        {(simState.runs || []).map((runValue, runIndex) => (
-          <RunSettings
-            key={runValue.uuid}
-            runID={runIndex}
-            runSettings={runValue}
-            regions={simState.regions}
-            allowSelect={allowSelect}
-            modifySimState={modifySimState}
-            ref={(el) => { itemRefs.current[runValue.uuid] = el; }}
-          />
-        ))}
-      </Accordion>
+      {simState.runs.length === 0 ? (
+        <>
+          <div className="alert alert-warning py-1 px-2 small mb-0">
+            ⚠️ No runs to show! Create or import a run to continue.
+          </div>
+          <div style={{ flex: 1 }} />
+        </>
+      ) : (
+          <Accordion
+            ref={scrollRef}
+            activeKey={simState.controls.selectedRun}
+            onSelect={handleToggle}
+            style={{ overflowY: 'auto', flex: 1 }}
+          >
+            {(simState.runs || []).map((runValue, runIndex) => (
+              <RunSettings
+                key={runValue.uuid}
+                runID={runIndex}
+                runSettings={runValue}
+                regions={simState.regions}
+                allowSelect={allowSelect(runValue)}
+                modifySimState={modifySimState}
+                ref={(el) => { itemRefs.current[runValue.uuid] = el; }}
+              />
+            ))}
+          </Accordion>
+        )}
       <ButtonGroup className="d-flex w-100 mt-1">
         <Button variant="outline-secondary" size="sm" className="flex-fill"
-          onClick={() => {}}>
+          onClick={() => {alert("UNIMPLEMENTED")}}>
           Import Run
         </Button>
         <Button variant="outline-primary" size="sm" className="flex-fill"
@@ -93,7 +121,7 @@ export default function RunMenu ({ simState, modifySimState }) {
         variant={selectionColor}
         size="sm"
         disabled={selectedCount === 0}
-        onClick={() => {}}
+        onClick={handleViewCompare}
       >
         {selectionText}
       </Button>

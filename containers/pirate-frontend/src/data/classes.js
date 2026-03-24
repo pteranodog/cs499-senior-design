@@ -123,13 +123,14 @@ function newMerchantShip(startPos, size, homePort) {
  *  - Persists between Runs.
  *  - pointsArr is assumed to be an array of all points within the region boundaries
  */
-function newRegion(center, pointsArr, regionName, length, width) {
+function newRegion(center, pointsArr, regionName, length, width, defaultZoom) {
   return {
     name: regionName,
     points: pointsArr, // array of Point instances
     center: center, // two-tuple of x/y coords
     length: length,
-    width: width
+    width: width,
+    defaultZoom: defaultZoom
   };
 }
 

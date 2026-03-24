@@ -11,7 +11,10 @@ function defaultRegions() {
   somaliaPoints["6b72e68d-e596-4e11-a190-bedbded40cc2"] = newPort("Camp Lemonnier (U.S.A.)", [11.543419592150114, 43.17903502125963], 0, [], []);
 
   let regions = {};
-  regions["331541d6-617d-4464-b7d0-9b346b87f41c"] = newRegion([8, 50], somaliaPoints, "Somalia", 1500, 1500);
+  regions["331541d6-617d-4464-b7d0-9b346b87f41c"] = newRegion([9.5, 46], somaliaPoints, "Somalian Coast", 1500, 1500, 6);
+  regions["fefc09d7-e49e-4789-9f48-36f64ff12281"] = newRegion([2.5, 1.5], [], "Gulf of Guinea", 1500, 1500, 6);
+  regions["90c7d81c-174e-4ec2-8c4b-c3f25d049b18"] = newRegion([3, 101.5], [], "Malacca Strait", 1500, 1500, 7);
+
   return regions;
 }
 

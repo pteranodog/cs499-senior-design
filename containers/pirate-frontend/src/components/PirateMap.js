@@ -3,12 +3,13 @@ import { useEffect, useState, useReducer, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import { simulationPointsToLeaflet } from '../utils/coords';
 import Controls from './controls/Controls';
-import RunMenu from './controls/run-list/RunMenu';
 import ShipIcons from './render/ShipIcons.js';
 import PointIcons from './render/PointIcons.js';
 import { simStateReducer, appStartState } from '../data/reducer.js';
-import Accordion from 'react-bootstrap/Accordion';
+import ControlsLayer from './controls/ControlsLayer';
+import RenderMap from './render/RenderMap.js';
 
+/*
 const shipList = [
   { id: 'pirate-1', type: 'pirate', lat: 10, lon: 60 },
   { id: 'pirate-2', type: 'pirate', lat: 11, lon: 59 },
@@ -80,14 +81,16 @@ const regionView = {
   'Gulf of Aden/Somalian Coast': { center: [9.5, 46.0], zoom: 6 },
   'Malacca Strait': { center: [3.0, 101.5], zoom: 7 },
 };
+*/
 
 const transformConfig = {
-  originLat: 34.7190616534629,
-  originLon: -86.64664978111168,
+  originLat: 0,
+  originLon: 0,
   metersPerUnit: 1,
   headingDegrees: 0,
 };
 
+/*
 const simulationTrack = [
   { id: 'start', x: 0, y: 0, label: 'Simulation origin (0, 0)' },
   { id: 'wp1', x: 90, y: 30, label: 'Waypoint 1 (90, 30)' },
@@ -122,24 +125,39 @@ function MapViewportController({
 
   return null;
 }
+*/
 
+function MapResizeHandler({ controlsType }) {
+  const map = useMap();
+  useEffect(() => {
+    setTimeout(() => map.invalidateSize(), 10); // Change if we add a transition effect
+  }, [controlsType]);
+  return null;
+}
+
+/*
 const DAY_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const DAY_TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 const NIGHT_TILE_URL = 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png';
 const NIGHT_TILE_ATTRIBUTION = '&copy; <a href="https://stadiamaps.com">Stadia Maps</a> contributors';
+*/
 
 function PirateMap() {
   const [simState, modifySimState] = useReducer(simStateReducer, {}, appStartState);
-  const [startCenterPoint, setStartCenterPoint] = useState(null);
-  const [simulationConfig, setSimulationConfig] = useState(null);
-  const [simulationTimeMinutes, setSimulationTimeMinutes] = useState(12 * 60); // 24h clock simulation time in minutes
-  const [previewStartTimeMinutes, setPreviewStartTimeMinutes] = useState(null);
-  const [isRunning, setIsRunning] = useState(false);
+  //const [startCenterPoint, setStartCenterPoint] = useState(null);
+  //const [simulationConfig, setSimulationConfig] = useState(null);
+  //const [simulationTimeMinutes, setSimulationTimeMinutes] = useState(12 * 60); // 24h clock simulation time in minutes
+  //const [previewStartTimeMinutes, setPreviewStartTimeMinutes] = useState(null);
+  //const [isRunning, setIsRunning] = useState(false);
 
+  // SUPER ANNOYING BUT USEFUL EFFECT
+  // LOGS STATE TO CONSOLE ON EVERY CHANGE
+  // DELETE IN PRODUCTION
   useEffect(() => {
     console.log(simState);
   }, [simState])
 
+  /*
   const defaultCenter = useMemo(
     () => [transformConfig.originLat, transformConfig.originLon],
     [],
@@ -223,14 +241,24 @@ function PirateMap() {
     setSimulationTimeMinutes(12 * 60);
     setPreviewStartTimeMinutes(null);
   };
+  */
 
   return (
     <>
-      <MapContainer
-        style={{ position: 'absolute', width: '100%', height: '100%', filter: activeMode === 'day' ? 'none' : 'brightness(0.75) contrast(1.15)'}}
-        center={[transformConfig.originLat, transformConfig.originLon]}
-        zoom={16}
-      >
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: simState.controls.type === 'list-runs' ? '600px' : '0',
+        width: simState.controls.type === 'list-runs' ? 'calc(100% - 600px)' : '100%',
+        height: '100%',
+      }}>
+        <MapContainer
+          style={{ position: 'absolute', width: '100%', height: '100%', /*filter: activeMode === 'day' ? 'none' : 'brightness(0.75) contrast(1.15)'*/}}
+          center={[transformConfig.originLat, transformConfig.originLon]}
+          zoom={4}
+        >
+          <MapResizeHandler controlsType={simState.controls.type} />
+          {/*
         <div style={backgroundTint} />
 
         <div style={topBadgeStyle}>
@@ -276,9 +304,11 @@ function PirateMap() {
           onSimulationStop={handleSimulationStop}
           onConfigTimeChange={handleConfigTimeChange}
         />
-      </MapContainer>
-      <RunMenu simState={simState} modifySimState={modifySimState} />
-      {/* Controls that float above the map in the top right */}
+        */}
+          <RenderMap simState={simState} modifySimState={modifySimState} />
+        </MapContainer>
+      </div>
+      <ControlsLayer simState={simState} modifySimState={modifySimState} />
     </>
   );
 }

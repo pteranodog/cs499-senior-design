@@ -1,12 +1,16 @@
 import FloatingLabel from 'react-bootstrap/FloatingLabel';
 import Form from 'react-bootstrap/Form';
 
-export default function RunSettingsControls({ runSettings, regions, modifyRun, modifyRatios }) {
+export default function RunSettingsControls({ runSettings, regions, modifyRun, modifyRatios, modifyRegion }) {
   const minDuration = 30;
   const maxDuration = 4800;
 
   return (
     <div className="d-flex flex-column gap-2">
+      {/*
+      // TODO: RANDOM SEED MODIFICATION
+      // TODO: Normal DateTime instead of Hour:Minute? Might be easier
+      */}
       <div className="d-flex gap-2 align-items-center">
         <FloatingLabel label="Hour (HH)" className="floating-dark flex-fill">
           <Form.Control
@@ -46,7 +50,7 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
       <FloatingLabel label="Region" className="floating-dark">
         <Form.Select size="sm" className="bg-dark text-light border-secondary"
           value={runSettings.regionId}
-          onChange={(e) => modifyRun('regionId', e.target.value)}
+          onChange={(e) => modifyRegion(e.target.value)}
         >
           {Object.entries(regions || {}).map(([regionId, region]) => (
             <option key={regionId} value={regionId}>{region.name}</option>

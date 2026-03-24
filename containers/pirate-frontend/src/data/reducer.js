@@ -24,6 +24,8 @@ function simStateReducer(state, action) {
       return duplicateRun(state, action.index);
     case 'select-run':
       return { ...state, controls: { ...state.controls, selectedRun: action.run } };
+    case 'view-run-controls':
+      return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'active-run', index: action.run }};
     default:
       console.warn('Action type "' + action.type + '" not found.');
       return state;
@@ -57,12 +59,14 @@ function loadRun(state, filePath) {
 }
 
 function deleteRun(state, index) {
+  const deletedRun = state.runs[index];
   const newRuns = state.runs.toSpliced(index, 1);
-  const deletedWasActive = state.runs[index].uuid === state.controls.selectedRun;
+  const deletedWasActive = deletedRun.uuid === state.controls.selectedRun;
   const newActiveKey = deletedWasActive
     ? (newRuns[index - 1] ?? newRuns[0])?.uuid ?? null
     : state.controls.selectedRun;
-  return { ...state, runs: newRuns, controls: {...state.controls, selectedRun: newActiveKey}};
+  const newDisplay = { type: 'region', index: deletedRun.regionId };
+  return { ...state, runs: newRuns, display: newDisplay, controls: { ...state.controls, selectedRun: newActiveKey } };
 }
 
 function duplicateRun(state, index) {
