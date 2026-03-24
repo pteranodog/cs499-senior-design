@@ -6,7 +6,6 @@ import ConfigDisplay from './ConfigDisplay';
 import StepRateControls from './StepRateControls';
 import Legend from './Legend';
 import EndScreen from './EndScreen';
-import StartScreen from './StartScreen';
 
 function Controls({
   pointsOfInterest = [],

@@ -182,9 +182,11 @@ function newPirateCove(name, covePos, pirateSpawnChance)
 /** Holds the configuration data that the user sets prior to starting the run.
  * TODO: probably needs more arguments, will refer to docs + update to include 
  * all the user settings */
-function newConfig(seed, duration, weatherType, maxPirates, maxMerchants, maxPatrols) {
+function newConfig(seed, startHour, startMinute, duration, weatherType, maxPirates, maxMerchants, maxPatrols) {
   return {
     seed: seed,
+    startHour: startHour,
+    startMinute: startMinute,
     duration: duration,
     weatherType: weatherType,
     maxPirates: maxPirates,
@@ -201,6 +203,8 @@ function newRun(name, runConfig, regionId) {
   let run = {
     name: name,
     regionId: regionId, // Region ID
+    status: 'new',
+    selected: false,
     // Infer initial run state info from config. currentState is comprised of all the CHANGING values of this run:
     currentState: {
       // Stats is a simple atomic object containing mostly numeric statistics of the run.

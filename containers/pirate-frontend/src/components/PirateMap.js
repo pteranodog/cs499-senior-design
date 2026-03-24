@@ -3,10 +3,11 @@ import { useEffect, useState, useReducer, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import { simulationPointsToLeaflet } from '../utils/coords';
 import Controls from './controls/Controls';
-import StartScreen from './controls/StartScreen';
+import RunMenu from './controls/run-list/RunMenu';
 import ShipIcons from './render/ShipIcons.js';
 import PointIcons from './render/PointIcons.js';
 import { simStateReducer, appStartState } from '../data/reducer.js';
+import Accordion from 'react-bootstrap/Accordion';
 
 const shipList = [
   { id: 'pirate-1', type: 'pirate', lat: 10, lon: 60 },
@@ -237,8 +238,6 @@ function PirateMap() {
           <span style={{ fontSize: '1.1rem' }}>
             {activeMode === 'day' ? 'Day' : 'Night'}
           </span>
-          {/* TEMPORARY BUTTON FOR TESTING CREATE-RUN */}
-          <button onClick={() => modifySimState({type: "create-run"})}>Create Run</button>
         </div>
 
         <TileLayer attribution={attribution} url={tileUrl} />
@@ -278,17 +277,7 @@ function PirateMap() {
           onConfigTimeChange={handleConfigTimeChange}
         />
       </MapContainer>
-
-      {(simState.runs || []).map((runValue, runIndex) => (
-        <StartScreen
-          key={runValue.uuid}
-          runID={runIndex}
-          runSettings={runValue}
-          regions={simState.regions}
-          modifySimState={modifySimState}
-        />
-      ))}
-
+      <RunMenu simState={simState} modifySimState={modifySimState} />
       {/* Controls that float above the map in the top right */}
     </>
   );
