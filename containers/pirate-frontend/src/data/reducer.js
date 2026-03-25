@@ -26,6 +26,8 @@ function simStateReducer(state, action) {
       return { ...state, controls: { ...state.controls, selectedRun: action.run } };
     case 'view-run-controls':
       return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'active-run', index: action.run }};
+    case 'view-run-end':
+      return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'end-run', index: action.run }};
     default:
       console.warn('Action type "' + action.type + '" not found.');
       return state;
