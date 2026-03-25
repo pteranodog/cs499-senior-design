@@ -42,7 +42,7 @@ export default function StatusDisplay({ simState, runID }) {
       style={{
         position: 'absolute',
         top: 16,
-        left: 16,
+        left: 44,
         zIndex: 1000,
         minWidth: minimized ? 160 : 260,
         borderRadius: 12,
@@ -77,7 +77,7 @@ export default function StatusDisplay({ simState, runID }) {
             padding: 0,
           }}
         >
-          {minimized ? '▼' : '▲'}
+          {minimized ? '\u25BC' : '\u25B2'}
         </button>
       </div>
 

@@ -14,7 +14,7 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
 
   const handleTerminate = () => {
     const confirmed = window.confirm(
-      'Are you sure you want to terminate this run?\nBy terminating, this simulation will end and your summary outcome will be presented.',
+      'Are you sure you want to terminate this run?\nYou will not be able to resume.',
     );
 
     if (!confirmed) {

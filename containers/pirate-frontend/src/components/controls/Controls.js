@@ -4,7 +4,6 @@ import Card from 'react-bootstrap/Card';
 import Dropdown from 'react-bootstrap/Dropdown';
 import ConfigDisplay from './ConfigDisplay';
 import StepRateControls from './StepRateControls';
-import Legend from './Legend';
 import EndScreen from './EndScreen';
 
 function Controls({
@@ -207,21 +206,6 @@ function Controls({
     setIsRunning(true);
   };
 
-  const handleTerminate = () => {
-    const confirmed = window.confirm(
-      'Are you sure you want to terminate this run?\nBy terminating, this simulation will end and your summary outcome will be presented.',
-    );
-    if (!confirmed) {
-      return;
-    }
-
-    setIsRunning(false);
-    setShowEndScreen(true);
-    if (typeof onSimulationStop === 'function') {
-      onSimulationStop();
-    }
-  };
-
   const handleRestart = () => {
     const confirmed = window.confirm(
       'Are you sure you wish to restart? You will be unable to save the current simulation after.',
@@ -415,10 +399,10 @@ Evasions,${evasions}`;
       </Control>
 
 
-      {/* LEGEND */}
+      {/* LEGEND - UNNECESSARY CODE
       <Control position = "bottomleft">
         <Legend/>
-      </Control>
+      </Control>*/}
 
 
       <ElapsedTime
