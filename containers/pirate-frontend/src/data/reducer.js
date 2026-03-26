@@ -38,7 +38,7 @@ function appStartState() {
     runs: [],
     display: {
       type: 'region',
-      index: '331541d6-617d-4464-b7d0-9b346b87f41c'
+      index: 'r1'
     },
     controls: {
       type: 'list-runs',
@@ -95,8 +95,8 @@ function buildNewRun() {
     Math.floor(Math.random() * 1000000000) + 1,
     0, 0, 1500, 'clear', 33, 34, 33
   );
-  const run = newRun('Untitled Run', config, '331541d6-617d-4464-b7d0-9b346b87f41c');
+  const run = newRun('Untitled Run', config, 'r1');
   return { ...run, uuid: crypto.randomUUID() };
 }
 
-export { simStateReducer, appStartState };
+export { simStateReducer, appStartState, buildNewRun };
