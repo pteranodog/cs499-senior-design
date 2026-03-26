@@ -145,13 +145,14 @@ function newMerchantShip(startPos, size, homePort) {
  *  - Persists between Runs.
  *  - pointsArr is assumed to be an array of all points within the region boundaries
  */
-function newRegion(center, pointsArr, regionName, length, width) {
+function newRegion(center, pointsArr, regionName, length, width, defaultZoom) {
   return {
     name: regionName,
     points: pointsArr, // array of Point instances
     center: center, // two-tuple of x/y coords
     length: length,
-    width: width
+    width: width,
+    defaultZoom: defaultZoom
   };
 }
 
@@ -204,9 +205,11 @@ function newPirateCove(name, covePos, pirateSpawnChance)
 /** Holds the configuration data that the user sets prior to starting the run.
  * TODO: probably needs more arguments, will refer to docs + update to include 
  * all the user settings */
-function newConfig(seed, duration, weatherType, maxPirates, maxMerchants, maxPatrols) {
+function newConfig(seed, startHour, startMinute, duration, weatherType, maxPirates, maxMerchants, maxPatrols) {
   return {
     seed: seed,
+    startHour: startHour,
+    startMinute: startMinute,
     duration: duration,
     weatherType: weatherType,
     maxPirates: maxPirates,
@@ -220,10 +223,11 @@ function newConfig(seed, duration, weatherType, maxPirates, maxMerchants, maxPat
  */
 function newRun(name, runConfig, regionId) {
   // Set up basic unchanging run properties
-  return {
+  let run = {
     name: name,
-    config: runConfig, // Config object
     regionId: regionId, // Region ID
+    status: 'new',
+    selected: false,
     // Infer initial run state info from config. currentState is comprised of all the CHANGING values of this run:
     currentState: {
       // Stats is a simple atomic object containing mostly numeric statistics of the run.
@@ -236,6 +240,7 @@ function newRun(name, runConfig, regionId) {
       ships: {}
     }
   }
+  return {...runConfig, ...run};
 }
 
 // ================= Helpful Functions For Testing  =================

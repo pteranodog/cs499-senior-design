@@ -5,10 +5,10 @@ function PointIcons({ pointList }) {
     <>
       {pointList.map((point, index) => (
         <PointIcon
-          key={point.id || `${point.type}-${index}-${point.lat}-${point.lon}`}
+          key={point.id || `${point.type}-${index}-${point.pos[0]}-${point.pos[1]}`}
           type={point.type}
-          lat={point.lat}
-          lon={point.lon}
+          lat={point.pos[0]}
+          lon={point.pos[1]}
           name={point.name}
         />
       ))}

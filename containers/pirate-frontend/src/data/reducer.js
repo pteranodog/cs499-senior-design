@@ -1,6 +1,5 @@
-import './classes.js';
+import { newConfig, newRun } from './classes.js';
 import { defaultRegions } from './regions.js';
-import { step } from './stateFunctions.js';
 
 function simStateReducer(state, action) {
   switch (action.type) {
@@ -8,21 +7,31 @@ function simStateReducer(state, action) {
     case 'reset':
       return appStartState();
     case 'display-region':
-      return displayRegion(state, action.id);
+      return { ...state, display: { type: 'region', index: action.id } };
     case 'display-run':
-      return displayRun(state, action.index);
+      return { ...state, display: { type: 'run', index: action.index } };
     case 'step-run':
-      return stepRun(state, action.index);
+      return { ...state, runs: state.runs.map((run, i) => i === action.index ? step(run) : run) };
     case 'create-run':
       return createRun(state);
     case 'load-run':
       return loadRun(state, action.filePath);
     case 'modify-run':
-      return modifyRun(state, action.index, action.runInfo);
+      return { ...state, runs: state.runs.map((run, i) => i === action.index ? { ...run, [action.setting]: action.value } : run) };
     case 'delete-run':
       return deleteRun(state, action.index);
+    case 'duplicate-run':
+      return duplicateRun(state, action.index);
+    case 'select-run':
+      return { ...state, runs: expandRun(state.runs, action.run) };
+    case 'view-run-list':
+      return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'list-runs' }};
+    case 'view-run-controls':
+      return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'active-run', index: action.run }};
+    case 'view-run-end':
+      return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'end-run', index: action.run }};
     default:
-      console.warning('Action type "' + action.type + '" not found.');
+      console.warn('Action type "' + action.type + '" not found.');
       return state;
   }
 }
@@ -33,54 +42,21 @@ function appStartState() {
     runs: [],
     display: {
       type: 'region',
-      index: '331541d6-617d-4464-b7d0-9b346b87f41c'
+      index: 'r1'
+    },
+    controls: {
+      type: 'list-runs',
     }
   };
 }
 
-function displayRegion(state, id) {
-  return {
-    regions: state.regions,
-    runs: state.runs,
-    display: {
-      type: 'region',
-      index: id
-    }
-  }
-}
-
-function displayRun(state, index) {
-  return {
-    regions: state.regions,
-    runs: state.runs,
-    display: {
-      type: 'run',
-      index: index
-    }
-  }
-}
-
-function stepRun(state, index) {
-  return {
-    regions: state.regions,
-    runs: state.runs.map((run, runIndex) => {
-      if (runIndex === index) {
-        // TODO: Make step function elsewhere
-        return step(run);
-      }
-      return run;
-    }),
-    display: state.display
-  }
-}
-
 function createRun(state) {
+  const run = { ...buildNewRun(), expanded: true };
   return {
-    regions: state.regions,
-    // TODO: Figure out where and what newRun is
-    runs: [...state.runs, newRun()],
-    display: state.display
-  }
+    ...state,
+    runs: [...collapseAll(state.runs), run],
+    controls: { ...state.controls }
+  };
 }
 
 function loadRun(state, filePath) {
@@ -88,29 +64,58 @@ function loadRun(state, filePath) {
   return state;
 }
 
-function modifyRun(state, index, runInfo) {
-  return {
-    regions: state.regions,
-    runs: state.runs.map((run, runIndex) => {
-      if (runIndex === index) {
-        return runInfo;
-      }
-      return run;
-    }),
-    display: state.display
-  }
-}
-
-// TODO: Guard code
 function deleteRun(state, index) {
-  return {
-    regions: state.regions,
-    runs: state.runs.toSpliced(index, 1),
-    display: state.display
-  }
+  const deletedRun = state.runs[index];
+  const newRuns = collapseAll(state.runs.toSpliced(index, 1));
+  const fallback = newRuns[index - 1] ?? newRuns[0];
+  const newDisplay = { type: 'region', index: deletedRun.regionId };
+  const finalRuns = fallback
+    ? expandRun(newRuns, fallback.uuid)
+    : newRuns;
+  return { ...state, runs: finalRuns, display: newDisplay, controls: { ...state.controls } };
 }
 
-function step() {};
-function newRun() {};
+function duplicateRun(state, index) {
+  const source = state.runs[index];
+  const duplicate = {
+    ...buildNewRun(),
+    name: source.name + ' (Copy)',
+    seed: source.seed,
+    startHour: source.startHour,
+    startMinute: source.startMinute,
+    duration: source.duration,
+    regionId: source.regionId,
+    weatherType: source.weatherType,
+    maxMerchants: source.maxMerchants,
+    maxPirates: source.maxPirates,
+    maxPatrols: source.maxPatrols,
+    expanded: true,
+  };
+  const newRuns = [...state.runs.slice(0, index + 1), duplicate, ...state.runs.slice(index + 1)];
+  return { ...state, runs: collapseAll(newRuns).map(run =>
+    run.uuid === duplicate.uuid ? { ...run, expanded: true } : run
+  )};
+}
 
-export { simStateReducer, appStartState };
+function collapseAll(runs) {
+  return runs.map(({ expanded, ...rest }) => rest);
+}
+
+function expandRun(runs, uuid) {
+  return collapseAll(runs).map(run =>
+    run.uuid === uuid ? { ...run, expanded: true } : run
+  );
+}
+
+function step() {}
+
+function buildNewRun() {
+  const config = newConfig(
+    Math.floor(Math.random() * 10000) + 1,
+    0, 0, 1500, 'clear', 33, 34, 33
+  );
+  const run = newRun('Untitled Run', config, 'r1');
+  return { ...run, uuid: crypto.randomUUID() };
+}
+
+export { simStateReducer, appStartState, buildNewRun };
