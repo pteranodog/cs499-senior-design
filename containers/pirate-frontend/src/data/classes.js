@@ -68,11 +68,6 @@ function newPirateShip(startPos, size, homeCove) {
   let ship = newShip("Pirate", startPos, size, sightRange, crewSize, armament, durability);
   ship.heldSkiffs = heldSkiffs;
   ship.homeCove = homeCove; // Spawn point. PirateCove object expected.
-
-  // NEW: assign behavior stuff
-  ship.kinematic = behvaiors.newKinematic(ship.pos, 0, 0, 0);
-  ship.behvaior = behvaiors.newWander(ship.kinematic, maxAcc, GLOBAL_MAX_ANGULAR_ACC, GLOBAL_MAX_ROTATION, 0.2, 0.5, maxSpeed);
-  ship.mover = behvaiors.newMover(ship.kinematic, ship.maxAcc, ship.maxSpeed, ship.behvaior);
   return ship;
 }
 

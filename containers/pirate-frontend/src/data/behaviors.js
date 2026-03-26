@@ -113,7 +113,8 @@ function updateMover(mover, steering, maxSpeed, time) {
 }
 function newContinue(k1) { // behavior obj; a mover keeping its current trajectory; no change in orientation or velocity
     return {
-        k1 : k1 // k1 = character to continue
+        k1 : k1, // k1 = character to continue
+        type: "continue"
     }
 }
 
@@ -127,7 +128,8 @@ function newSeek(k1, k2, maxAcceleration) { // Mover advances directly towards a
     return {
         k1: k1,
         k2: k2,
-        maxAcceleration: maxAcceleration
+        maxAcceleration: maxAcceleration,
+        type: "seek"
     }
 }
 
@@ -149,7 +151,8 @@ function newFlee(k1, k2, maxAcceleration) { // Mover travels directly away from 
     return { // identify which mover is fleeing from which
         k1 : k1, // k1 = mover that will be fleeing
         k2 : k2, // k2 = target (mover being fled from)
-        maxAcceleration : maxAcceleration
+        maxAcceleration : maxAcceleration,
+        type: "flee"
     }
 }
 
@@ -174,7 +177,8 @@ function newArrive(k1, k2, maxAcceleration, maxSpeed, targetRadius, slowRadius) 
         maxSpeed : maxSpeed,
         targetRadius : targetRadius,
         slowRadius : slowRadius,
-        timeToTarget : 0.1
+        timeToTarget : 0.1,
+        type: "arrive"
     }
 }
 
@@ -221,6 +225,7 @@ function getArriveSteering(arriveBheavior) {
 function newPursue (k1, k2, maxAcceleration, maxPrediction) { //extends Seek  // Similar to seek, except predicts where target is going and sends the subject mover towards that point
     // REMINDER: k1 is the pursuer, k2 is the target (via Seek implementation)
     let result = newSeek(k1, k2, maxAcceleration);
+    result.type = "flee"; // override type
     // Make new target obj to override Seek's with later
     let pursuedTarget = {
             pos: [0,0],
@@ -292,7 +297,8 @@ function newAlign(k1, k2, maxAngularAcc, maxRotation, slowThreshold, targetThres
         targetThreshold : targetThreshold, // When the focused mover's orientation is within this many rads of the target's, stop rotating entirely
         // NOTE ABOUT THRESHOLD VALUES: These are important for making the behaviors "smooth"; my advice is to not make targetThreshold <0.2 and
         // not to make slowThreshold <0.5. Their stability also depends on rotation speed/ acc; so be careful w/ those values too
-        timeToTarget : 0.4 // Time over which to achieve target orientation (NOTE: could need tweaked/ made variable?)
+        timeToTarget : 0.4, // Time over which to achieve target orientation (NOTE: could need tweaked/ made variable?)
+        type: "flee"
     }
 }
 
@@ -349,7 +355,9 @@ function getAlignSteering(alignBehavior) {
 function newFace(k1, k2, maxAngularAcc, maxRotation, slowThreshold, targetThreshold) { // Face a mover towards another mover
     // We just need to change the target field after calling Align (because we want to face towards it, not align with its movement); all else stays the same
     // That is to say: constructor params serve the same prupose as they do in Align, so see Align's constructor for info on those
-    return newAlign(k1, k2, maxAngularAcc, maxRotation, slowThreshold, targetThreshold)
+    let result = newAlign(k1, k2, maxAngularAcc, maxRotation, slowThreshold, targetThreshold);
+    result.type = "face";
+    return result;
 }
 
 function getFaceSteering(faceBehavior) {
@@ -383,6 +391,7 @@ function newWander(k1, maxAcceleration, maxAngularAcc, maxRotation, slowThreshol
     }
 
     let result = newFace(k1, target, maxAngularAcc, maxRotation, slowThreshold, targetThreshold);
+    result.type = "wander";
     result.maxSpeed = maxSpeed; // linear movement introduced, so a maximum speed is specified
 
     // NOTE: hardcoded values; normally they'd be set by args of the constructor but this behavior should be more consistent 
@@ -461,6 +470,7 @@ function newFollowPath(path, pathOffset, currentParam, k1, maxAcceleration) { //
     result.pathOffset = pathOffset; // wait what does this do again im dumb
     result.currentParam = currentParam; // parametrized distance along the path, being "aimed at"
     result.maxAcceleration = maxAcceleration;
+    result.type = "followPath"
     return result;
 }
     
@@ -561,6 +571,31 @@ function getPathPosition(path, param) {
     return P;
 }
 
+function getSteering(behavior) {  // "Master" getSteering function to be called by step function, so it can just call this on every ship 
+    switch (behavior.type) {
+        case "seek":
+            return(getSeekSteering(behavior));
+        case "flee":
+            return(getFleeSteering(behavior));
+        case "arrive":
+            return(getArriveSteering(behavior));
+        case "face":
+            return(getFaceSteering(behavior));
+        case "align":
+            return(getAlignSteering(behavior));
+        case "wander":
+            return(getWanderSteering(behavior));
+        case "continue":
+            return(getContinueSteering(behavior));
+        case "followPath":
+            return(getFollowPathSteering(behavior));
+        case "pursue":
+            return(getPursueSteering(behavior))
+        default:
+            console.log("getSteering error: Unrecognized behavior. Returning default 0 steering")
+            return(newSteeringOutput([0,0],0))
+    }
+}
 // ============================= Export everything =============================
 // NOTE: import like this: 
 // import * as Behaviors from "../data/behaviors.js";
@@ -569,6 +604,5 @@ function getPathPosition(path, param) {
 // c = Behaviors.clampOreintation(...)
 
 export  {getLength, normalize, add, subtract, scalarMult, dotProduct, closestPointOnSegment, orientationToVector, clampOreintation, newMover, newKinematic, newSteeringOutput, newSeek, newFlee,
-    newArrive, newPursue, newPath, newFollowPath, newWander, newFace, newAlign, newContinue, updateMover
-}
+    newArrive, newPursue, newPath, newFollowPath, newWander, newFace, newAlign, newContinue, updateMover, assemblePath, getSteering}
 

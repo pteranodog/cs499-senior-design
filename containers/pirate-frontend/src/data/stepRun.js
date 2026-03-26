@@ -1,3 +1,5 @@
+import { simState } from "./simState";
+
 function stepRun(state, runId) {
   newState = state;
   currentRun = state.runs.at(runId); // Started here
