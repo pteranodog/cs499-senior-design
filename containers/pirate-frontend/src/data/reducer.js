@@ -1,7 +1,6 @@
 import './classes.js';
 import { defaultRegions } from './regions.js';
 import { step } from './stateFunctions.js';
-// import './stepRun.js';
 
 function simStateReducer(state, action) {
   switch (action.type) {

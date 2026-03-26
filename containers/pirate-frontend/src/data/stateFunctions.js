@@ -3,52 +3,39 @@ import * as behaviors from './behaviors.js'
 
 const COMBAT_RANGE = 40;
 
-function canSee(ship1, ship2) // can ship1 see ship 2?
+function canSee(ship1, ship2) // can ship1 see ship2?
 {
   let dist = behaviors.getLength(behaviors.subtract(ship1.pos, ship2.pos))
-  if (dist <= ship1.sightRange) {
-    return true
-  }
-  else {
-    return false;
-  }
+  return dist <= ship1.sightRange;
 }
 
-function checkForIdleTransition(thisShip, shipArray) { // return updated ship after idle transitions (no mutation)
+function checkForIdleTransition(thisShip, thisId, shipsById) { // return updated ship after idle transitions (no mutation)
 
   if (thisShip.state != 1) { // If this ship isn't idle, this function has nothing to do
     return thisShip;
   }
 
-  let updatedShip = { ...thisShip }; // make shallop copy of ship to return as updated version
+  let updatedShip = { ...thisShip };
 
-  switch (thisShip.type) { // Check for different conditions depending on ship type:
+  // Build an array of OTHER ships only (exclude self)
+  const otherShips = Object.entries(shipsById)
+    .filter(([id]) => id !== thisId)
+    .map(([, ship]) => ship);
+
+  switch (thisShip.type) {
 
     case "Patrol": // What should Idle Patrol ships check for?
-      for (let j = 0; j < shipArray.length; j++) { // Check out every other ship
-        const otherShip = shipArray[j];
-
-        if (!canSee(updatedShip, otherShip)) { // If I can't see this ship, disregard it
-          continue;
-        }
-
-        if (otherShip.type === "Pirate") {  // Pursue pirates
-          updatedShip = {
-            ...updatedShip,
-            state: 2
-          };
+      for (const otherShip of otherShips) { // Check out every other ship
+        if (!canSee(updatedShip, otherShip)) continue; // If I can't see this ship, disregard it
+        if (otherShip.type === "Pirate") {
+          updatedShip = { ...updatedShip, state: 2 }; // Pursue pirates
         }
       }
       break;
 
     case "Pirate": // What should Idle Pirate ships check for?
-      for (let j = 0; j < shipArray.length; j++) { // Check out every other ship
-        const otherShip = shipArray[j];
-
-        if (!canSee(updatedShip, otherShip)) { // If I can't see this ship, disregard it
-          continue;
-        }
-
+      for (const otherShip of otherShips) { // Check out every other ship
+        if (!canSee(updatedShip, otherShip)) continue; // If I can't see this ship, disregard it
         if (otherShip.type === "Merchant") { // Pursue merchants
           updatedShip = {
             ...updatedShip,
@@ -60,9 +47,7 @@ function checkForIdleTransition(thisShip, shipArray) { // return updated ship af
               1
             )
           };
-        }
-
-        else if (otherShip.type === "Patrol") { // Flee from patrols
+        } else if (otherShip.type === "Patrol") { // Flee from patrols
           updatedShip = {
             ...updatedShip,
             state: 3,
@@ -77,17 +62,10 @@ function checkForIdleTransition(thisShip, shipArray) { // return updated ship af
       break;
 
     case "Merchant": // What should Idle Merchant ships check for?
-      for (let j = 0; j < shipArray.length; j++) {
-        const otherShip = shipArray[j];
-
-        if (!canSee(updatedShip, otherShip)) { // If I can't see this ship, disregard it
-          continue;
-        }
-        else if (otherShip.type === "Pirate") { // Flee from pirates
-          updatedShip = {
-            ...updatedShip,
-            state: 3
-          };
+      for (const otherShip of otherShips) { // Check out every other ship
+        if (!canSee(updatedShip, otherShip)) continue; // If I can't see this ship, disregard it
+        if (otherShip.type === "Pirate") {
+          updatedShip = { ...updatedShip, state: 3 };
         }
       }
       break;
@@ -96,104 +74,101 @@ function checkForIdleTransition(thisShip, shipArray) { // return updated ship af
   return updatedShip;
 }
 
-function advanceCombat(thisShip) { // allow this ship to "have its turn" in combat, return updated version of this ship and its enemy
-  if (thisShip.state !== 10 || !thisShip.currentEnemy) {
-    return { self: thisShip, enemy: thisShip.currentEnemy || null };
+function advanceCombat(thisShip, shipsById) { // return updated shipsById after this ship deals damage
+  if (thisShip.state !== 10 || !thisShip.currentEnemyId) {
+    return shipsById;
   }
 
-  const atk = thisShip.armament * (thisShip.crewSize * 0.5);
+  const enemyId = thisShip.currentEnemyId;
+  const enemy = shipsById[enemyId];
+  if (!enemy) return shipsById;
 
+  const atk = thisShip.armament * (thisShip.crewSize * 0.5);
   const updatedEnemy = {
-    ...thisShip.currentEnemy,
-    hp: thisShip.currentEnemy.hp - atk / (thisShip.currentEnemy.durability / 2),
+    ...enemy,
+    hp: enemy.hp - atk / (enemy.durability / 2)
   };
 
+  // Return a new shipsById with the updated enemy
   return {
-    self: thisShip,
-    enemy: updatedEnemy,
+    ...shipsById,
+    [enemyId]: updatedEnemy
   };
 }
 
-function checkForCombatScenario(ship, shipArray) { // return updated ships if combat begins
-  if ((ship.state === 10) || (ship.state === 1)) { // if this ship is in combat already or idle, ignore
-    return {
-      self: ship,
-      other: null
-    };
+function checkForCombatScenario(ship, shipId, shipsById) { // return updated shipsById if combat begins
+  if (ship.state === 10 || ship.state === 1) { // if this ship is in combat already or idle, ignore
+    return shipsById;
   }
 
-  for (let i = 0; i < shipArray.length; i++) {
-    const otherShip = shipArray[i];
-    let dist = behaviors.getLength(
+  const otherEntries = Object.entries(shipsById).filter(([id]) => id !== shipId);
+
+  for (const [otherId, otherShip] of otherEntries) {
+    const dist = behaviors.getLength(
       behaviors.subtract(ship.mover.kinematic.pos, otherShip.mover.kinematic.pos)
     );
 
+    // prepare both ships for combat
     if (dist <= COMBAT_RANGE) {
-
-      // prepare both ships for combat
-      let updatedShip = { 
+      const updatedShip = {
         ...ship,
         inCombat: true,
         state: 10,
-        currentEnemy: otherShip,
-        hp: 100
+        currentEnemyId: otherId, // store ID, not the object
+        hp: ship.hp ?? 100       // don't reset hp if already set
       };
-
-      let updatedOther = {
+      const updatedOther = {
         ...otherShip,
         inCombat: true,
         state: 10,
-        currentEnemy: ship,
-        hp: 100
+        currentEnemyId: shipId,
+        hp: otherShip.hp ?? 100
       };
 
       return {
-        self: updatedShip,
-        other: updatedOther
+        ...shipsById,
+        [shipId]: updatedShip,
+        [otherId]: updatedOther
       };
     }
   }
 
-  // no combat triggered (still need to return original ship)
-  return {
-    self: ship,
-    other: null
-  };
+  return shipsById; // no combat triggered
 }
 
-function checkForPortArrival(ship) { // Reverses this ship's course in the event that it's reached one of its ports
-  if (!ship.homePort || !ship.mover.behavior?.path) // If this ship doesn't have a home port, ignore
-  {
+function checkForPortArrival(ship) { // Reverses this ship's course if it has reached its home port
+  if (!ship.homePort || !ship.mover.behavior?.path) {
     return ship;
   }
 
   const dist = behaviors.getLength(
-    behaviors.subtract(ship.pos, ship.homePort.pos)
+    behaviors.subtract(ship.mover.kinematic.pos, ship.homePort.pos)
   );
 
-  if (dist > COMBAT_RANGE) return ship; 
+  if (dist > COMBAT_RANGE) return ship;
 
   const reversePath = arr => [...arr].reverse();
 
   return {
     ...ship,
-    behavior: {
-      ...ship.mover.behavior,
-      path: {
-        ...ship.mover.behavior.path,
-        points: reversePath(ship.mover.behavior.path.points),
-        distances: reversePath(ship.mover.behavior.path.distances),
-        segments: reversePath(ship.mover.behavior.path.segments),
-        params: reversePath(ship.mover.behavior.path.params),
-      },
-    },
+    mover: {
+      ...ship.mover,
+      behavior: {
+        ...ship.mover.behavior,
+        path: {
+          ...ship.mover.behavior.path,
+          points: reversePath(ship.mover.behavior.path.points),
+          distances: reversePath(ship.mover.behavior.path.distances),
+          segments: reversePath(ship.mover.behavior.path.segments),
+          params: reversePath(ship.mover.behavior.path.params),
+        }
+      }
+    }
   };
 }
 
-
 function updateShipBehavior(ship, timeStep) {
-  // Only move if not in combat
-  if (ship.state >= 10) {
+  if (ship.state >= 10) { // in combat, don't move
     return ship;
   }
 
@@ -204,7 +179,6 @@ function updateShipBehavior(ship, timeStep) {
     timeStep
   );
 
-  // Return a new ship object with updated Mover
   return {
     ...ship,
     mover: newMover
@@ -212,52 +186,41 @@ function updateShipBehavior(ship, timeStep) {
 }
 
 function step(run, timeStep = 1) {
-  // Keep track of all ships, indexed by ID
-  const shipsById = { ...run.currentState.ships };
+  // Work from a fresh copy of ships
+  let shipsById = { ...run.currentState.ships };
 
-  // Step 1: process each ship
-  const processedShips = Object.entries(shipsById).map(([id, ship]) => {
-    let updatedShip = ship;
+  // Process each ship in turn
+  for (const [id, ship] of Object.entries(shipsById)) {
+    let updatedShip = shipsById[id]; // always read fresh (another ship may have updated this one)
 
-    // Idle transitions
-    updatedShip = checkForIdleTransition(updatedShip, Object.values(shipsById));
+    // Idle -> active transitions (sight-based)
+    updatedShip = checkForIdleTransition(updatedShip, id, shipsById);
+    shipsById[id] = updatedShip;
 
-    // Combat scenarios
-    const combatResult = checkForCombatScenario(updatedShip, id, Object.values(shipsById).filter(s => s !== ship)); // weird filter thing prevents ships fighting themselves
-    updatedShip = combatResult.self;
+    // Check if this ship should enter combat with anyone
+    shipsById = checkForCombatScenario(updatedShip, id, shipsById);
+    updatedShip = shipsById[id];
 
-    // If combat started, update the enemy ship as well
-    if (combatResult.other) {
-      shipsById[combatResult.other.id || id] = combatResult.other;
-    }
+    // This ship deals damage to its enemy (if in combat)
+    shipsById = advanceCombat(updatedShip, shipsById);
+    updatedShip = shipsById[id];
 
-    // Advance combat (if in combat)
-    const combatAdvance = advanceCombat(updatedShip);
-    updatedShip = combatAdvance.self;
-    if (combatAdvance.enemy) {
-      shipsById[combatAdvance.enemy.id || id] = combatAdvance.enemy;
-    }
-
-    // Update movement / behavior
+    // Move!
     updatedShip = updateShipBehavior(updatedShip, timeStep);
+    shipsById[id] = updatedShip;
 
-    // Check for port arrival
+    // Reverse course if merchant + arrived at port
     updatedShip = checkForPortArrival(updatedShip);
+    shipsById[id] = updatedShip;
+  }
 
-    return [id, updatedShip];
-  });
-
-  // Step 2: reconstruct updated ships object
-  const newShips = Object.fromEntries(processedShips);
-
-  // Step 3: return updated run object
   return {
     ...run,
     currentState: {
       ...run.currentState,
-      ships: newShips
+      ships: shipsById
     }
   };
 }
 
-export {step}
+export { step }
