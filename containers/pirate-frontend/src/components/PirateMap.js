@@ -153,9 +153,9 @@ function PirateMap() {
 
   useEffect(() => {
     saveStateToUrl(simState);
-  // SUPER ANNOYING BUT USEFUL EFFECT
-  // LOGS STATE TO CONSOLE ON EVERY CHANGE
-  // DELETE IN PRODUCTION
+    // SUPER ANNOYING BUT USEFUL EFFECT
+    // LOGS STATE TO CONSOLE ON EVERY CHANGE
+    // DELETE IN PRODUCTION
     console.log(simState);
   }, [simState])
 

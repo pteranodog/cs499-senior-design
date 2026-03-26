@@ -23,7 +23,7 @@ function simStateReducer(state, action) {
     case 'duplicate-run':
       return duplicateRun(state, action.index);
     case 'select-run':
-      return { ...state, controls: { ...state.controls, selectedRun: action.run } };
+      return { ...state, runs: expandRun(state.runs, action.run) };
     case 'view-run-controls':
       return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'active-run', index: action.run }};
     default:
@@ -42,15 +42,17 @@ function appStartState() {
     },
     controls: {
       type: 'list-runs',
-      selectedRun: null
     }
   };
 }
 
 function createRun(state) {
-  const newRun = buildNewRun();
-  const selectedRun = state.controls.selectedRun ? newRun.uuid : null;
-  return { ...state, runs: [...state.runs, newRun], controls: {...state.controls, selectedRun}};
+  const run = { ...buildNewRun(), expanded: true };
+  return {
+    ...state,
+    runs: [...collapseAll(state.runs), run],
+    controls: { ...state.controls }
+  };
 }
 
 function loadRun(state, filePath) {
@@ -60,13 +62,13 @@ function loadRun(state, filePath) {
 
 function deleteRun(state, index) {
   const deletedRun = state.runs[index];
-  const newRuns = state.runs.toSpliced(index, 1);
-  const deletedWasActive = deletedRun.uuid === state.controls.selectedRun;
-  const newActiveKey = deletedWasActive
-    ? (newRuns[index - 1] ?? newRuns[0])?.uuid ?? null
-    : state.controls.selectedRun;
+  const newRuns = collapseAll(state.runs.toSpliced(index, 1));
+  const fallback = newRuns[index - 1] ?? newRuns[0];
   const newDisplay = { type: 'region', index: deletedRun.regionId };
-  return { ...state, runs: newRuns, display: newDisplay, controls: { ...state.controls, selectedRun: newActiveKey } };
+  const finalRuns = fallback
+    ? expandRun(newRuns, fallback.uuid)
+    : newRuns;
+  return { ...state, runs: finalRuns, display: newDisplay, controls: { ...state.controls } };
 }
 
 function duplicateRun(state, index) {
@@ -83,9 +85,22 @@ function duplicateRun(state, index) {
     maxMerchants: source.maxMerchants,
     maxPirates: source.maxPirates,
     maxPatrols: source.maxPatrols,
+    expanded: true,
   };
   const newRuns = [...state.runs.slice(0, index + 1), duplicate, ...state.runs.slice(index + 1)];
-  return { ...state, runs: newRuns, controls: { ...state.controls, selectedRun: duplicate.uuid } };
+  return { ...state, runs: collapseAll(newRuns).map(run =>
+    run.uuid === duplicate.uuid ? { ...run, expanded: true } : run
+  )};
+}
+
+function collapseAll(runs) {
+  return runs.map(({ expanded, ...rest }) => rest);
+}
+
+function expandRun(runs, uuid) {
+  return collapseAll(runs).map(run =>
+    run.uuid === uuid ? { ...run, expanded: true } : run
+  );
 }
 
 function step() {}

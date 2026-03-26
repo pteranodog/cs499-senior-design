@@ -90,7 +90,7 @@ export default function RunMenu ({ simState, modifySimState }) {
       ) : (
           <Accordion
             ref={scrollRef}
-            activeKey={simState.controls.selectedRun}
+            activeKey={simState.runs.find(r => r.expanded)?.uuid ?? null}
             onSelect={handleToggle}
             style={{ overflowY: 'auto', flex: 1 }}
           >
