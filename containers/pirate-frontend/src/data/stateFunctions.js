@@ -188,10 +188,13 @@ function updateShipBehavior(ship, timeStep) {
 function step(run, timeStep = 1) {
   // Work from a fresh copy of ships
   let shipsById = { ...run.currentState.ships };
+  let points = {...run.points};
 
   // Process each ship in turn
   for (const [id, ship] of Object.entries(shipsById)) {
     let updatedShip = shipsById[id]; // always read fresh (another ship may have updated this one)
+
+
 
     // Idle -> active transitions (sight-based)
     updatedShip = checkForIdleTransition(updatedShip, id, shipsById);
@@ -214,6 +217,10 @@ function step(run, timeStep = 1) {
     shipsById[id] = updatedShip;
   }
 
+
+  shipsById = processShipSpawns(run, shipsById);
+  
+
   return {
     ...run,
     currentState: {
@@ -221,6 +228,52 @@ function step(run, timeStep = 1) {
       ships: shipsById
     }
   };
+}
+
+// Spawn a new merchant ship at this port's location.
+function spawnMerchant(id, size) {
+  thisMerchant = new MerchantShip(id, this.pos, size, this)
+  return thisMerchant
+}
+
+// Spawn a new patrol ship at this port's location.
+function spawnPatrol(id, size) {
+  thisPatrol = new PatrolShip(id, this.pos, size, this)
+  return thisPatrol
+}
+
+// Spawn a new pirate ship at this cove's location.
+function spawnPirate(id, size) {
+  thisPirate = new PirateShip(id, this.pos, size, this)
+  return thisPirate
+}
+
+
+function processShipSpawns(run, shipArr) {
+  let updatedShipList = {...shipArr};
+  let pointList = {...run.points}
+  for (let i = 0; i < pointList.length; i++) {
+    const thisPoint = pointList[i];
+    switch (thisPoint.type) {
+      case "port":
+        if (Math.random()<= thisPoint.merchantSpawnChance) { // TODO: replace math.random with seed functionality
+          updatedShipList.push(spawnMerchant(updatedShipList.size + 1,"small" )); // TODO decide sizes i forgot about this
+        }
+
+        if (Math.random()<= thisPoint.patrolSpawnChance) { // TODO: replace math.random with seed functionality
+          updatedShipList.push(spawnPatrol(updatedShipList.size + 1,"small" )); // TODO decide sizes i forgot about this
+        }
+        break;
+      case "cove":
+        if (Math.random()<= thisPoint.pirateSpawnChance) { // TODO: replace math.random with seed functionality
+          updatedShipList.push(spawnPirate(updatedShipList.size + 1,"small" )); // TODO decide sizes i forgot about this
+        }
+      default:
+        break;
+    }
+    
+  }
+  return updatedShipList;
 }
 
 export { step }
