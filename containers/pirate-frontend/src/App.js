@@ -5,6 +5,11 @@ function App() {
   if (isMobile) {
     return (
       <div style={{ textAlign: 'center', marginTop: '50px' }}>
+        <marquee behavior="scroll" direction="right">
+          <img src="/patrol-icon.png" alt="Patrol" style={{ height: '50px', marginRight: '40px' }} />
+          <img src="/pirate-icon.png" alt="Pirate" style={{ height: '50px', marginRight: '40px' }} />
+          <img src="/merchant-icon.png" alt="Merchant" style={{ height: '50px' }} />
+        </marquee>
         <h1>Please use a desktop browser</h1>
         <p>This application is not supported on mobile devices.</p>
       </div>
