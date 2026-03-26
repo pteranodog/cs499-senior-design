@@ -26,7 +26,7 @@ function diffRun(run) {
 }
 
 function applyRunDiff(diff) {
-  return { ...buildNewRun(), ...diff, uuid: crypto.randomUUID(), seed: diff.seed, name: diff.name };
+  return { ...buildNewRun(), ...diff, uuid: crypto.randomUUID(), seed: diff.seed };
 }
 
 const DEFAULT_APP_STATE = {
