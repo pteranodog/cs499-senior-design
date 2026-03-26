@@ -22,7 +22,10 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
     }
 
     modifyRun('status', 'terminated-before-natural-completion');
-    modifySimState({ type: 'view-run-end', run: runID });
+    // TODO: SET THIS TO VIEW-END-RUN AGAIN WHEN END-RUN IS DONE
+    modifySimState({ type: 'view-run-list', run: runID });
+    // modifySimState({ type: 'view-run-end', run: runID });
+
   };
 
   const onPauseToggle = () => {
