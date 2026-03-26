@@ -7,12 +7,12 @@ import RunSettingsControls from './RunSettingsControls';
 import RunSettingsSummary from './RunSettingsSummary';
 
 const RunSettings = forwardRef(function RunSettings({ runID, runSettings, regions, allowSelect, modifySimState }, ref) {
-  const canBeEdited = (runSettings.runStatus ?? 'new') === 'new' && !runSettings.selected;
+  const canBeEdited = (runSettings.status ?? 'new') === 'new' && !runSettings.selected;
   let disallowedEditingReason = "";
   if (runSettings.selected) {
     disallowedEditingReason = "Settings are locked while this run is selected. Deselect this run to modify it!";
   }
-  if (!((runSettings.runStatus ?? 'new') === 'new')) {
+  if (!((runSettings.status ?? 'new') === 'new')) {
     disallowedEditingReason = "Settings are locked once a run has started. Duplicate this run to try different settings!";
   }
   const [shiftHeld, setShiftHeld] = useState(false);
