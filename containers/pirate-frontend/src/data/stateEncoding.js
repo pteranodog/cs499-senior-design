@@ -90,11 +90,14 @@ export function decodeState(encoded) {
 
 export function saveStateToUrl(simState) {
   const encoded = encodeState(simState);
-  window.history.replaceState(null, '', '/' + encoded);
+  const url = new URL(window.location.href);
+  url.searchParams.set('s', encoded);
+  window.history.replaceState(null, '', url.toString());
 }
 
 export function loadStateFromUrl() {
-  const path = window.location.pathname.slice(1); // strip leading /
-  if (!path) return null;
-  return decodeState(path);
+  const params = new URLSearchParams(window.location.search);
+  const encoded = params.get('s');
+  if (!encoded) return null;
+  return decodeState(encoded);
 }
