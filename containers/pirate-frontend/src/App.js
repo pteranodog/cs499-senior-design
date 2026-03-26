@@ -1,6 +1,16 @@
+import { isMobile } from 'react-device-detect';
 import PirateMap from './components/PirateMap.js';
 
 function App() {
+  if (isMobile) {
+    return (
+      <div style={{ textAlign: 'center', marginTop: '50px' }}>
+        <h1>Please use a desktop browser</h1>
+        <p>This application is not supported on mobile devices.</p>
+      </div>
+    )
+  }
+
   return (
     <>
       <link
