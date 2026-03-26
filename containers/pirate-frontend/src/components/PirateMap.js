@@ -8,6 +8,7 @@ import PointIcons from './render/PointIcons.js';
 import { simStateReducer, appStartState } from '../data/reducer.js';
 import ControlsLayer from './controls/ControlsLayer';
 import RenderMap from './render/RenderMap.js';
+import { saveStateToUrl, loadStateFromUrl } from '../data/stateEncoding.js';
 
 /*
 const shipList = [
@@ -143,17 +144,18 @@ const NIGHT_TILE_ATTRIBUTION = '&copy; <a href="https://stadiamaps.com">Stadia M
 */
 
 function PirateMap() {
-  const [simState, modifySimState] = useReducer(simStateReducer, {}, appStartState);
+  const [simState, modifySimState] = useReducer(simStateReducer, {}, () => loadStateFromUrl() ?? appStartState());
   //const [startCenterPoint, setStartCenterPoint] = useState(null);
   //const [simulationConfig, setSimulationConfig] = useState(null);
   //const [simulationTimeMinutes, setSimulationTimeMinutes] = useState(12 * 60); // 24h clock simulation time in minutes
   //const [previewStartTimeMinutes, setPreviewStartTimeMinutes] = useState(null);
   //const [isRunning, setIsRunning] = useState(false);
 
+  useEffect(() => {
+    saveStateToUrl(simState);
   // SUPER ANNOYING BUT USEFUL EFFECT
   // LOGS STATE TO CONSOLE ON EVERY CHANGE
   // DELETE IN PRODUCTION
-  useEffect(() => {
     console.log(simState);
   }, [simState])
 
