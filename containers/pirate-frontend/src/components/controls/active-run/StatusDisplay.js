@@ -38,7 +38,7 @@ export default function StatusDisplay({ simState, runID }) {
       style={{
         position: 'absolute',
         top: 84,
-        left: 16,
+        left: 12,
         zIndex: 1000,
         minWidth: 260,
         borderRadius: 12,

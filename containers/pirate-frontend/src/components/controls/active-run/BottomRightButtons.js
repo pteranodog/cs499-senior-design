@@ -58,7 +58,7 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
     >
       <ButtonGroup aria-label="Run controls">
         <Button variant="primary" onClick={onPauseToggle}>
-          {isRunning ? 'Pause' : 'Resume'}
+          {isRunning ? 'Resume' : 'Pause'}
         </Button>
         <Button variant="secondary" onClick={onStep} disabled={isRunning}>
           Step

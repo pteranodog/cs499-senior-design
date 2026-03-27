@@ -8,7 +8,7 @@ export default function LiveCounts({ simState }) {
         className="p-2 small"
         style={{
             position: 'absolute',
-            top: 60,
+            top: 50,
             right: 16,
             zIndex: 1000,
         }}
