@@ -1,4 +1,4 @@
-import * as behvaiors from './behaviors.js'
+// import * as behvaiors from './behaviors.js'
 // Class definitions; for ships, points, regions, runs
 // TODOs: 
 // - add "advance/move" methods? i.e. SomePirate.advance() will 
