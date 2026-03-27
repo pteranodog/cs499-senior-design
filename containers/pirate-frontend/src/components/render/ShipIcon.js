@@ -13,20 +13,33 @@ function ShipIcons({ type, lat, lon }) {
   }
   
   const iconMap = {
-    pirate: '/pirate-icon.png',
-    merchant: '/merchant-icon.png',
-    patrol: '/patrol-icon.png'
+    pirate: L.icon({
+      iconUrl: '/pirate-icon.png',
+      iconSize: [52, 40],
+      iconAnchor: [26, 40],
+      popupAnchor: [7, -35]
+    }),
+    merchant: L.icon({
+      iconUrl: '/merchant-icon.png',
+      iconSize: [81, 25],
+      iconAnchor: [41, 25],
+      popupAnchor: [-7, -15]
+    }),
+    patrol: L.icon({
+      iconUrl: '/patrol-icon.png',
+      iconSize: [70, 40],
+      iconAnchor: [35, 40],
+      popupAnchor: [-5, -35]
+    }),
+    default: L.icon({
+      iconUrl: '/boat-icon.png',
+      iconSize: [60, 60],
+      iconAnchor: [26, 40],
+      popupAnchor: [-14, -25]
+    })
   };
 
-  const shipIcon = L.icon({
-    iconUrl: iconMap[type] || 'boat-icon.png',
-    iconSize: [40, 40],
-    shadowSize: [40, 40],
-    iconAnchor: [0, 0],
-    shadowAnchor: [0, 0],
-    popupAnchor: [10, 10]
-  })
-
+  const shipIcon = iconMap[type]|| iconMap.default;
   return (
     <Marker position={[lat, lon]} icon={shipIcon}>                                                         
       <Popup>                                                                                                          
