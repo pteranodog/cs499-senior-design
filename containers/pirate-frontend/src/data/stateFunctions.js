@@ -221,38 +221,37 @@ function step(run, timeStep = 1) {
 
   // shipsById = processShipSpawns(run, shipsById);
   
-
-  /* return {
-    ...run,
-    currentState: {
-      ...run.currentState,
-      ships: shipsById
-    }
-  }; */
-
   // Sync top-level pos (ship.pos) with mover position (ship.mover.pos)
   for (const [id, ship] of Object.entries(shipsById)) {
     if (ship.mover?.kinematic?.pos) {
       shipsById[id] = { ...ship, pos: ship.mover.kinematic.pos };
       }
   }
+
+  return {
+    ...run,
+    currentState: {
+      ...run.currentState,
+      ships: shipsById
+    }
+  };
 }
 
 // Spawn a new merchant ship at this port's location.
 function spawnMerchant(id, size) {
-  thisMerchant = new MerchantShip(id, this.pos, size, this)
+  let thisMerchant = data.newMerchantShip(id, this.pos, size, this)
   return thisMerchant
 }
 
 // Spawn a new patrol ship at this port's location.
 function spawnPatrol(id, size) {
-  thisPatrol = new PatrolShip(id, this.pos, size, this)
+  let thisPatrol = data.newPatrolShip(id, this.pos, size, this)
   return thisPatrol
 }
 
 // Spawn a new pirate ship at this cove's location.
 function spawnPirate(id, size) {
-  thisPirate = new PirateShip(id, this.pos, size, this)
+  let thisPirate = data.newPirateShip(id, this.pos, size, this)
   return thisPirate
 }
 

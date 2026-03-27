@@ -1,5 +1,6 @@
 import { newConfig, newRun } from './classes.js';
 import { defaultRegions } from './regions.js';
+import { step } from './stateFunctions.js';
 import * as behaviors from './behaviors.js';
 
 function simStateReducer(state, action) {
@@ -107,8 +108,6 @@ function expandRun(runs, uuid) {
     run.uuid === uuid ? { ...run, expanded: true } : run
   );
 }
-
-function step() {}
 
 function buildNewRun() {
   const config = newConfig(

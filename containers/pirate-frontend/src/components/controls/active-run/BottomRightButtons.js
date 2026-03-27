@@ -60,7 +60,7 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
         <Button variant="primary" onClick={onPauseToggle}>
           {isRunning ? 'Pause' : 'Resume'}
         </Button>
-        <Button variant="secondary" onClick={onStep} disabled={isRunning}>
+        <Button variant="secondary" onClick={onStep} disabled={false}>
           Step
         </Button>
         <Button variant="warning" onClick={onSpeedChange}>
