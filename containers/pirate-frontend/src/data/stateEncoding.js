@@ -69,7 +69,7 @@ const DEFAULT_RUN_TEMPLATE = (() => {
 function diffRun(run) {
   const diff = { seed: run.seed };
   for (const [key, value] of Object.entries(run)) {
-    if (['uuid', 'seed'].includes(key)) continue;
+    if (['uuid', 'seed', 'currentState'].includes(key)) continue;
     if (JSON.stringify(value) !== JSON.stringify(DEFAULT_RUN_TEMPLATE[key])) {
       diff[key] = value;
     }
@@ -78,6 +78,9 @@ function diffRun(run) {
 }
 
 function applyRunDiff(diff) {
+  // TODO: Since currentState is excluded, applying the diff will eventually
+  // require "re-running" the run by stepping it a number of times equal to
+  // diff.steps || 0
   return { ...buildNewRun(), ...diff, uuid: crypto.randomUUID(), seed: diff.seed };
 }
 
