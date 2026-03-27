@@ -33,8 +33,8 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
   }
 
   const onStep = () => {
-    alert('This button is not yet implemented.');
-  }
+      modifySimState({ type: 'step-run', index: runID });
+    };
 
   const onSpeedChange = () => {
     alert('This button is not yet implemented.');

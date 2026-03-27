@@ -217,17 +217,25 @@ function step(run, timeStep = 1) {
     shipsById[id] = updatedShip;
   }
 
+  // this stuff broke ignore for now: 
 
-  shipsById = processShipSpawns(run, shipsById);
+  // shipsById = processShipSpawns(run, shipsById);
   
 
-  return {
+  /* return {
     ...run,
     currentState: {
       ...run.currentState,
       ships: shipsById
     }
-  };
+  }; */
+
+  // Sync top-level pos (ship.pos) with mover position (ship.mover.pos)
+  for (const [id, ship] of Object.entries(shipsById)) {
+    if (ship.mover?.kinematic?.pos) {
+      shipsById[id] = { ...ship, pos: ship.mover.kinematic.pos };
+      }
+  }
 }
 
 // Spawn a new merchant ship at this port's location.
@@ -276,4 +284,4 @@ function processShipSpawns(run, shipArr) {
   return updatedShipList;
 }
 
-export { step }
+export { step } 
