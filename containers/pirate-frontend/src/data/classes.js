@@ -65,7 +65,7 @@ function newPirateShip(startPos, size, homeCove) {
     }
   }
 
-  let ship = newShip("Pirate", startPos, size, sightRange, crewSize, armament, durability);
+  let ship = newShip("pirate", startPos, size, sightRange, crewSize, armament, durability);
   ship.heldSkiffs = heldSkiffs;
   ship.homeCove = homeCove; // Spawn point. PirateCove object expected.
   return ship;
@@ -114,7 +114,7 @@ function newPatrolShip(startPos, size, homePort) {
   }
 
   // Call super with the inferred size-specific stats
-  let ship = newShip("Patrol", startPos, size, sightRange, crewSize, armament, durability)
+  let ship = newShip("patrol", startPos, size, sightRange, crewSize, armament, durability)
   ship.carriedSmallPatrols = carriedSmallPatrols      
   ship.homePort = homePort // Spawn point / "Point A" in this ship's trade route. Port object expected
   return ship;
@@ -133,7 +133,7 @@ function newMerchantShip(startPos, size, homePort) {
 
   // switch/if-else statement here for sizes if last comment is correct
 
-  let ship = newShip("Merchant", startPos, size, sightRange, crewSize, armament, durability);
+  let ship = newShip("merchant", startPos, size, sightRange, crewSize, armament, durability);
   ship.homePort = homePort; // Spawn point / "Point A" of patrol path. Port object expected.
   return ship;
 }
@@ -172,7 +172,7 @@ function newPoint(name, pointType, pointPos) {
  */
 function newPort(name, portPos, merchantSpawnChance, toPorts, fromPorts)
 {
-  let point = newPoint(name, "Port", portPos)
+  let point = newPoint(name, "port", portPos)
 
   // Probability at each step that this Port spawns a brand new Merchant
   // (NOTE: merchant count should not exceed a certain maximum)
@@ -191,7 +191,7 @@ function newPort(name, portPos, merchantSpawnChance, toPorts, fromPorts)
  * Pirates emerge. */
 function newPirateCove(name, covePos, pirateSpawnChance)
 {
-  let point = newPoint(name, "PirateCove", covePos)
+  let point = newPoint(name, "pirateCove", covePos)
 
   // Probability at each step that this Cove spawns a new Pirate 
   // (NOTE: pirate count should not exceed a certain maximum)

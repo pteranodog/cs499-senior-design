@@ -24,19 +24,19 @@ function checkForIdleTransition(thisShip, thisId, shipsById) { // return updated
 
   switch (thisShip.type) {
 
-    case "Patrol": // What should Idle Patrol ships check for?
+    case "patrol": // What should Idle Patrol ships check for?
       for (const otherShip of otherShips) { // Check out every other ship
         if (!canSee(updatedShip, otherShip)) continue; // If I can't see this ship, disregard it
-        if (otherShip.type === "Pirate") {
+        if (otherShip.type === "pirate") {
           updatedShip = { ...updatedShip, state: 2 }; // Pursue pirates
         }
       }
       break;
 
-    case "Pirate": // What should Idle Pirate ships check for?
+    case "pirate": // What should Idle Pirate ships check for?
       for (const otherShip of otherShips) { // Check out every other ship
         if (!canSee(updatedShip, otherShip)) continue; // If I can't see this ship, disregard it
-        if (otherShip.type === "Merchant") { // Pursue merchants
+        if (otherShip.type === "merchant") { // Pursue merchants
           updatedShip = {
             ...updatedShip,
             state: 2,
@@ -47,7 +47,7 @@ function checkForIdleTransition(thisShip, thisId, shipsById) { // return updated
               1
             )
           };
-        } else if (otherShip.type === "Patrol") { // Flee from patrols
+        } else if (otherShip.type === "patrol") { // Flee from patrols
           updatedShip = {
             ...updatedShip,
             state: 3,
@@ -61,10 +61,10 @@ function checkForIdleTransition(thisShip, thisId, shipsById) { // return updated
       }
       break;
 
-    case "Merchant": // What should Idle Merchant ships check for?
+    case "merchant": // What should Idle Merchant ships check for?
       for (const otherShip of otherShips) { // Check out every other ship
         if (!canSee(updatedShip, otherShip)) continue; // If I can't see this ship, disregard it
-        if (otherShip.type === "Pirate") {
+        if (otherShip.type === "pirate") {
           updatedShip = { ...updatedShip, state: 3 };
         }
       }

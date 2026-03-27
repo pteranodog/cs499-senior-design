@@ -133,24 +133,24 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
   for (const point of Object.values(region.points)) {
     const pos = point.pos; // for now, lat/lon; may not need cartesial after all?
  
-    if (point.type === 'Port') {
+    if (point.type === 'port') {
       // Merchants spawn from ports
       if (Math.random() < merchantChance) { // TODO: seed!
         const id = crypto.randomUUID();
-        ships[id] = buildShipWithMover('Merchant', pos, 'medium');
+        ships[id] = buildShipWithMover('merchant', pos, 'medium');
       }
       // Patrols also base out of ports 
       if (Math.random() < patrolChance) { // TODO: seed!
         const id = crypto.randomUUID(); 
-        ships[id] = buildShipWithMover('Patrol', pos, 'medium');
+        ships[id] = buildShipWithMover('patrol', pos, 'medium');
       }
     }
  
-    if (point.type === 'PirateCove') {
+    if (point.type === 'pirateCove') {
       // Pirates spawn from coves
       if (Math.random() < pirateChance) { // TODO: seed!
         const id = crypto.randomUUID();
-        ships[id] = buildShipWithMover('Pirate', pos, 'small');
+        ships[id] = buildShipWithMover('pirate', pos, 'small');
       }
     }
   }
@@ -167,9 +167,9 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
 function buildShipWithMover(type, pos, size) { // Construct a ship AND attach a mover object 
   // Predefined, constant state of our ship types. May need balancing!!
   const stats = {
-    Merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1, maxSpeed: 10 },
-    Pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10, maxSpeed: 10 },
-    Patrol:   { crewSize: 10, durability: 20, armament: 60, sightRange: 2,  maxSpeed: 10 },
+    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1, maxSpeed: 10 },
+    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10, maxSpeed: 10 },
+    patrol:   { crewSize: 10, durability: 20, armament: 60, sightRange: 2,  maxSpeed: 10 },
   }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1, maxSpeed: 5 };
  
   // Build the kinematic: ships start stationary at their spawn point
