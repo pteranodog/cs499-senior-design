@@ -66,11 +66,10 @@ function loadRun(state, filePath) {
 
 function deleteRun(state, index) {
   const deletedRun = state.runs[index];
-  const newRuns = collapseAll(state.runs.toSpliced(index, 1));
-  const fallback = newRuns[index - 1] ?? newRuns[0];
+  const newRuns = state.runs.toSpliced(index, 1);
   const newDisplay = { type: 'region', index: deletedRun.regionId };
-  const finalRuns = fallback
-    ? expandRun(newRuns, fallback.uuid)
+  const finalRuns = deletedRun.expanded
+    ? expandRun(collapseAll(newRuns), (newRuns[index - 1] ?? newRuns[0])?.uuid)
     : newRuns;
   return { ...state, runs: finalRuns, display: newDisplay, controls: { ...state.controls } };
 }

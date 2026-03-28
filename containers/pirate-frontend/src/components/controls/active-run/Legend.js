@@ -16,7 +16,7 @@ export default function Legend() {
       style={{
         position: 'absolute',
         bottom: 16,
-        left: 16,
+        left: 12,
         zIndex: 1000,
         minWidth: '160px',
       }}

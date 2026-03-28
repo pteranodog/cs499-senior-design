@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 function formatSimulatedClock(startHour, startMinute) {
   const hour = Number(startHour);
   const minute = Number(startMinute);
@@ -20,8 +18,6 @@ function getTimeOfDay(startHour) {
 }
 
 export default function StatusDisplay({ simState, runID }) {
-  const [minimized, setMinimized] = useState(false);
-
   const run = typeof runID === 'number'
     ? simState?.runs?.[runID]
     : simState?.runs?.find((candidate) => candidate?.uuid === runID);
@@ -41,10 +37,10 @@ export default function StatusDisplay({ simState, runID }) {
       onClick={(e) => e.stopPropagation()}
       style={{
         position: 'absolute',
-        top: 16,
-        left: 44,
+        top: 84,
+        left: 12,
         zIndex: 1000,
-        minWidth: minimized ? 160 : 260,
+        minWidth: 260,
         borderRadius: 12,
         padding: '0.75rem 0.9rem',
         backgroundColor,
@@ -56,44 +52,25 @@ export default function StatusDisplay({ simState, runID }) {
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
           gap: '0.75rem',
         }}
       >
         <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.04em', color: secondaryColor }}>
           STATUS
         </div>
-        <button
-          type="button"
-          onClick={() => setMinimized((prev) => !prev)}
-          aria-label={minimized ? 'Expand status display' : 'Minimize status display'}
-          style={{
-            border: 'none',
-            background: 'transparent',
-            color: textColor,
-            cursor: 'pointer',
-            fontSize: '0.95rem',
-            lineHeight: 1,
-            padding: 0,
-          }}
-        >
-          {minimized ? '\u25BC' : '\u25B2'}
-        </button>
       </div>
 
-      {!minimized && (
-        <div style={{ marginTop: '0.35rem' }}>
-          <div><strong>Sim Name:</strong> {run.name || 'n/a'}</div>
-          <div><strong>Sim Clock:</strong> {formatSimulatedClock(run.startHour, run.startMinute)}</div>
-          <div><strong>Mode:</strong> {timeOfDay}</div>
-          <div><strong>Duration:</strong> {run.duration || 0} minutes</div>
-          <div><strong>Region:</strong> {region?.name || 'n/a'}</div>
-          <div><strong>Weather:</strong> {run.weatherType || 'n/a'}</div>
-          <div><strong>Merchant Presence:</strong> {run.maxMerchants ?? 0}%</div>
-          <div><strong>Pirate Presence:</strong> {run.maxPirates ?? 0}%</div>
-          <div><strong>Security Presence:</strong> {run.maxPatrols ?? 0}%</div>
-        </div>
-      )}
+      <div style={{ marginTop: '0.35rem' }}>
+        <div><strong>Sim Name:</strong> {run.name || 'n/a'}</div>
+        <div><strong>Sim Clock:</strong> {formatSimulatedClock(run.startHour, run.startMinute)}</div>
+        <div><strong>Mode:</strong> {timeOfDay}</div>
+        <div><strong>Duration:</strong> {run.duration || 0} minutes</div>
+        <div><strong>Region:</strong> {region?.name || 'n/a'}</div>
+        <div><strong>Weather:</strong> {run.weatherType || 'n/a'}</div>
+        <div><strong>Merchant Presence:</strong> {run.maxMerchants ?? 0}%</div>
+        <div><strong>Pirate Presence:</strong> {run.maxPirates ?? 0}%</div>
+        <div><strong>Security Presence:</strong> {run.maxPatrols ?? 0}%</div>
+      </div>
     </div>
   );
 }

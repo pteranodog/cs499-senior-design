@@ -1,10 +1,6 @@
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useState, useReducer, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
-import { simulationPointsToLeaflet } from '../utils/coords';
-import Controls from './controls/Controls';
-import ShipIcons from './render/ShipIcons.js';
-import PointIcons from './render/PointIcons.js';
+import { useEffect, useReducer } from 'react';
+import { MapContainer, useMap } from 'react-leaflet';
 import { simStateReducer, appStartState } from '../data/reducer.js';
 import ControlsLayer from './controls/ControlsLayer';
 import RenderMap from './render/RenderMap.js';
@@ -132,7 +128,7 @@ function MapResizeHandler({ controlsType }) {
   const map = useMap();
   useEffect(() => {
     setTimeout(() => map.invalidateSize(), 10); // Change if we add a transition effect
-  }, [controlsType]);
+  }, [controlsType, map]);
   return null;
 }
 
@@ -145,6 +141,7 @@ const NIGHT_TILE_ATTRIBUTION = '&copy; <a href="https://stadiamaps.com">Stadia M
 
 function PirateMap() {
   const [simState, modifySimState] = useReducer(simStateReducer, {}, () => loadStateFromUrl() ?? appStartState());
+  const controlsHasSidePanel = simState.controls.type === 'list-runs' || simState.controls.type === 'end-run';
   //const [startCenterPoint, setStartCenterPoint] = useState(null);
   //const [simulationConfig, setSimulationConfig] = useState(null);
   //const [simulationTimeMinutes, setSimulationTimeMinutes] = useState(12 * 60); // 24h clock simulation time in minutes
@@ -250,8 +247,8 @@ function PirateMap() {
       <div style={{
         position: 'absolute',
         top: 0,
-        left: simState.controls.type === 'list-runs' ? '600px' : '0',
-        width: simState.controls.type === 'list-runs' ? 'calc(100% - 600px)' : '100%',
+        left: controlsHasSidePanel ? '600px' : '0',
+        width: controlsHasSidePanel ? 'calc(100% - 600px)' : '100%',
         height: '100%',
       }}>
         <MapContainer

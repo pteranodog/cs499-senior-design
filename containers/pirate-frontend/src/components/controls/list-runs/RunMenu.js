@@ -48,10 +48,10 @@ export default function RunMenu ({ simState, modifySimState }) {
   }
 
   useEffect(() => {
-    const key = simState.controls.selectedRun;
-    if (!key) return;
+    const expandedRun = simState.runs.find(r => r.expanded);
+    if (!expandedRun) return;
     setTimeout(() => {
-      const item = itemRefs.current[key];
+      const item = itemRefs.current[expandedRun.uuid];
       const container = scrollRef.current;
       if (!item || !container) return;
       const itemTop = item.offsetTop;
@@ -64,7 +64,7 @@ export default function RunMenu ({ simState, modifySimState }) {
         container.scrollTo({ top: itemTop, behavior: 'smooth' });
       }
     }, 350);
-  }, [simState.controls.selectedRun]);
+  }, [simState.runs]);
 
   return (
     <div
