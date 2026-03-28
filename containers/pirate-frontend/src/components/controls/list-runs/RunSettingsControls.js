@@ -51,6 +51,7 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
         <Form.Select size="sm" className="bg-dark text-light border-secondary"
           value={runSettings.regionId}
           onChange={(e) => modifyRegion(e.target.value)}
+          data-testid="region-select"
         >
           {Object.entries(regions || {}).map(([regionId, region]) => (
             <option key={regionId} value={regionId}>{region.name}</option>
@@ -62,6 +63,7 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
         <Form.Select size="sm" className="bg-dark text-light border-secondary"
           value={runSettings.weatherType}
           onChange={(e) => modifyRun('weatherType', e.target.value)}
+          data-testid="weather"
         >
           <option value="clear">Clear</option>
           <option value="storm">Storm</option>

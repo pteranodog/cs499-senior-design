@@ -76,6 +76,7 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
           <div className="d-flex align-items-center gap-2 flex-fill me-2">
             <Form.Control
               size="sm" type="text" placeholder="Simulation Name"
+              data-testid="simulation-name"
               className="border-secondary text-light"
               style={{ width: '50%', backgroundColor: 'var(--bs-gray-900)' }}
               value={runSettings.name}
