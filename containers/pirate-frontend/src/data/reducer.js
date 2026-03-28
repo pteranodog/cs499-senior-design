@@ -26,6 +26,9 @@ function simStateReducer(state, action) {
       return duplicateRun(state, action.index);
     case 'select-run':
       return { ...state, runs: expandRun(state.runs, action.run) };
+    case 'compare-runs':
+      return { ...state, display: { type: 'run', index: action.runA },
+        controls: { type: 'compare-runs', runA: action.runA, runB: action.runB }};
     case 'view-run-list':
       return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'list-runs' }};
     case 'view-run-controls':

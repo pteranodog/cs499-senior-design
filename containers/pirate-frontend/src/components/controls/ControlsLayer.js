@@ -1,6 +1,7 @@
 import RunMenu from './list-runs/RunMenu';
 import RunControls from './active-run/RunControls';
 import SimEndControls from './end-run/SimEndControls';
+import CompareControls from './compare-runs/CompareControls';
 
 export default function ControlsLayer({ simState, modifySimState }) {
   const { type, index } = simState.controls;
@@ -13,6 +14,9 @@ export default function ControlsLayer({ simState, modifySimState }) {
   }
   if (type === 'end-run') {
     return <SimEndControls simState={simState} modifySimState={modifySimState} runID={index} />;
+  }
+  if (type === 'compare-runs') {
+    return <CompareControls simState={simState} modifySimState={modifySimState} />;
   }
 
   return null;

@@ -9,12 +9,15 @@ import { exportRunAsJson } from '../../../utils/fileInputOutput';
 
 const RunSettings = forwardRef(function RunSettings({ runID, runSettings, regions, allowSelect, modifySimState }, ref) {
   const canBeEdited = (runSettings.status ?? 'new') === 'new' && !runSettings.selected;
-  let disallowedEditingReason = "";
+  let disallowedEditingWarning = "";
   if (runSettings.selected) {
-    disallowedEditingReason = "Settings are locked while this run is selected. Deselect this run to modify it!";
+    disallowedEditingWarning = "Settings are locked while this run is selected. Deselect this run to modify it!";
   }
   if (!((runSettings.status ?? 'new') === 'new')) {
-    disallowedEditingReason = "Settings are locked once a run has started. Duplicate this run to try different settings!";
+    disallowedEditingWarning = "Settings are locked once a run has started. Duplicate this run to try different settings!";
+  }
+  if (runSettings.status === "terminated-before-natural-completion") {
+    disallowedEditingWarning = "This run has ended. Duplicate this run to try different settings!";
   }
   const [shiftHeld, setShiftHeld] = useState(false);
 
@@ -103,7 +106,7 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
           <div className="d-flex flex-column gap-2">
             {canBeEdited
               ? <RunSettingsControls runSettings={runSettings} regions={regions} modifyRun={modifyRun} modifyRatios={modifyRatios} modifyRegion={modifyRegion} />
-              : <RunSettingsSummary  runSettings={runSettings} regions={regions} reason={disallowedEditingReason} />
+              : <RunSettingsSummary  runSettings={runSettings} regions={regions} warning={disallowedEditingWarning} />
             }
             <ButtonGroup className="d-flex mt-1">
               <Button variant="outline-primary" size="sm" className="flex-fill"
