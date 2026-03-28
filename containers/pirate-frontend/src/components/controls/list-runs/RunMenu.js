@@ -50,7 +50,11 @@ export default function RunMenu ({ simState, modifySimState }) {
         modifySimState({ type: 'view-run-end', run: runIndex });
       }
     } else if (selectedCount === 2) {
-      alert("UNIMPLEMENTED");
+      const [runA, runB] = simState.runs
+      .map((r, i) => ({ r, i }))
+      .filter(({ r }) => r.selected)
+      .map(({ i }) => i);
+      modifySimState({ type: 'compare-runs', runA, runB });
     } else {
       console.warn("Should be unable to click this button (>2 selected)");
     }

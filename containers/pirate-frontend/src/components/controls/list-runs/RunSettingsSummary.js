@@ -1,4 +1,4 @@
-export default function RunSettingsSummary({ runSettings, regions, reason }) {
+export default function RunSettingsSummary({ runSettings, regions, warning }) {
   const region = (regions || {})[runSettings.regionId];
 
   return (
@@ -30,9 +30,10 @@ export default function RunSettingsSummary({ runSettings, regions, reason }) {
         ))}
       </div>
 
-      <div className="alert alert-warning py-1 px-2 small mb-0">
-        ⚠️ {reason}
+      {warning && <div className="alert alert-warning py-1 px-2 small mb-0">
+        ⚠️ {warning}
       </div>
+      }
     </div>
   );
 }
