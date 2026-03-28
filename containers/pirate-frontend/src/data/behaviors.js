@@ -87,26 +87,34 @@ function newMover(initialKinematic, acceleration, maxSpeed, behavior) { // retur
 
 }
 
-function updateMover(mover, steering, maxSpeed, time) { // returns an updated version of a mover object; advances its movement based on other args
-    let updatedMover = JSON.parse(JSON.stringify(mover)); // copy mover
-    updatedMover.kinematic.pos = add(updatedMover.kinematic.pos, scalarMult(updatedMover.kinematic.velocity, time)); // advance position according to velocity
-        updatedMover.kinematic.orientation += updatedMover.kinematic.rotation * time; // change orientation according to rotation
+function updateMover(mover, steering, maxSpeed, time) {
+    // Compute new kinematic values
+    let newPos = add(mover.kinematic.pos, scalarMult(mover.kinematic.velocity, time));
+    let newOrientation = mover.kinematic.orientation + mover.kinematic.rotation * time;
+    let newVelocity = add(mover.kinematic.velocity, scalarMult(steering.linear, time));
+    let newRotation = mover.kinematic.rotation + steering.angular * time;
 
-        updatedMover.kinematic.velocity = add(updatedMover.kinematic.velocity, scalarMult(steering.linear,time)); // increase velocity according to acceleration
-        updatedMover.kinematic.rotation += steering.angular * time; // increase rotation according to angular acceleration
+    // Clamp velocity if over maxSpeed
+    if (getLength(newVelocity) > maxSpeed) {
+        newVelocity = scalarMult(normalize(newVelocity), maxSpeed);
+    }
 
-        updatedMover.acceleration = steering.linear; // update this movers own acceleration value
-
-        if (getLength(updatedMover.kinematic.velocity) > maxSpeed) { // is this mover going above their max speed?
-            updatedMover.kinematic.velocity = normalize(updatedMover.kinematic.velocity);
-            updatedMover.kinematic.velocity = scalarMult(updatedMover.kinematic.velocity, maxSpeed); // if so, return to max speed
-        }
-    return updatedMover;
+    // construct new mover object
+    return {
+        ...mover,
+        kinematic: {
+            pos: newPos,
+            orientation: newOrientation,
+            velocity: newVelocity,
+            rotation: newRotation
+        },
+        acceleration: steering.linear
+    };
 }
-
 function newContinue(k1) { // behavior obj; a mover keeping its current trajectory; no change in orientation or velocity
     return {
-        k1 : k1 // k1 = character to continue
+        k1 : k1, // k1 = character to continue
+        type: "continue"
     }
 }
 
@@ -120,7 +128,8 @@ function newSeek(k1, k2, maxAcceleration) { // Mover advances directly towards a
     return {
         k1: k1,
         k2: k2,
-        maxAcceleration: maxAcceleration
+        maxAcceleration: maxAcceleration,
+        type: "seek"
     }
 }
 
@@ -142,7 +151,8 @@ function newFlee(k1, k2, maxAcceleration) { // Mover travels directly away from 
     return { // identify which mover is fleeing from which
         k1 : k1, // k1 = mover that will be fleeing
         k2 : k2, // k2 = target (mover being fled from)
-        maxAcceleration : maxAcceleration
+        maxAcceleration : maxAcceleration,
+        type: "flee"
     }
 }
 
@@ -167,7 +177,8 @@ function newArrive(k1, k2, maxAcceleration, maxSpeed, targetRadius, slowRadius) 
         maxSpeed : maxSpeed,
         targetRadius : targetRadius,
         slowRadius : slowRadius,
-        timeToTarget : 0.1
+        timeToTarget : 0.1,
+        type: "arrive"
     }
 }
 
@@ -179,21 +190,23 @@ function getArriveSteering(arriveBheavior) {
     let direction = subtract(arriveBheavior.k2.pos,arriveBheavior.k1.pos); // get difference between target pos and pos of mover we want to steer; this time, save separately as a direction
     let distance = getLength(direction); // save distance between the two
         
-    if (distance < arriveBheavior.targetRadius) { // has this mover reached its target?
-        arriveBheavior.k1.isCollided = true;
+    if (distance < arriveBheavior.targetRadius) { // has this mover reached its target? 
         return newSteeringOutput([0,0], 0); // if so, no need to steer; return a 0 steering output
     }
+
+    let targetSpeed; // changed to compute locally instead of storing on behavior
+
     if (distance > arriveBheavior.slowRadius) { // is this mover far away enough from its target that it doesn't need to start slowing down (to prevent overshot)?
-        arriveBheavior.targetSpeed = arriveBheavior.maxSpeed; // if so, stay at max speed
+        targetSpeed = arriveBheavior.maxSpeed; // if so, stay at max speed
     }
     else { // if not, slow down:
-        arriveBheavior.targetSpeed = arriveBheavior.maxSpeed * (distance / arriveBheavior.slowRadius);
+        targetSpeed = arriveBheavior.maxSpeed * (distance / arriveBheavior.slowRadius);
     }
 
     // combine the direction of the difference in position with the speed obtained from the logic above to obtain a new velocity 
     let targetVelocity = direction;
     targetVelocity = normalize(targetVelocity);
-    targetVelocity = scalarMult(targetVelocity, arriveBheavior.targetSpeed);
+    targetVelocity = scalarMult(targetVelocity, targetSpeed);
 
     // finally, use this new velocity and the given time to get the new acceleration
     linear = subtract(targetVelocity, arriveBheavior.k1.velocity);
@@ -212,6 +225,7 @@ function getArriveSteering(arriveBheavior) {
 function newPursue (k1, k2, maxAcceleration, maxPrediction) { //extends Seek  // Similar to seek, except predicts where target is going and sends the subject mover towards that point
     // REMINDER: k1 is the pursuer, k2 is the target (via Seek implementation)
     let result = newSeek(k1, k2, maxAcceleration);
+    result.type = "flee"; // override type
     // Make new target obj to override Seek's with later
     let pursuedTarget = {
             pos: [0,0],
@@ -223,41 +237,40 @@ function newPursue (k1, k2, maxAcceleration, maxPrediction) { //extends Seek  //
 }
 
 
-// NOTE: in the OO version of this getSteering i did some strange mutations that I more or less kept; this could be a source of error later on
 function getPursueSteering(pursueBehavior) {
-    // First, modify target data to be a prediction
-        let direction = subtract(pursueBehavior.k2.pos, pursueBehavior.k1.pos);
-        let distance = getLength(direction);
+    // First, compute target data as a prediction
+    let direction = subtract(pursueBehavior.k2.pos, pursueBehavior.k1.pos);
+    let distance = getLength(direction);
 
-        pursueBehavior.pursuedTarget = { // init target that will override Seek's target (basically dummy object to hold predicted pos)
-            pos: [0,0]
-        }
+    let speed = getLength(pursueBehavior.k1.velocity); // record subject mover's current speed
+    let prediction; // init here so it can be modified from within if-else
 
-        let speed = getLength(pursueBehavior.k1.velocity) // record subject mover's current speed
-        let prediction // init here so it can be modified from within if-else
+    // Is that speed too slow for a reasonable prediction?
+    if (speed <= distance / pursueBehavior.maxPrediction) {
+        prediction = pursueBehavior.maxPrediction; // if so, look as far ahead as possible
+    }
+    else {
+        prediction = distance / speed; // otherwise calculate prediction time normally
+    }
 
-        // Is that speed too slow for a reasonable prediction?
-        if (speed <= distance / pursueBehavior.maxPrediction) {
-            prediction = pursueBehavior.maxPrediction; // if so, look as far ahead as possible
-        }
-        else {
-            prediction = distance / speed; // otherwise calculate prediction time normally
-        }
+    // now get predicted position 
+    let predictedPos = add(pursueBehavior.k2.pos, scalarMult(pursueBehavior.k2.velocity, prediction));
 
-        // now get predicted position 
-        pursueBehavior.predictedPos = add(pursueBehavior.k2.pos, scalarMult(pursueBehavior.k2.velocity, prediction));
+    // finally, construct a temporary target object
+    let pursuedTarget = {
+        pos: predictedPos
+    };
 
-        // finally, set the fields accordingly
-        pursueBehavior.pursuedTarget.pos = pursueBehavior.predictedPos;
-        pursueBehavior.temp = pursueBehavior.k2;
-        pursueBehavior.k2 = pursueBehavior.pursuedTarget; // switch to new target obj so Seek can do the rest of the steering work
+    // create a temporary behavior object for Seek to make steering with
+    let tempSeek = {
+        k1: pursueBehavior.k1,
+        k2: pursuedTarget,
+        maxAcceleration: pursueBehavior.maxAcceleration
+    };
 
-
-
-        let result = getSeekSteering(pursueBehavior);
-        pursueBehavior.k2 = pursueBehavior.temp; // restore true target
+    let result = getSeekSteering(tempSeek);
         
-        return result;
+    return result;
 }
 
 
@@ -284,7 +297,8 @@ function newAlign(k1, k2, maxAngularAcc, maxRotation, slowThreshold, targetThres
         targetThreshold : targetThreshold, // When the focused mover's orientation is within this many rads of the target's, stop rotating entirely
         // NOTE ABOUT THRESHOLD VALUES: These are important for making the behaviors "smooth"; my advice is to not make targetThreshold <0.2 and
         // not to make slowThreshold <0.5. Their stability also depends on rotation speed/ acc; so be careful w/ those values too
-        timeToTarget : 0.4 // Time over which to achieve target orientation (NOTE: could need tweaked/ made variable?)
+        timeToTarget : 0.4, // Time over which to achieve target orientation (NOTE: could need tweaked/ made variable?)
+        type: "flee"
     }
 }
 
@@ -295,15 +309,15 @@ function getAlignSteering(alignBehavior) {
 
     // Get the naïve rotation to match the target
     let rotation = alignBehavior.k2.orientation - alignBehavior.k1.orientation;
-    // Clamp to [-pi, pi] 
+
+    // Clamp to [-pi, pi]
     rotation = clampOreintation(rotation);
     let rotationSize = Math.abs(rotation);
+
     // Test for arrival
     if (rotationSize <= alignBehavior.targetThreshold) {
         angular = 0;
         linear = [0, 0];
-        alignBehavior.k1.orientation = alignBehavior.k2.orientation; // this is a sort of band-aid fix for overshooting
-        alignBehavior.k1.rotation = 0; // this is (also) a sort of band-aid fix for overshooting;
         return newSteeringOutput(linear, angular);
     }
 
@@ -313,12 +327,15 @@ function getAlignSteering(alignBehavior) {
     if (rotationSize > alignBehavior.slowThreshold) {
         targetRotation = alignBehavior.maxRotation;
     }
-    else { // Between intervals, scale rotation to slow down
-        targetRotation = alignBehavior.maxRotation * rotationSize / alignBehavior.slowThreshold;
+    else {
+        targetRotation =
+            alignBehavior.maxRotation *
+            rotationSize /
+            alignBehavior.slowThreshold;
     }
     
     // make targetRotation combine speed and direction
-    targetRotation *= rotation/rotationSize;
+    targetRotation *= rotation / rotationSize;
 
     // Accelerate to target rotation
     angular = targetRotation - alignBehavior.k1.rotation;
@@ -327,8 +344,8 @@ function getAlignSteering(alignBehavior) {
     // Test for > max acceleration
     let angAcc = Math.abs(angular);
     if (angAcc > alignBehavior.maxAngularAcc) {
-        angular /= angAcc; // Set to magnitude 1, keeping sign
-        angular *= alignBehavior.maxAngularAcc; // Set back to max
+        angular /= angAcc;
+        angular *= alignBehavior.maxAngularAcc;
     }
 
     linear = [0,0];
@@ -338,26 +355,32 @@ function getAlignSteering(alignBehavior) {
 function newFace(k1, k2, maxAngularAcc, maxRotation, slowThreshold, targetThreshold) { // Face a mover towards another mover
     // We just need to change the target field after calling Align (because we want to face towards it, not align with its movement); all else stays the same
     // That is to say: constructor params serve the same prupose as they do in Align, so see Align's constructor for info on those
-    return newAlign(k1, k2, maxAngularAcc, maxRotation, slowThreshold, targetThreshold)
+    let result = newAlign(k1, k2, maxAngularAcc, maxRotation, slowThreshold, targetThreshold);
+    result.type = "face";
+    return result;
 }
 
 function getFaceSteering(faceBehavior) {
-    let direction = subtract(faceBehavior.k2.pos, faceBehavior.k1.pos); // Direction and distance vector between subject mover and target mover
+    // Compute direction vector from subject to target
+    let direction = subtract(faceBehavior.k2.pos, faceBehavior.k1.pos);
+    
     if (getLength(direction) == 0) {
-        return(newSteeringOutput([0,0], 0));
+        return newSteeringOutput([0,0], 0);
     }
 
+    // Compute desired orientation to face the target
     let targetOrientation = Math.atan2(direction[1], direction[0]);
 
-    let originalTargetOrientation = faceBehavior.k2.orientation;
-    faceBehavior.k2.orientation = targetOrientation;
+    // create a tempAlign behavior 
+    let alignCopy = {
+        ...faceBehavior, // copy all other behavior fields
+        k2: { ...faceBehavior.k2, orientation: targetOrientation } // BUT override orientation
+    };
 
-    let result = getAlignSteering(faceBehavior);
-
-    faceBehavior.k2.orientation = originalTargetOrientation;
-
-    return result;
+    // Let Align take it from here
+    return getAlignSteering(alignCopy);
 }
+
 function newWander(k1, maxAcceleration, maxAngularAcc, maxRotation, slowThreshold, targetThreshold, maxSpeed) {
     // note the lack of a target kinematic, since the "target" is a defined distance
     // Once more, see Align's constructor's comments for info on the constructor's args (maxSpeed included here since we introduce linear movement now)
@@ -368,6 +391,7 @@ function newWander(k1, maxAcceleration, maxAngularAcc, maxRotation, slowThreshol
     }
 
     let result = newFace(k1, target, maxAngularAcc, maxRotation, slowThreshold, targetThreshold);
+    result.type = "wander";
     result.maxSpeed = maxSpeed; // linear movement introduced, so a maximum speed is specified
 
     // NOTE: hardcoded values; normally they'd be set by args of the constructor but this behavior should be more consistent 
@@ -383,24 +407,59 @@ function newWander(k1, maxAcceleration, maxAngularAcc, maxRotation, slowThreshol
 
 function getWanderSteering(wanderBehavior) {
     // Update wander orientation
-    wanderBehavior.wanderOrientation += (Math.random() * 2 - 1) * wanderBehavior.wanderRate;
+    let wanderOrientation =
+        wanderBehavior.wanderOrientation +
+        (Math.random() * 2 - 1) * wanderBehavior.wanderRate;
     
     // Get the orientation we want to achieve
-    let targetOrientation = wanderBehavior.wanderOrientation + wanderBehavior.k1.orientation;
+    let targetOrientation =
+        wanderOrientation + wanderBehavior.k1.orientation;
 
-    // Calculate center of wander circle's pos (remember the k2 here is a self-provided, simplified, generic Object with pos/orientation properties)
-    wanderBehavior.k2.pos = add(wanderBehavior.k1.pos, scalarMult(orientationToVector(wanderBehavior.k1.orientation), wanderBehavior.wanderOffset))
+    // Calculate center of wander circle's pos
+    let center = add(
+        wanderBehavior.k1.pos,
+        scalarMult(
+            orientationToVector(wanderBehavior.k1.orientation),
+            wanderBehavior.wanderOffset
+        )
+    );
 
     // From there, find the target's location
-    wanderBehavior.k2.pos = add(wanderBehavior.k2.pos, scalarMult(orientationToVector(targetOrientation), wanderBehavior.wanderRadius));
+    let targetPos = add(
+        center,
+        scalarMult(
+            orientationToVector(targetOrientation),
+            wanderBehavior.wanderRadius
+        )
+    );
 
-    // Let Face take it from here
-    let result = getFaceSteering(wanderBehavior);
+    // create temp target for Face
+    let tempTarget = {
+        pos: targetPos,
+        orientation: 0
+    };
 
-    // Add linear acceleration to the result (since Face only returns angular)
-    result.linear = scalarMult(orientationToVector(wanderBehavior.k1.orientation), wanderBehavior.maxAcceleration);
-    wanderBehavior.k1.velocity = scalarMult(orientationToVector(wanderBehavior.k1.orientation),wanderBehavior.maxSpeed);
-    return result;
+    // add temp Face behavior input fields
+    let tempFaceBehavior = {
+        k1: wanderBehavior.k1,
+        k2: tempTarget,
+        maxAngularAcc: wanderBehavior.maxAngularAcc,
+        maxRotation: wanderBehavior.maxRotation,
+        slowThreshold: wanderBehavior.slowThreshold,
+        targetThreshold: wanderBehavior.targetThreshold,
+        timeToTarget: wanderBehavior.timeToTarget
+    };
+
+    // let Face compute angular steering
+    let faceResult = getFaceSteering(tempFaceBehavior);
+
+    // Add linear acceleration 
+    let linear = scalarMult(
+        orientationToVector(wanderBehavior.k1.orientation),
+        wanderBehavior.maxAcceleration
+    );
+
+    return newSteeringOutput(linear, faceResult.angular);
 }
     
 function newFollowPath(path, pathOffset, currentParam, k1, maxAcceleration) { // Advance a mover along a Path
@@ -411,21 +470,25 @@ function newFollowPath(path, pathOffset, currentParam, k1, maxAcceleration) { //
     result.pathOffset = pathOffset; // wait what does this do again im dumb
     result.currentParam = currentParam; // parametrized distance along the path, being "aimed at"
     result.maxAcceleration = maxAcceleration;
+    result.type = "followPath"
     return result;
 }
     
 function getFollowPathSteering(followPathBehavior) {
-    // find my path param
-    followPathBehavior.currentParam = getPathParam(followPathBehavior.path, followPathBehavior.k1.pos);
+    // compute updated path param
+    let currentParam = getPathParam(followPathBehavior.path, followPathBehavior.k1.pos);
+    let targetParam = currentParam + followPathBehavior.pathOffset;
+    let targetPos = getPathPosition(followPathBehavior.path, targetParam);
 
-    // offset: how far ahead (along path) to seek to?
-    followPathBehavior.targetParam = followPathBehavior.currentParam + followPathBehavior.pathOffset;
+    // create temp Seek object
+    let tempSeekBehavior = {
+        k1: followPathBehavior.k1,
+        k2: { ...followPathBehavior.k2, pos: targetPos }, // override pos only
+        maxAcceleration: followPathBehavior.maxAcceleration
+    };
 
-    // set actual target pos to the pos of the target path param
-    followPathBehavior.k2.pos = getPathPosition(followPathBehavior.path, followPathBehavior.targetParam);
-
-    // now get Seek's steering to steer towards that param pos ("my" position and target's position are now set)
-    return getSeekSteering(followPathBehavior);
+    // compute and return Seek steering
+    return getSeekSteering(tempSeekBehavior);
 }
 
 function newPath(points, id) {  // functions as the path data structure necessary to implement path following
@@ -439,18 +502,28 @@ function newPath(points, id) {  // functions as the path data structure necessar
     }
 }
         
-function assemblePath(path) { // NOTE: sort of breaks the rule of returning NEW data instead of modifiying existing, but paths are only modified once so i think this is fine
-    for (let i = 1; i < path.params.length; i++) { // find length of each segment
-        let thisSeg = subtract(path.points[i], path.points.at(i-1));
-        let thisSegLength = getLength(thisSeg);
-        path.distances[i] = thisSegLength + path.distances[i-1];
+function assemblePath(path) {
+    let distances = new Array(path.points.length).fill(0);
+    let params = new Array(path.points.length).fill(0);
+
+    for (let i = 1; i < path.points.length; i++) {
+        let seg = subtract(path.points[i], path.points[i - 1]);
+        let segLength = getLength(seg);
+        distances[i] = segLength + distances[i - 1];
     }
 
-    path.totalLength = path.distances.at(-1); // last member of distances holds total path distance
+    let totalLength = distances.at(-1);
 
-    for (let i = 1; i < path.params.length; i++) { // get parametrized lengths
-        path.params[i] = path.distances[i] / path.totalLength; // [0 - 1]
-    } 
+    for (let i = 1; i < path.points.length; i++) {
+        params[i] = distances[i] / totalLength;
+    }
+
+    return {
+        ...path,
+        distances: distances,
+        params: params,
+        totalLength: totalLength
+    };
 }
 
 function getPathParam(path, point) {
@@ -498,6 +571,31 @@ function getPathPosition(path, param) {
     return P;
 }
 
+function getSteering(behavior) {  // "Master" getSteering function to be called by step function, so it can just call this on every ship 
+    switch (behavior.type) {
+        case "seek":
+            return(getSeekSteering(behavior));
+        case "flee":
+            return(getFleeSteering(behavior));
+        case "arrive":
+            return(getArriveSteering(behavior));
+        case "face":
+            return(getFaceSteering(behavior));
+        case "align":
+            return(getAlignSteering(behavior));
+        case "wander":
+            return(getWanderSteering(behavior));
+        case "continue":
+            return(getContinueSteering(behavior));
+        case "followPath":
+            return(getFollowPathSteering(behavior));
+        case "pursue":
+            return(getPursueSteering(behavior))
+        default:
+            console.log("getSteering error: Unrecognized behavior. Returning default 0 steering")
+            return(newSteeringOutput([0,0],0))
+    }
+}
 // ============================= Export everything =============================
 // NOTE: import like this: 
 // import * as Behaviors from "../data/behaviors.js";
@@ -506,7 +604,5 @@ function getPathPosition(path, param) {
 // c = Behaviors.clampOreintation(...)
 
 export  {getLength, normalize, add, subtract, scalarMult, dotProduct, closestPointOnSegment, orientationToVector, clampOreintation, newMover, newKinematic, newSteeringOutput, newSeek, newFlee,
-    newArrive, newPursue, newPath, newFollowPath, newWander, newFace, newAlign, newContinue
-}
+    newArrive, newPursue, newPath, newFollowPath, newWander, newFace, newAlign, newContinue, updateMover, assemblePath, getSteering}
 
-console.log("hey");

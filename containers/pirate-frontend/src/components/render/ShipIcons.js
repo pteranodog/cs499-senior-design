@@ -7,8 +7,8 @@ function ShipIcons({ shipList }) {
         <ShipIcon
           key={ship.id || `${ship.type}-${index}-${ship.lat}-${ship.lon}`}
           type={ship.type}
-          lat={ship.lat}
-          lon={ship.lon}
+          lat={ship.pos[0]}
+          lon={ship.pos[1]}
         />
       ))}
     </>

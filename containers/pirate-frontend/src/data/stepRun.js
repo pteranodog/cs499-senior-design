@@ -1,3 +1,5 @@
+import { simState } from "./simState";
+
 function stepRun(state, runId) {
   newState = state;
   currentRun = state.runs.at(runId); // Started here
@@ -20,7 +22,7 @@ function stepRun(state, runId) {
 
 function releaseSkiff(id) {
   if (this.heldSkiffs) {    
-    releasedSkiff = new PirateShip(id, this.pos, "small")
+    let releasedSkiff = new PirateShip(id, this.pos, "small")
     this.crewSize -= 7
     this.heldSkiffs -= 1
     return this.releaseSkiff // Return this new ship so it can be added to the state data

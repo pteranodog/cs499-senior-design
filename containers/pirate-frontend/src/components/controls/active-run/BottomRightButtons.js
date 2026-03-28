@@ -31,8 +31,8 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
   }
 
   const onStep = () => {
-    alert('This button is not yet implemented.');
-  }
+      modifySimState({ type: 'step-run', index: runID });
+    };
 
   const onSpeedChange = () => {
     alert('This button is not yet implemented.');
@@ -58,7 +58,7 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
         <Button variant="primary" onClick={onPauseToggle}>
           {isRunning ? 'Resume' : 'Pause'}
         </Button>
-        <Button variant="secondary" onClick={onStep} disabled={isRunning}>
+        <Button variant="secondary" onClick={onStep} disabled={false}>
           Step
         </Button>
         <Button variant="warning" onClick={onSpeedChange}>
