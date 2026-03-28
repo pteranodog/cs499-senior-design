@@ -31,7 +31,7 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
     if (runSettings.selected) {
       modifySimState({ type: 'display-run', index: runID });
     }
-  }, [runSettings.selected])
+  }, [modifySimState, runID, runSettings.selected])
 
   const showSelectionButton = runSettings.selected || allowSelect;
 

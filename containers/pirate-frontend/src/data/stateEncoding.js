@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { strToU8, strFromU8, compressSync, decompressSync } from 'fflate';
 import { encode, decode } from '@msgpack/msgpack';
 import { defaultRegions } from './regions.js';
