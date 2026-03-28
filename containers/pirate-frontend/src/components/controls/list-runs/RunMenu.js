@@ -3,49 +3,58 @@ import Accordion from 'react-bootstrap/Accordion';
 import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import { useEffect, useRef } from 'react';
+import { readRunFile } from '../../../utils/fileInputOutput';
 
 export default function RunMenu ({ simState, modifySimState }) {
   const selectedRuns = (simState.runs || []).filter(r => r.selected);
   const selectedCount = selectedRuns.length;
   const selectedRegionIds = new Set(selectedRuns.map(r => r.regionId));
   const allowSelect = (run) => {
-    if (run.selected) return true; // always show button if already selected
+    if (run.selected) return true;
     if (selectedCount >= 2) return false;
     if (selectedCount === 0) return true;
     return selectedRegionIds.has(run.regionId);
   };
-  const selectionTextOptions = {
-    0: "No Selection",
-    1: "View",
-    2: "Compare"
-  };
-  const selectionColorOptions = {
-    0: 'secondary',
-    1: 'success',
-    2: 'warning'
-  }
+  const selectionTextOptions = { 0: "No Selection", 1: "View", 2: "Compare" };
+  const selectionColorOptions = { 0: 'secondary', 1: 'success', 2: 'warning' };
+  const createRunColorOptions = { 0: 'primary' };
   const selectionText = selectionTextOptions[selectedCount] || "Too Many Selections!";
   const selectionColor = selectionColorOptions[selectedCount] || 'danger';
+  const createRunColor = createRunColorOptions[selectedCount] || 'outline-primary';
   const scrollRef = useRef(null);
   const itemRefs = useRef({});
+  const fileInputRef = useRef(null);
 
   const handleToggle = (eventKey) => {
-    const newKey = simState.controls.selectedRun === eventKey ? null : eventKey;
+    const newKey = simState.runs.find(r => r.expanded)?.uuid === eventKey ? null : eventKey;
     modifySimState({ type: 'select-run', run: newKey });
+  };
+
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const run = await readRunFile(file);
+    modifySimState({ type: 'load-run', run });
+    e.target.value = null; // reset so the same file can be re-imported
   };
 
   const handleViewCompare = () => {
     if (selectedCount === 0) {
       console.warn("Should be unable to click this button (none selected)");
     } else if (selectedCount === 1) {
-      let runIndex = simState.runs.findIndex((item) => (item.selected === true));
-      modifySimState({ type: 'view-run-controls', run: runIndex});
+      const runIndex = simState.runs.findIndex((item) => item.selected === true);
+      const run = simState.runs[runIndex];
+      if (run.status === 'new') {
+        modifySimState({ type: 'view-run-controls', run: runIndex });
+      } else {
+        modifySimState({ type: 'view-run-end', run: runIndex });
+      }
     } else if (selectedCount === 2) {
       alert("UNIMPLEMENTED");
     } else {
-      console.warn("Should be unable to click this button (>2 selected)")
+      console.warn("Should be unable to click this button (>2 selected)");
     }
-  }
+  };
 
   useEffect(() => {
     const expandedRun = simState.runs.find(r => r.expanded);
@@ -80,6 +89,13 @@ export default function RunMenu ({ simState, modifySimState }) {
         flexDirection: 'column',
         padding: '4px',
       }}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        style={{ display: 'none' }}
+        onChange={handleImport}
+      />
       {simState.runs.length === 0 ? (
         <>
           <div className="alert alert-warning py-1 px-2 small mb-0">
@@ -108,11 +124,11 @@ export default function RunMenu ({ simState, modifySimState }) {
           </Accordion>
         )}
       <ButtonGroup className="d-flex w-100 mt-1">
-        <Button variant="outline-secondary" size="sm" className="flex-fill"
-          onClick={() => {alert("UNIMPLEMENTED")}}>
+        <Button variant="outline-info" size="sm" className="flex-fill"
+          onClick={() => fileInputRef.current.click()}>
           Import Run
         </Button>
-        <Button variant="outline-primary" size="sm" className="flex-fill"
+        <Button variant={createRunColor} size="sm" className="flex-fill"
           onClick={() => modifySimState({ type: 'create-run' })}>
           Create Run
         </Button>
