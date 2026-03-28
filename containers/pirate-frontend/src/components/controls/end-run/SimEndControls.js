@@ -1,52 +1,14 @@
 import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import FileInputDisplay from '../../../utils/fileInputDisplay';
-
-function formatClock(startHour, startMinute) {
-	const hour = Number(startHour);
-	const minute = Number(startMinute);
-
-	if (!Number.isFinite(hour) || !Number.isFinite(minute)) {
-		return '00:00';
-	}
-
-	return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-}
-
-function formatStatus(status) {
-	if (status === 'terminated-before-natural-completion') {
-		return 'Terminated Early';
-	}
-	if (!status) {
-		return 'Completed';
-	}
-	return status;
-}
-
-function createDownload(fileName, content, type) {
-	const blob = new Blob([content], { type });
-	const url = URL.createObjectURL(blob);
-	const anchor = document.createElement('a');
-	anchor.href = url;
-	anchor.download = fileName;
-	document.body.appendChild(anchor);
-	anchor.click();
-	document.body.removeChild(anchor);
-	URL.revokeObjectURL(url);
-}
-
-function csvRow(label, value) {
-	return `${label},${String(value ?? '').replace(/\n/g, ' ')}`;
-}
+import { exportRunAsJson, exportRunAsCsv, formatClock, formatStatus } from '../../../utils/fileInputOutput';
 
 export default function SimEndControls({ simState, modifySimState, runID }) {
 	const run = typeof runID === 'number'
 		? simState?.runs?.[runID]
 		: simState?.runs?.find((candidate) => candidate?.uuid === runID);
 
-	if (!run) {
-		return null;
-	}
+	if (!run) return null;
 
 	const region = simState?.regions?.[run.regionId];
 	const ships = Object.values(run?.currentState?.ships ?? {});
@@ -63,69 +25,6 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 		else if (type.includes('patrol')) acc.patrols += 1;
 		return acc;
 	}, { merchants: 0, pirates: 0, patrols: 0 });
-
-	const runPayload = {
-		simulationName: run.name,
-		status: run.status,
-		region: {
-			id: run.regionId,
-			name: region?.name ?? run.regionId,
-		},
-		config: {
-			seed: run.seed,
-			startTime: formatClock(run.startHour, run.startMinute),
-			durationMinutes: Number(run.duration ?? 0),
-			weatherType: run.weatherType,
-			maxMerchants: Number(run.maxMerchants ?? 0),
-			maxPirates: Number(run.maxPirates ?? 0),
-			maxPatrols: Number(run.maxPatrols ?? 0),
-		},
-		outcomes: {
-			captures,
-			rescues,
-			sinks,
-			activeShips: ships.length,
-			activeMerchants: shipCounts.merchants,
-			activePirates: shipCounts.pirates,
-			activePatrols: shipCounts.patrols,
-		},
-	};
-
-	const exportRun = (format = 'json') => {
-		const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-		const safeName = (run.name || 'simulation-run').trim().replace(/\s+/g, '-').toLowerCase();
-
-		if (format === 'json') {
-			createDownload(
-				`${safeName}-${timestamp}.json`,
-				JSON.stringify(runPayload, null, 2),
-				'application/json',
-			);
-			return;
-		}
-
-		const csv = [
-			csvRow('Simulation Name', run.name),
-			csvRow('Status', formatStatus(run.status)),
-			csvRow('Region', region?.name ?? run.regionId),
-			csvRow('Seed', run.seed),
-			csvRow('Start Time', formatClock(run.startHour, run.startMinute)),
-			csvRow('Duration (minutes)', Number(run.duration ?? 0)),
-			csvRow('Weather', run.weatherType),
-			csvRow('Max Merchants (%)', Number(run.maxMerchants ?? 0)),
-			csvRow('Max Pirates (%)', Number(run.maxPirates ?? 0)),
-			csvRow('Max Patrols (%)', Number(run.maxPatrols ?? 0)),
-			csvRow('Captures', captures),
-			csvRow('Rescues', rescues),
-			csvRow('Sinks', sinks),
-			csvRow('Active Ships', ships.length),
-			csvRow('Active Merchants', shipCounts.merchants),
-			csvRow('Active Pirates', shipCounts.pirates),
-			csvRow('Active Patrols', shipCounts.patrols),
-		].join('\n');
-
-		createDownload(`${safeName}-${timestamp}.csv`, csv, 'text/csv');
-	};
 
 	return (
 		<div
@@ -152,7 +51,7 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 			</div>
 
 			<div className="border border-secondary rounded p-3">
-				<h6 className="mb-2">SimStats</h6>
+				<h6 className="mb-2">Sim Stats</h6>
 				<div className="small d-flex flex-column gap-1">
 					<div><strong>Captures:</strong> {captures}</div>
 					<div><strong>Rescues:</strong> {rescues}</div>
@@ -165,23 +64,27 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 			</div>
 
 			<div className="border border-secondary rounded p-3">
-				<h6 className="mb-2">SaveRun</h6>
+				<h6 className="mb-2">Save Run</h6>
 				<div className="small mb-2">Export this run snapshot for later analysis or comparison.</div>
 				<ButtonGroup className="w-100">
-					<Button variant="success" onClick={() => exportRun('json')}>Export JSON</Button>
-					<Button variant="success" onClick={() => exportRun('csv')}>Export CSV</Button>
+					<Button variant="success" onClick={() => exportRunAsJson(run, region)}>Export JSON</Button>
+					<Button variant="success" onClick={() => exportRunAsCsv(run, region)}>Export CSV</Button>
 				</ButtonGroup>
 			</div>
 
-			<Button variant="primary" onClick={() => modifySimState({ type: 'view-run-controls', run: runID })}>
-				Back To Run Controls
+      {/* Since the user can't re-run an already-complete run, complete/terminated runs will probably
+        * only be able to be viewed in the "end-run" screen. Can discuss later.
+			<Button variant="secondary" onClick={() => modifySimState({ type: 'view-run-controls', run: runID })}>
+        View Run
+			</Button>
+      */}
+
+			<Button variant="primary" onClick={() => modifySimState({ type: 'view-run-list', run: runID })}>
+        View All Runs
 			</Button>
 
-			<Button variant="secondary" onClick={() => modifySimState({ type: 'view-run-list', run: runID })}>
-				Back To Run List
-			</Button>
-
-			<FileInputDisplay buttonLabel="Compare Simulations" buttonClassName="btn btn-outline-light" />
+      {/* Commented out because it's moving to the main screen when two runs are selected already */}
+      {/* <FileInputDisplay buttonLabel="Compare Simulations" buttonClassName="btn btn-outline-light" /> */}
 		</div>
 	);
 }

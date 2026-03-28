@@ -17,7 +17,7 @@ function simStateReducer(state, action) {
     case 'create-run':
       return createRun(state);
     case 'load-run':
-      return loadRun(state, action.filePath);
+      return loadRun(state, action.run);
     case 'modify-run':
       return { ...state, runs: state.runs.map((run, i) => i === action.index ? { ...run, [action.setting]: action.value } : run) };
     case 'delete-run':
@@ -61,9 +61,13 @@ function createRun(state) {
   };
 }
 
-function loadRun(state, filePath) {
-  // TODO: Load run
-  return state;
+function loadRun(state, run) {
+  const withExpanded = { ...run, expanded: true };
+  return {
+    ...state,
+    runs: [...collapseAll(state.runs), withExpanded],
+    controls: { ...state.controls },
+  };
 }
 
 function deleteRun(state, index) {

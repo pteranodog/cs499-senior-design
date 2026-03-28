@@ -5,6 +5,7 @@ import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import RunSettingsControls from './RunSettingsControls';
 import RunSettingsSummary from './RunSettingsSummary';
+import { exportRunAsJson } from '../../../utils/fileInputOutput';
 
 const RunSettings = forwardRef(function RunSettings({ runID, runSettings, regions, allowSelect, modifySimState }, ref) {
   const canBeEdited = (runSettings.status ?? 'new') === 'new' && !runSettings.selected;
@@ -109,9 +110,9 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
                 onClick={() => modifySimState({ type: 'duplicate-run', index: runID })}>
                 Duplicate
               </Button>
-              <Button variant="outline-secondary" size="sm" className="flex-fill"
-                onClick={() => {alert("UNIMPLEMENTED")}}>
-                Export
+              <Button variant="outline-info" size="sm" className="flex-fill"
+                onClick={() => exportRunAsJson(runSettings, regions?.[runSettings.regionId])}>
+                Export JSON
               </Button>
               <Button variant="outline-danger" size="sm" className="flex-fill"
                 onClick={() => modifySimState({ type: 'delete-run', index: runID })}>
