@@ -9,17 +9,18 @@ export default function RunControls({ simState, modifySimState, runID }) {
     const run = typeof runID === 'number'
         ? simState?.runs?.[runID]
         : simState?.runs?.find((candidate) => candidate?.uuid === runID);
+    const speed = run?.speed || 1;
 
     useEffect(() => {
-        if (run.status !== 'running') {
+        if (!run || run.status !== 'running') {
             return undefined;
         }
         const interval = setInterval(() => {
             modifySimState({ type: 'increment-run-time', index: runID, seconds: 1 });
-        }, 1000);
+        }, 1000 / speed);
 
     return () => clearInterval(interval);
-    }, [run.status, runID, modifySimState]);
+    }, [run, runID, modifySimState, speed]);
 
     if (!run) {
         return null;

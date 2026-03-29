@@ -11,6 +11,7 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
   }
 
   const modifyRun = (setting, value) => modifySimState({ type: 'modify-run', index: runID, setting, value });
+  const speed = run.speed || 1;
 
   const handleTerminate = () => {
     const confirmed = window.confirm(
@@ -45,11 +46,8 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
   }
 
   const onSpeedChange = () => {
-    alert('This button is not yet implemented.');
-  }
-
-  const speed = () => {
-    alert('This button is not yet implemented.');
+    const nextSpeed = speed === 1 ? 2 : speed === 2 ? 4 : 1;
+    modifyRun('speed', nextSpeed);
   }
 
 
