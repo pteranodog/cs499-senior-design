@@ -29,3 +29,20 @@ code {
 .accordion-item.run-item .accordion-button::after {
   filter: invert(1); /* makes the chevron visible on dark backgrounds */
 }
+
+.marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.marquee-content {
+  display: inline-block;
+  animation: marquee-scroll 10s linear infinite;
+}
+
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); } /* Moves halfway to show the duplicate */
+}
+

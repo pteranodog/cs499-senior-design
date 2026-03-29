@@ -23,7 +23,6 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
     }
 
     modifyRun('status', 'terminated-before-natural-completion');
-
     modifySimState({ type: 'view-run-end', run: runID });
 
   };
@@ -41,8 +40,8 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
   }
 
   const onStep = () => {
-    alert('This button is not yet implemented.');
-  }
+      modifySimState({ type: 'step-run', index: runID });
+    };
 
   const onSpeedChange = () => {
     const nextSpeed = speed === 1 ? 2 : speed === 2 ? 4 : 1;
@@ -64,7 +63,7 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
         <Button variant="primary" onClick={onPauseToggle}>
           {isNew ? 'Start' : isRunning ? 'Pause' : 'Resume'}
         </Button>
-        <Button variant="secondary" onClick={onStep} disabled={isRunning}>
+        <Button variant="secondary" onClick={onStep} disabled={false}>
           Step
         </Button>
         <Button variant="warning" onClick={onSpeedChange}>

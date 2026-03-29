@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { strToU8, strFromU8, compressSync, decompressSync } from 'fflate';
 import { encode, decode } from '@msgpack/msgpack';
 import { defaultRegions } from './regions.js';
@@ -9,6 +8,58 @@ import { buildNewRun } from './reducer.js';
 // If it's *still* too large, we can strip currentState entirely, remove status also,
 // and set status='new' on every run loaded from a URL.
 
+const minifyMap = {
+  runs: "r",
+  seed: "s",
+  display: "d",
+  controls: "c",
+  expanded: "e",
+  status: "st",
+  "terminated-before-natural-completion": "t",
+  weatherType: "w",
+  startHour: "h",
+  startMinute: "m",
+  duration: "z",
+  regionId: "i",
+  maxPirates: "mp",
+  maxMerchants: "mm",
+  maxPatrols: "mp",
+  index: "x",
+  type: "y",
+  selected: "l",
+  name: "n",
+  storm: "sm",
+  fog: "f",
+  "active-run": "a",
+  "end-run": "en",
+  region: "g",
+}
+const reverseMap = Object.fromEntries(Object.entries(minifyMap).map(a => [...a].reverse()));
+const excludedKeys = ["name"];
+
+function mapKeysAndValues(data, map, currentKey) {
+  // Handle Arrays
+  if (Array.isArray(data)) return data.map(v => mapKeysAndValues(v, map, currentKey));
+  
+  // Handle Objects
+  if (data && typeof data === 'object') {
+    return Object.entries(data).reduce((acc, [k, v]) => {
+      const targetKey = map[k] || k;
+      // Pass the *original* key name (from the mapping if unminifying) to the next call
+      const originalKey = reverseMap[k] || k; 
+      acc[targetKey] = mapKeysAndValues(v, map, originalKey);
+      return acc;
+    }, {});
+  }
+
+  // Handle Primitives: Skip mapping if the parent key is in the excluded list
+  if (excludedKeys.includes(currentKey)) return data;
+  return map[data] || data;
+};
+
+const minify = (data) => mapKeysAndValues(data, minifyMap);
+const unminify = (data) => mapKeysAndValues(data, reverseMap);
+
 const DEFAULT_RUN_TEMPLATE = (() => {
   const run = buildNewRun();
   return { ...run, seed: null };
@@ -17,7 +68,7 @@ const DEFAULT_RUN_TEMPLATE = (() => {
 function diffRun(run) {
   const diff = { seed: run.seed };
   for (const [key, value] of Object.entries(run)) {
-    if (['uuid', 'seed'].includes(key)) continue;
+    if (['uuid', 'seed', 'currentState'].includes(key)) continue;
     if (JSON.stringify(value) !== JSON.stringify(DEFAULT_RUN_TEMPLATE[key])) {
       diff[key] = value;
     }
@@ -26,7 +77,10 @@ function diffRun(run) {
 }
 
 function applyRunDiff(diff) {
-  return { ...buildNewRun(), ...diff, uuid: crypto.randomUUID(), seed: diff.seed, name: diff.name };
+  // TODO: Since currentState is excluded, applying the diff will eventually
+  // require "re-running" the run by stepping it a number of times equal to
+  // diff.steps || 0
+  return { ...buildNewRun(), ...diff, uuid: crypto.randomUUID(), seed: diff.seed };
 }
 
 const DEFAULT_APP_STATE = {
@@ -94,10 +148,12 @@ function buildDiff(simState) {
 export function encodeState(simState) {
   const diff = buildDiff(simState);
   if (Object.keys(diff).length === 0) return null;
-  console.log('encoding:', JSON.stringify(diff));
-  const bytes = encode(diff);
+  console.log('minifying:', JSON.stringify(diff));
+  const mini = minify(diff);
+  console.log('encoding:', JSON.stringify(mini));
+  const bytes = encode(mini);
   return ENCODERS
-    .map(enc => ({ param: enc.param, value: enc.encode(bytes, diff) }))
+    .map(enc => ({ param: enc.param, value: enc.encode(bytes, mini) }))
     .reduce((best, c) => c.value.length < best.value.length ? c : best);
 }
 
@@ -106,11 +162,12 @@ export function decodeState(param, encoded) {
     const encoder = ENCODERS.find(enc => enc.param === param);
     const bytes = encoder.decode(encoded);
     const parsed = decode(bytes);
+    const unminified = unminify(parsed);
     return {
       ...DEFAULT_APP_STATE,
-      ...parsed,
+      ...unminified,
       regions: defaultRegions(),
-      runs: (parsed.runs ?? []).map(applyRunDiff),
+      runs: (unminified.runs ?? []).map(applyRunDiff),
     };
   } catch (e) {
     console.warn('Failed to decode state from URL:', e);
