@@ -28,8 +28,16 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
 
   };
 
+  const isRunning = run.status === 'running';
+  const isNew = run.status === 'new';
+
   const onPauseToggle = () => {
-    alert('This button is not yet implemented.');
+    if (isNew) {
+      modifyRun('status', 'running');
+      return;
+    }
+
+    modifyRun('status', isRunning ? 'paused' : 'running');
   }
 
   const onStep = () => {
@@ -44,7 +52,6 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
     alert('This button is not yet implemented.');
   }
 
-  const isRunning = run.status === 'running';
 
   return (
     <div
@@ -58,7 +65,7 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
     >
       <ButtonGroup aria-label="Run controls">
         <Button variant="primary" onClick={onPauseToggle}>
-          {isRunning ? 'Resume' : 'Pause'}
+          {isNew ? 'Start' : isRunning ? 'Pause' : 'Resume'}
         </Button>
         <Button variant="secondary" onClick={onStep} disabled={isRunning}>
           Step
