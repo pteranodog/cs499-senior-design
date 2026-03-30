@@ -2,6 +2,7 @@ import { newConfig, newRun } from './classes.js';
 import { defaultRegions } from './regions.js';
 import { step } from './stateFunctions.js';
 import * as behaviors from './behaviors.js';
+import { latLngToCartesian } from '../utils/coords.js';
 
 function simStateReducer(state, action) {
   switch (action.type) {
@@ -144,12 +145,12 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
       // Merchants spawn from ports
       if (Math.random() < merchantChance) { // TODO: seed!
         const id = crypto.randomUUID();
-        ships[id] = buildShipWithMover('merchant', pos, 'medium');
+        ships[id] = buildShipWithMover('merchant', pos, 'medium', region.center);
       }
       // Patrols also base out of ports 
       if (Math.random() < patrolChance) { // TODO: seed!
         const id = crypto.randomUUID(); 
-        ships[id] = buildShipWithMover('patrol', pos, 'medium');
+        ships[id] = buildShipWithMover('patrol', pos, 'medium', region.center);
       }
     }
  
@@ -157,7 +158,7 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
       // Pirates spawn from coves
       if (Math.random() < pirateChance) { // TODO: seed!
         const id = crypto.randomUUID();
-        ships[id] = buildShipWithMover('pirate', pos, 'small');
+        ships[id] = buildShipWithMover('pirate', pos, 'small', region.center);
       }
     }
   }
@@ -171,17 +172,26 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
   };
 }
 
-function buildShipWithMover(type, pos, size) { // Construct a ship AND attach a mover object 
+// NEW: passing in region center for coord conversion
+function buildShipWithMover(type, pos, size, regionCenter) { // Construct a ship AND attach a mover object 
   // Predefined, constant state of our ship types. May need balancing!!
   const stats = {
     merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1, maxSpeed: 10 },
     pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10, maxSpeed: 10 },
     patrol:   { crewSize: 10, durability: 20, armament: 60, sightRange: 2,  maxSpeed: 10 },
   }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1, maxSpeed: 5 };
+
+  // NEW: convert position to cartesian before building
+  const cartesianPos = latLngToCartesian(pos[0], pos[1], {
+    originLat: regionCenter[0],
+    originLon: regionCenter[1],
+    metersPerUnit: 1,
+    headingDegrees: 0,
+  });
  
   // Build the kinematic: ships start stationary at their spawn point
   const kinematic = behaviors.newKinematic(
-    pos,   // position [lat, lon]
+    cartesianPos,   // position
     0,     // orientation (radians)
     [0, 0],// velocity
     0      // rotation

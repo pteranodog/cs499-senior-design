@@ -37,3 +37,17 @@ export function simulationPointsToLeaflet(points, transformConfig) {
     latLng: cartesianToLatLng(point.x, point.y, transformConfig),
   }));
 }
+
+export function latLngToCartesian(lat, lon, { originLat, originLon, metersPerUnit = 1, headingDegrees = 0 }) {
+  const projectedOrigin = L.CRS.EPSG3857.project(L.latLng(originLat, originLon));
+  const projectedPoint  = L.CRS.EPSG3857.project(L.latLng(lat, lon));
+
+  const eastMeters  = projectedPoint.x - projectedOrigin.x;
+  const northMeters = projectedPoint.y - projectedOrigin.y;
+
+  const heading = headingDegrees * (Math.PI / 180);
+  const x = ( eastMeters * Math.cos(heading) + northMeters * Math.sin(heading)) / metersPerUnit;
+  const y = (-eastMeters * Math.sin(heading) + northMeters * Math.cos(heading)) / metersPerUnit;
+
+  return [x, y];
+}
