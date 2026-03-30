@@ -9,7 +9,7 @@ function ShipIcons({ type, lat, lon }) {
   } else if (type === "merchant") {
     markerText = "This is a merchant!";
   } else if (type === "patrol") {
-    markerText = "This is a patrol vessel!";
+    markerText = "This is a security vessel!";
   }
   
   const iconMap = {
