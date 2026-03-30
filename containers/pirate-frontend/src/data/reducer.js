@@ -18,6 +18,8 @@ function simStateReducer(state, action) {
       return createRun(state);
     case 'load-run':
       return loadRun(state, action.run);
+    case 'start-run':
+      return startRun(state, action.index);
     case 'modify-run':
       return { ...state, runs: state.runs.map((run, i) => i === action.index ? { ...run, [action.setting]: action.value } : run) };
     case 'delete-run':
@@ -218,20 +220,29 @@ function buildShipWithMover(type, pos, size) { // Construct a ship AND attach a 
 function viewRunControls(state, runIndex) {
   const run = state.runs[runIndex];
   if (!run) return state;
- 
-  // Only spawn ships if this run hasn't been started yet
-  const runWithShips = run.status === 'new'
-    ? spawnShips({ ...run, status: 'running' }, state.regions)
-    : run;
- 
+
   return {
     ...state,
-    runs: state.runs.map((r, i) => i === runIndex ? runWithShips : r),
+    runs: state.runs,
     display:  { type: 'run', index: runIndex },
     controls: { type: 'active-run', index: runIndex },
   };
 }
 
+function startRun(state, runIndex) {
+  const run = state.runs[runIndex];
+  if (!run) return state;
+
+  const startedRun = run.status === 'new'
+    ? spawnShips({ ...run, status: 'running' }, state.regions)
+    : { ...run, status: 'running' };
+
+  return {
+    ...state,
+    runs: state.runs.map((candidate, i) => i === runIndex ? startedRun : candidate),
+  };
+}
+
 
 export { simStateReducer, appStartState, buildNewRun };
-export { spawnShips, buildShipWithMover, viewRunControls };
+export { spawnShips, buildShipWithMover, viewRunControls, startRun };
