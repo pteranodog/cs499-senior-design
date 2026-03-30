@@ -604,5 +604,5 @@ function getSteering(behavior) {  // "Master" getSteering function to be called 
 // c = Behaviors.clampOreintation(...)
 
 export  {getLength, normalize, add, subtract, scalarMult, dotProduct, closestPointOnSegment, orientationToVector, clampOreintation, newMover, newKinematic, newSteeringOutput, newSeek, newFlee,
-    newArrive, newPursue, newPath, newFollowPath, newWander, newFace, newAlign, newContinue, updateMover, assemblePath, getSteering}
+    newArrive, newPursue, newPath, newFollowPath, newWander, newFace, newAlign, newContinue, updateMover, assemblePath, getSteering, getPathParam}
 

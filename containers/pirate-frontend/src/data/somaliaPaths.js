@@ -36,9 +36,12 @@ let mombasa_To_Oman_Path = behaviors.assemblePath(behaviors.newPath(
     4
 ));
 
-export const somaliaPaths = {
-    djibouti_To_Mombasa_Path: djibouti_To_Mombasa_Path,
-    djibouti_To_Mumbai_Path: djibouti_To_Mumbai_Path,
-    dar_Es_Salaam_To_Mumbai_Path: dar_Es_Salaam_To_Mumbai_Path,
-    mombasa_To_Oman_Path: mombasa_To_Oman_Path
+// export paths as obj structured as LUT based on key names of export in regions.js;
+// note that, since a one-to-many relationship between points is possbile,
+// some values for such keys are arrays containing all the outgoing paths from
+// that point
+export const somaliaMerchantPaths = { 
+    "p4": [djibouti_To_Mombasa_Path, djibouti_To_Mumbai_Path],
+    "p3": [dar_Es_Salaam_To_Mumbai_Path],
+    "p2": [mombasa_To_Oman_Path]
 };
