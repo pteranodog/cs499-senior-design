@@ -15,8 +15,9 @@ export default function RunControls({ simState, modifySimState, runID }) {
         if (!run || run.status !== 'running') {
             return undefined;
         }
-        const interval = setInterval(() => {
+        const interval = setInterval(() => { // NEW: added step call to this, because it needed to be there -ljj
             modifySimState({ type: 'increment-run-time', index: runID, seconds: 1 });
+            modifySimState({ type: 'step-run', index: runID });
         }, 1000 / speed);
 
     return () => clearInterval(interval);
@@ -32,7 +33,9 @@ export default function RunControls({ simState, modifySimState, runID }) {
             <BottomRightButtons simState={simState} modifySimState={modifySimState} runID={runID} />
             <Legend />
             <TimeViewer seconds={run.elapsedTime || 0} />
-            <LiveCounts simState={simState} />
+            {/* NEW: passing down run ID as well so this run's exact data can be referenced -ljj */}
+            <LiveCounts simState={simState} runID={runID} />
+
         </>
     );
 }
