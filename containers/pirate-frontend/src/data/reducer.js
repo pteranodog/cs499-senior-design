@@ -245,7 +245,13 @@ function buildShipWithMover(type, pos, size, regionCenter, path) { // Construct 
   // NEW: using followPath as default ship behavior now, NOTE: also may need balancing/ number tweaking
   let behavior;
   if (path) {
-    behavior = behaviors.newFollowPath(path, 10, behaviors.getPathParam(path, cartesianPos), kinematic, 800);
+    behavior = behaviors.newFollowPath(
+    path,
+    0.04,  // pathOffset — small value, just look slightly ahead
+    0,     // currentParam — always start at beginning of path
+    kinematic,
+    10 * 100  // BOOSTED ACCELERATION FOR TESTING REMOVE *100 LATER
+    );
   } 
   else {
     behavior = wander;
