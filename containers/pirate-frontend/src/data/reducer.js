@@ -2,9 +2,6 @@ import { newConfig, newRun } from './classes.js';
 import { defaultRegions } from './regions.js';
 import { step } from './stateFunctions.js';
 import * as behaviors from './behaviors.js';
-import { latLngToCartesian } from '../utils/coords.js';
-
-import { somaliaMerchantPaths } from './somaliaPaths.js';
 
 function simStateReducer(state, action) {
   switch (action.type) {
@@ -141,59 +138,28 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
   const merchantChance = (run.maxMerchants ?? 0) / 100;
   const pirateChance   = (run.maxPirates   ?? 0) / 100;
   const patrolChance   = (run.maxPatrols   ?? 0) / 100;
-
-  let merchantPaths;
-  let piratePaths;
-  let patrolPaths;
-
-  switch (region.name) { // TODO: make the rest of these paths
-    case "Somalian Coast":
-      merchantPaths = somaliaMerchantPaths;
-      // piratePaths = somaliaPiratePaths;
-      // patrolPaths = somaliaPatrolPaths;
-      break;
-
-    case "Gulf of Guinea":
-      // merchantPaths = guineaMerchantPaths;
-      // piratePaths = guineaPiratePaths;
-      // patrolPaths = guineaPatrolPaths;
-      break;
-
-    case "Malacca Strait":
-      // merchantPaths = malaccaMerchantPaths;
-      // piratePaths = malaccaPiratePaths;
-      // patrolPaths = malaccaPatrolPaths;
-      break;
-  
-    default:
-      console.error("Unrecognized region name; no paths will be made! This is probably gonna break something!");
-      break;
-  }
  
-  for (const [pointId, point] of Object.entries(region.points)) {
-    const pos = point.pos;
-
+  for (const point of Object.values(region.points)) {
+    const pos = point.pos; // for now, lat/lon; may not need cartesial after all?
+ 
     if (point.type === 'port') {
-      if (Math.random() < merchantChance) {
+      // Merchants spawn from ports
+      if (Math.random() < merchantChance) { // TODO: seed!
         const id = crypto.randomUUID();
-        const paths = merchantPaths[pointId];
-        const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
-        ships[id] = buildShipWithMover('merchant', pos, 'medium', region.center, path);
+        ships[id] = buildShipWithMover('merchant', pos, 'medium');
       }
-      if (Math.random() < patrolChance) {
-        const id = crypto.randomUUID();
-        const paths = patrolPaths[pointId];
-        const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
-        ships[id] = buildShipWithMover('patrol', pos, 'medium', region.center, path);
+      // Patrols also base out of ports 
+      if (Math.random() < patrolChance) { // TODO: seed!
+        const id = crypto.randomUUID(); 
+        ships[id] = buildShipWithMover('patrol', pos, 'medium');
       }
     }
-
+ 
     if (point.type === 'pirateCove') {
-      if (Math.random() < pirateChance) {
+      // Pirates spawn from coves
+      if (Math.random() < pirateChance) { // TODO: seed!
         const id = crypto.randomUUID();
-        const paths = piratePaths[pointId];
-        const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
-        ships[id] = buildShipWithMover('pirate', pos, 'small', region.center, path);
+        ships[id] = buildShipWithMover('pirate', pos, 'small');
       }
     }
   }
@@ -207,33 +173,23 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
   };
 }
 
-// NEW: passing in region center for coord conversion. ALSO NEW: all ships start as path followers, so a path arg is now needed
-function buildShipWithMover(type, pos, size, regionCenter, path) { // Construct a ship AND attach a mover object 
-  
+function buildShipWithMover(type, pos, size) { // Construct a ship AND attach a mover object 
   // Predefined, constant state of our ship types. May need balancing!!
   const stats = {
-    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1000, maxSpeed: 10000 },
-    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10000, maxSpeed: 10000 },
-    patrol:   { crewSize: 10, durability: 20, armament: 60, sightRange: 2000,  maxSpeed: 10000 },
-  }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1000, maxSpeed: 5000 };
-
-  // NEW: convert position to cartesian before building
-  const cartesianPos = latLngToCartesian(pos[0], pos[1], {
-    originLat: regionCenter[0],
-    originLon: regionCenter[1],
-    metersPerUnit: 1,
-    headingDegrees: 0,
-  });
+    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1, maxSpeed: 10 },
+    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10, maxSpeed: 10 },
+    patrol:   { crewSize: 10, durability: 20, armament: 60, sightRange: 2,  maxSpeed: 10 },
+  }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1, maxSpeed: 5 };
  
   // Build the kinematic: ships start stationary at their spawn point
   const kinematic = behaviors.newKinematic(
-    cartesianPos,   // position
+    pos,   // position [lat, lon]
     0,     // orientation (radians)
     [0, 0],// velocity
     0      // rotation
   );
  
-  // NEW: not using wander anymore because it sucks and doesnt work and also sucks
+  // Create a generic wander for any ship type to use
   const wander = behaviors.newWander(
     kinematic,
     0.5,   // maxAcceleration
@@ -242,28 +198,13 @@ function buildShipWithMover(type, pos, size, regionCenter, path) { // Construct 
     1,     // slowThreshold
     0.5,   // targetThreshold
     stats.maxSpeed
-  ); 
-
-  // NEW: using followPath as default ship behavior now, NOTE: also may need balancing/ number tweaking
-  let behavior;
-  if (path) {
-    behavior = behaviors.newFollowPath(
-    path,
-    0.04,  // pathOffset — small value, just look slightly ahead
-    0,     // currentParam — always start at beginning of path
-    kinematic,
-    10 * 100  // BOOSTED ACCELERATION FOR TESTING REMOVE *100 LATER
-    );
-  } 
-  else {
-    behavior = wander;
-  }
+  );
  
-  const mover = behaviors.newMover(kinematic, [0, 0], stats.maxSpeed, behavior);
+  const mover = behaviors.newMover(kinematic, [0, 0], stats.maxSpeed, wander);
  
   return {
     type,
-    pos: cartesianPos,            // keep top-level pos in sync with mover for ShipIcons to read
+    pos,            // keep top-level pos in sync with mover for ShipIcons to read
     size,
     sightRange: stats.sightRange,
     crewSize:   stats.crewSize,
