@@ -3,7 +3,6 @@ import { defaultRegions } from './regions.js';
 import { step } from './stateFunctions.js';
 import * as behaviors from './behaviors.js';
 import { latLngToCartesian } from '../utils/coords.js';
-
 import { somaliaMerchantPaths } from './somaliaPaths.js';
 import { somaliaPiratePaths } from './somaliaPaths.js';
 import { somaliaPatrolPaths } from './somaliaPaths.js';
@@ -24,7 +23,7 @@ function simStateReducer(state, action) {
     case 'load-run':
       return loadRun(state, action.run);
     case 'start-run':
-      return startRun(state, action.index);
+      return startRun(state, action.index, action.startPaused);
     case 'modify-run':
       return { ...state, runs: state.runs.map((run, i) => i === action.index ? { ...run, [action.setting]: action.value } : run) };
     case 'delete-run':
@@ -37,7 +36,7 @@ function simStateReducer(state, action) {
       return { ...state, display: { type: 'run', index: action.runA },
         controls: { type: 'compare-runs', runA: action.runA, runB: action.runB }};
     case 'view-run-list':
-      return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'list-runs' }};
+      return viewRunList(state, action.run, action.selected);
     case 'view-run-controls':
       return viewRunControls(state, action.run);
     case 'view-run-end':
@@ -124,6 +123,12 @@ function expandRun(runs, uuid) {
   );
 }
 
+function deselectAll(runs, exceptThese) {
+  // Allow single-values or arrays by converting single values to arrays
+  exceptThese = Array.isArray(exceptThese) ? exceptThese : [exceptThese];
+  return runs.map((run, index) => { return { ...run, selected: exceptThese.includes(index) }});
+}
+
 function buildNewRun() {
   const config = newConfig(
     Math.floor(Math.random() * 10000) + 1,
@@ -172,15 +177,14 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
       break;
   }
  
-  for (const [pointId, point] of Object.entries(region.points)) {
-    const pos = point.pos;
-
+  for (const point of Object.values(region.points)) {
+    const pos = point.pos; // for now, lat/lon; may not need cartesial after all?
+ 
     if (point.type === 'port') {
-      if (Math.random() < merchantChance) {
+      // Merchants spawn from ports
+      if (Math.random() < merchantChance) { // TODO: seed!
         const id = crypto.randomUUID();
-        const paths = merchantPaths[pointId];
-        const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
-        ships[id] = buildShipWithMover('merchant', pos, 'medium', region.center, path);
+        ships[id] = buildShipWithMover('merchant', pos, 'medium');
       }
     }
 
@@ -192,13 +196,12 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
           ships[id] = buildShipWithMover('patrol', pos, 'medium', region.center, path);
         }
     }
-
+ 
     if (point.type === 'pirateCove') {
-      if (Math.random() < pirateChance) {
+      // Pirates spawn from coves
+      if (Math.random() < pirateChance) { // TODO: seed!
         const id = crypto.randomUUID();
-        const paths = piratePaths[pointId];
-        const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
-        ships[id] = buildShipWithMover('pirate', pos, 'small', region.center, path);
+        ships[id] = buildShipWithMover('pirate', pos, 'small');
       }
     }
   }
@@ -212,33 +215,23 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
   };
 }
 
-// NEW: passing in region center for coord conversion. ALSO NEW: all ships start as path followers, so a path arg is now needed
-function buildShipWithMover(type, pos, size, regionCenter, path) { // Construct a ship AND attach a mover object 
-  
+function buildShipWithMover(type, pos, size) { // Construct a ship AND attach a mover object 
   // Predefined, constant state of our ship types. May need balancing!!
   const stats = {
-    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1000, maxSpeed: 10000 },
-    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10000, maxSpeed: 10000 },
-    patrol:   { crewSize: 10, durability: 20, armament: 60, sightRange: 2000,  maxSpeed: 10000 },
-  }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1000, maxSpeed: 5000 };
-
-  // NEW: convert position to cartesian before building
-  const cartesianPos = latLngToCartesian(pos[0], pos[1], {
-    originLat: regionCenter[0],
-    originLon: regionCenter[1],
-    metersPerUnit: 1,
-    headingDegrees: 0,
-  });
+    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1, maxSpeed: 10 },
+    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10, maxSpeed: 10 },
+    patrol:   { crewSize: 10, durability: 20, armament: 60, sightRange: 2,  maxSpeed: 10 },
+  }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1, maxSpeed: 5 };
  
   // Build the kinematic: ships start stationary at their spawn point
   const kinematic = behaviors.newKinematic(
-    cartesianPos,   // position
+    pos,   // position [lat, lon]
     0,     // orientation (radians)
     [0, 0],// velocity
     0      // rotation
   );
  
-  // NEW: not using wander anymore because it sucks and doesnt work and also sucks
+  // Create a generic wander for any ship type to use
   const wander = behaviors.newWander(
     kinematic,
     0.5,   // maxAcceleration
@@ -247,28 +240,13 @@ function buildShipWithMover(type, pos, size, regionCenter, path) { // Construct 
     1,     // slowThreshold
     0.5,   // targetThreshold
     stats.maxSpeed
-  ); 
-
-  // NEW: using followPath as default ship behavior now, NOTE: also may need balancing/ number tweaking
-  let behavior;
-  if (path) {
-    behavior = behaviors.newFollowPath(
-    path,
-    0.04,  // pathOffset — small value, just look slightly ahead
-    0,     // currentParam — always start at beginning of path
-    kinematic,
-    10 * 100  // BOOSTED ACCELERATION FOR TESTING REMOVE *100 LATER
-    );
-  } 
-  else {
-    behavior = wander;
-  }
+  );
  
-  const mover = behaviors.newMover(kinematic, [0, 0], stats.maxSpeed, behavior);
+  const mover = behaviors.newMover(kinematic, [0, 0], stats.maxSpeed, wander);
  
   return {
     type,
-    pos: cartesianPos,            // keep top-level pos in sync with mover for ShipIcons to read
+    pos,            // keep top-level pos in sync with mover for ShipIcons to read
     size,
     sightRange: stats.sightRange,
     crewSize:   stats.crewSize,
@@ -279,6 +257,15 @@ function buildShipWithMover(type, pos, size, regionCenter, path) { // Construct 
     inCombat: false,
     mover,
   };
+}
+
+function viewRunList(state, runIndex, selectedRuns) {
+  let runs = deselectAll(state.runs, selectedRuns);
+  let display = state.display;
+  if (runIndex) {
+      display = { type: 'run', index: runIndex };
+  }
+  return { ...state, runs: runs, display: display, controls: { type: 'list-runs' }};
 }
 
 function viewRunControls(state, runIndex) {
@@ -293,13 +280,13 @@ function viewRunControls(state, runIndex) {
   };
 }
 
-function startRun(state, runIndex) {
+function startRun(state, runIndex, startPaused) {
   const run = state.runs[runIndex];
   if (!run) return state;
 
   const startedRun = run.status === 'new'
-    ? spawnShips({ ...run, status: 'running' }, state.regions)
-    : { ...run, status: 'running' };
+    ? spawnShips({ ...run, status: startPaused ? 'paused' : 'running' }, state.regions)
+    : { ...run, status: startPaused ? 'paused' : 'running' };
 
   return {
     ...state,

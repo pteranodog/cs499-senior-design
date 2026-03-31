@@ -33,6 +33,14 @@ const minifyMap = {
   "active-run": "a",
   "end-run": "en",
   region: "g",
+  elapsedTime: "et",
+  "compare-runs": "cr",
+  runA: "1",
+  runB: "2",
+  run: "n",
+  running: "rg",
+  paused: "p",
+  speed: "sp",
 }
 const reverseMap = Object.fromEntries(Object.entries(minifyMap).map(a => [...a].reverse()));
 const excludedKeys = ["name"];

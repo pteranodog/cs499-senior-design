@@ -63,9 +63,7 @@ export default function RunDisplay({ simState, run }) {
     <>
       <TileLayer attribution={DAY_TILE_ATTRIBUTION} url={DAY_TILE_URL} />
       <PointIcons pointList={pointList} />
-      
-      {/* NEW: pass down region center for coord accuracy*/}
-      <ShipIcons shipList={shipList} regionCenter={region.center} /> 
+      <ShipIcons shipList={shipList} />
       <DisplayBadge simState={simState} />
     </>
   );

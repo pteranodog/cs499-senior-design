@@ -44,10 +44,10 @@ export default function RunMenu ({ simState, modifySimState }) {
     } else if (selectedCount === 1) {
       const runIndex = simState.runs.findIndex((item) => item.selected === true);
       const run = simState.runs[runIndex];
-      if (run.status === 'new' || run.status === 'running' || run.status === 'paused') {
-      modifySimState({ type: 'view-run-controls', run: runIndex });
+      if (run.status === 'new') {
+        modifySimState({ type: 'view-run-controls', run: runIndex });
       } else {
-      modifySimState({ type: 'view-run-end', run: runIndex });
+        modifySimState({ type: 'view-run-end', run: runIndex });
       }
     } else if (selectedCount === 2) {
       const [runA, runB] = simState.runs
