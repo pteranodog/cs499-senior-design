@@ -1,7 +1,18 @@
 import { isMobile } from 'react-device-detect';
 import PirateMap from './components/PirateMap.js';
+import { useEffect } from 'react';
 
 function App() {
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
   if (isMobile) {
     return (
       <div style={{ textAlign: 'center', marginTop: '50px' }}>
