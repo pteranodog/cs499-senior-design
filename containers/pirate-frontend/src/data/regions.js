@@ -6,10 +6,6 @@ function defaultRegions() {
   somaliaPoints["p2"] = newPort("Mombasa (Kenya)", [-4.0717, 39.6730], 0.01, [], []);
   somaliaPoints["p3"] = newPort("Dar es Salaam (Tanzania)", [-6.7640, 39.2747], 0.01, [], []); 
   somaliaPoints["p4"] = newPort("Djibouti", [11.6048, 43.1497], 0.01, [], []);
-
-  somaliaPoints["p5"] = newPort("Mumbai", [18.9, 72.8], 0, [], []);
-  somaliaPoints["p6"] = newPort("Port Salah (Oman)", [16.9, 54.0], 0, [], []);
-  
   somaliaPoints["p5"] = newPirateCove("Cove One", [11.1705, 47.4048], 0.01); 
   somaliaPoints["p6"] = newPirateCove("Cove Two", [5.0659, 48.2978], 0.01);
   somaliaPoints["p7"] = newPort("Camp Lemonnier (U.S.A.)", [11.5434, 43.1790], 0, [], []);
