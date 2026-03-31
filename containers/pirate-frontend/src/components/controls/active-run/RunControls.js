@@ -4,6 +4,7 @@ import Legend from "./Legend";
 import TimeViewer from "./TimeViewer";
 import LiveCounts from "./LiveCounts";
 import { useEffect } from "react";
+import Modify from "./Modify";
 
 export default function RunControls({ simState, modifySimState, runID }) { 
     const run = typeof runID === 'number'
@@ -35,7 +36,7 @@ export default function RunControls({ simState, modifySimState, runID }) {
             <TimeViewer seconds={run.elapsedTime || 0} />
             {/* NEW: passing down run ID as well so this run's exact data can be referenced -ljj */}
             <LiveCounts simState={simState} runID={runID} />
-
+            <Modify run={run} runID={runID} modifySimState={modifySimState} />
         </>
     );
 }

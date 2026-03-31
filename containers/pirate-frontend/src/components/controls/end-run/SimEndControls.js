@@ -59,7 +59,7 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 					<div><strong>Active Ships:</strong> {ships.length}</div>
 					<div><strong>Merchants:</strong> {shipCounts.merchants}</div>
 					<div><strong>Pirates:</strong> {shipCounts.pirates}</div>
-					<div><strong>Patrols:</strong> {shipCounts.patrols}</div>
+					<div><strong>Security:</strong> {shipCounts.patrols}</div>
 				</div>
 			</div>
 

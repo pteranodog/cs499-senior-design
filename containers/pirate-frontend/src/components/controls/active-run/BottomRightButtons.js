@@ -31,12 +31,12 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
   const isNew = run.status === 'new';
 
   const onPauseToggle = () => {
-  if (isNew) {
-    // NEW: added reducer call to modify state -ljj
-    modifySimState({ type: 'view-run-controls', run: runID });
-    return;
-  }
-  modifyRun('status', isRunning ? 'paused' : 'running');
+    if (isNew) {
+      modifySimState({ type: 'start-run', index: runID });
+      return;
+    }
+
+    modifyRun('status', isRunning ? 'paused' : 'running');
   }
 
   const onStep = () => {

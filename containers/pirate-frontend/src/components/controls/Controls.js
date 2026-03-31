@@ -124,7 +124,7 @@ function Controls({
     return () => clearInterval(interval);
   }, [isRunning, duration, speed, onSimulationStop]);
 
-  useEffect(() => {
+  useEffect(() => {                             //THIS IS THE THING THAT NEEDS TO BE PUT BACK IN CODE FOR WARNING USER BEFORE EXITING
     if (!isRunning && !showEndScreen) {
       return undefined;
     }
@@ -206,7 +206,7 @@ function Controls({
     setIsRunning(true);
   };
 
-  const handleRestart = () => {
+  /*const handleRestart = () => {       CODE MIGHT BE USED FOR REFERENCE LATER
     const confirmed = window.confirm(
       'Are you sure you wish to restart? You will be unable to save the current simulation after.',
     );
@@ -222,12 +222,7 @@ function Controls({
     if (typeof onSimulationStop === 'function') {
       onSimulationStop();
     }
-  };
-
-  const handleStep = () => {
-    if (isRunning || showStartScreen || showEndScreen) {
-      return;
-    }
+  };*/
 
     const durationInSeconds = Number(duration) * 60;
     setSeconds((prev) => {
@@ -240,18 +235,6 @@ function Controls({
     });
 
     applyMetricTick();
-  };
-
-  const handleSpeed = () => {
-    setSpeed((prev) => {
-      if (prev === 1) {
-        return 2;
-      }
-      if (prev === 2) {
-        return 4;
-      }
-      return 1;
-    });
   };
 
   const handleExport = (format = 'json') => {
@@ -301,33 +284,6 @@ Evasions,${evasions}`;
     URL.revokeObjectURL(url);
   };
 
-
-  const ElapsedTime = ({ seconds, formatTime }) => (
-    <div className="mb-2 small">
-      <strong>Elapsed:</strong> {formatTime(seconds)}
-    </div>
-  );
-
-  /*
-  const LiveCounts = ({
-  entries,
-  exits,
-  captures,
-  defeats,
-  rescues,
-  evasions
-  }) => (
-  <div className="small">
-    <div>Entries: {entries}</div>
-    <div>Exits: {exits}</div>
-    <div>Captures: {captures}</div>
-    <div>Defeats: {defeats}</div>
-    <div>Rescues: {rescues}</div>
-    <div>Evasions: {evasions}</div>
-  </div>
-  );
-  */
-
   return (
     <>
       <EndScreen 
@@ -347,85 +303,7 @@ Evasions,${evasions}`;
         handleRestart={handleRestart}
       >
       </EndScreen>   
-
-
-      {/* THIS IS THE ELAPSED TIME AND DROPDOWN DISPLAY THAT IS SHOWN IN THE TOP RIGHT */}  
-      <Control position="topright">
-
-        {/* SHOW ELAPSED TIME */}
-        <Card bg="light" text="dark" className="mb-2 p-2 small">
-          <div><strong>Time Elapsed:</strong> {formatTime(seconds)}</div>
-        </Card>
-
-        <Dropdown>
-          <Dropdown.Toggle variant="light" size="sm">
-            View Live Counts
-          </Dropdown.Toggle>
-          <Dropdown.Menu>
-            <Dropdown.Item disabled>Entries: {entries}</Dropdown.Item>
-            <Dropdown.Item disabled>Exits: {exits}</Dropdown.Item>
-            <Dropdown.Item disabled>Captures: {captures}</Dropdown.Item>
-            <Dropdown.Item disabled>Defeats: {defeats}</Dropdown.Item>
-            <Dropdown.Item disabled>Rescues: {rescues}</Dropdown.Item>
-            <Dropdown.Item disabled>Evasions: {evasions}</Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
-      </Control>
-
-
-      {/* ALWAYS VISIBLE STATUS DISPLAY (TOP LEFT) */}
-      <Control position = "topleft">
-        <ConfigDisplay
-          simName={simName}
-          getSimulatedClock={getSimulatedClock}
-          timeOfDay={timeOfDay}
-          duration={duration}
-          region={region}
-          weather={weather}
-          merchantRate={merchantRate}
-          pirateRate={pirateRate}
-          securityRate={securityRate}
-        />
-      </Control>
-
-
-      {/* BOTTOM RIGHT CONTROLS */}
-      <Control position="bottomright">
-        <StepRateControls
-          stepRate={stepRate}
-          setStepRate={setStepRate}
-          isRunning={isRunning}
-        />
-      </Control>
-
-
-      {/* LEGEND - UNNECESSARY CODE
-      <Control position = "bottomleft">
-        <Legend/>
-      </Control>*/}
-
-
-      <ElapsedTime
-        seconds={seconds}
-        formatTime={formatTime}
-      >
-      </ElapsedTime>
-
-
-      {/* THIS IS TO KEEP TRACK OF THE REAL TIME STATS DURING A RUN (TO BE USED WHEN SIM LOGIC IS HOOKED UP!!!!) */}
-      {/*}
-    <LiveCounts
-      entries={entries}
-      exits={exits}
-      captures={captures}
-      defeats={defeats}
-      rescues={rescues}
-      evasions={evasions}
-    >
-    </LiveCounts>
-    */}
-    </>
+      </>
   );
-};
 
 export default Controls;

@@ -8,7 +8,7 @@ function PointIcons({ type, lat, lon, name }) {
   } else if (type === "pirateCove") {
     markerText = "This is a pirate cove!";
   } else if (type === "patrolBase") {
-    markerText = "This is a patrol base!";
+    markerText = "This is a security base!";
   }
   if (name) {
     markerText = name;
