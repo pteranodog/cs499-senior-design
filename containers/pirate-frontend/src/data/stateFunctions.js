@@ -175,7 +175,7 @@ function updateShipBehavior(ship, timeStep) {
   const newMover = behaviors.updateMover(
     ship.mover,
     behaviors.getSteering(ship.mover.behavior),
-    ship.maxSpeed,
+    ship.mover.maxSpeed,
     timeStep
   );
 
