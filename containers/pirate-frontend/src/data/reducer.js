@@ -5,6 +5,8 @@ import * as behaviors from './behaviors.js';
 import { latLngToCartesian } from '../utils/coords.js';
 
 import { somaliaMerchantPaths } from './somaliaPaths.js';
+import { somaliaPiratePaths } from './somaliaPaths.js';
+import { somaliaPatrolPaths } from './somaliaPaths.js';
 
 function simStateReducer(state, action) {
   switch (action.type) {
@@ -149,8 +151,8 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
   switch (region.name) { // TODO: make the rest of these paths
     case "Somalian Coast":
       merchantPaths = somaliaMerchantPaths;
-      // piratePaths = somaliaPiratePaths;
-      // patrolPaths = somaliaPatrolPaths;
+      piratePaths = somaliaPiratePaths;
+      patrolPaths = somaliaPatrolPaths;
       break;
 
     case "Gulf of Guinea":
@@ -180,12 +182,15 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
         const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
         ships[id] = buildShipWithMover('merchant', pos, 'medium', region.center, path);
       }
+    }
+
+    if (point.type === 'patrolBase') {
       if (Math.random() < patrolChance) {
-        const id = crypto.randomUUID();
-        const paths = patrolPaths[pointId];
-        const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
-        ships[id] = buildShipWithMover('patrol', pos, 'medium', region.center, path);
-      }
+          const id = crypto.randomUUID();
+          const paths = patrolPaths[pointId];
+          const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
+          ships[id] = buildShipWithMover('patrol', pos, 'medium', region.center, path);
+        }
     }
 
     if (point.type === 'pirateCove') {
