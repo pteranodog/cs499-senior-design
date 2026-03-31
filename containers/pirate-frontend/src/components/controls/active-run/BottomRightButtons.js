@@ -32,7 +32,7 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
 
   const onPauseToggle = () => {
     if (isNew) {
-      modifyRun('status', 'running');
+      modifySimState({ type: 'start-run', index: runID });
       return;
     }
 

@@ -6,7 +6,7 @@ export default function Legend() {
   const legendItems = [
     { label: 'Merchants', icon: '/merchant-icon.png' },
     { label: 'Pirates', icon: '/pirate-icon.png' },
-    { label: 'Patrol', icon: '/patrol-icon.png' },
+    { label: 'Security', icon: '/patrol-icon.png' },
   ];
 
   return (
