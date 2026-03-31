@@ -2,6 +2,10 @@ import { newConfig, newRun } from './classes.js';
 import { defaultRegions } from './regions.js';
 import { step } from './stateFunctions.js';
 import * as behaviors from './behaviors.js';
+import { latLngToCartesian } from '../utils/coords.js';
+import { somaliaMerchantPaths } from './somaliaPaths.js';
+import { somaliaPiratePaths } from './somaliaPaths.js';
+import { somaliaPatrolPaths } from './somaliaPaths.js';
 
 function simStateReducer(state, action) {
   switch (action.type) {
@@ -144,6 +148,34 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
   const merchantChance = (run.maxMerchants ?? 0) / 100;
   const pirateChance   = (run.maxPirates   ?? 0) / 100;
   const patrolChance   = (run.maxPatrols   ?? 0) / 100;
+
+  let merchantPaths;
+  let piratePaths;
+  let patrolPaths;
+
+  switch (region.name) { // TODO: make the rest of these paths
+    case "Somalian Coast":
+      merchantPaths = somaliaMerchantPaths;
+      piratePaths = somaliaPiratePaths;
+      patrolPaths = somaliaPatrolPaths;
+      break;
+
+    case "Gulf of Guinea":
+      // merchantPaths = guineaMerchantPaths;
+      // piratePaths = guineaPiratePaths;
+      // patrolPaths = guineaPatrolPaths;
+      break;
+
+    case "Malacca Strait":
+      // merchantPaths = malaccaMerchantPaths;
+      // piratePaths = malaccaPiratePaths;
+      // patrolPaths = malaccaPatrolPaths;
+      break;
+  
+    default:
+      console.error("Unrecognized region name; no paths will be made! This is probably gonna break something!");
+      break;
+  }
  
   for (const point of Object.values(region.points)) {
     const pos = point.pos; // for now, lat/lon; may not need cartesial after all?
@@ -154,11 +186,15 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
         const id = crypto.randomUUID();
         ships[id] = buildShipWithMover('merchant', pos, 'medium');
       }
-      // Patrols also base out of ports 
-      if (Math.random() < patrolChance) { // TODO: seed!
-        const id = crypto.randomUUID(); 
-        ships[id] = buildShipWithMover('patrol', pos, 'medium');
-      }
+    }
+
+    if (point.type === 'patrolBase') {
+      if (Math.random() < patrolChance) {
+          const id = crypto.randomUUID();
+          const paths = patrolPaths[pointId];
+          const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
+          ships[id] = buildShipWithMover('patrol', pos, 'medium', region.center, path);
+        }
     }
  
     if (point.type === 'pirateCove') {
