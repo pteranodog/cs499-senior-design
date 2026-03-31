@@ -227,6 +227,8 @@ function newRun(name, runConfig, regionId) {
     name: name,
     regionId: regionId, // Region ID
     status: 'new',
+    speed: 1,
+    elapsedTime: 0, // in seconds; will be updated as the run progresses
     selected: false,
     // Infer initial run state info from config. currentState is comprised of all the CHANGING values of this run:
     currentState: {
