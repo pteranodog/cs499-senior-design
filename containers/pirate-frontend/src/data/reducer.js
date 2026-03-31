@@ -19,7 +19,7 @@ function simStateReducer(state, action) {
     case 'load-run':
       return loadRun(state, action.run);
     case 'start-run':
-      return startRun(state, action.index);
+      return startRun(state, action.index, action.startPaused);
     case 'modify-run':
       return { ...state, runs: state.runs.map((run, i) => i === action.index ? { ...run, [action.setting]: action.value } : run) };
     case 'delete-run':
@@ -32,7 +32,7 @@ function simStateReducer(state, action) {
       return { ...state, display: { type: 'run', index: action.runA },
         controls: { type: 'compare-runs', runA: action.runA, runB: action.runB }};
     case 'view-run-list':
-      return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'list-runs' }};
+      return viewRunList(state, action.run, action.selected);
     case 'view-run-controls':
       return viewRunControls(state, action.run);
     case 'view-run-end':
@@ -117,6 +117,12 @@ function expandRun(runs, uuid) {
   return collapseAll(runs).map(run =>
     run.uuid === uuid ? { ...run, expanded: true } : run
   );
+}
+
+function deselectAll(runs, exceptThese) {
+  // Allow single-values or arrays by converting single values to arrays
+  exceptThese = Array.isArray(exceptThese) ? exceptThese : [exceptThese];
+  return runs.map((run, index) => { return { ...run, selected: exceptThese.includes(index) }});
 }
 
 function buildNewRun() {
@@ -217,6 +223,15 @@ function buildShipWithMover(type, pos, size) { // Construct a ship AND attach a 
   };
 }
 
+function viewRunList(state, runIndex, selectedRuns) {
+  let runs = deselectAll(state.runs, selectedRuns);
+  let display = state.display;
+  if (runIndex) {
+      display = { type: 'run', index: runIndex };
+  }
+  return { ...state, runs: runs, display: display, controls: { type: 'list-runs' }};
+}
+
 function viewRunControls(state, runIndex) {
   const run = state.runs[runIndex];
   if (!run) return state;
@@ -229,13 +244,13 @@ function viewRunControls(state, runIndex) {
   };
 }
 
-function startRun(state, runIndex) {
+function startRun(state, runIndex, startPaused) {
   const run = state.runs[runIndex];
   if (!run) return state;
 
   const startedRun = run.status === 'new'
-    ? spawnShips({ ...run, status: 'running' }, state.regions)
-    : { ...run, status: 'running' };
+    ? spawnShips({ ...run, status: startPaused ? 'paused' : 'running' }, state.regions)
+    : { ...run, status: startPaused ? 'paused' : 'running' };
 
   return {
     ...state,

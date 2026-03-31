@@ -34,7 +34,7 @@ export default function RunControls({ simState, modifySimState, runID }) {
             <Legend />
             <TimeViewer seconds={run.elapsedTime || 0} />
             <LiveCounts simState={simState} />
-            <Modify run={run} runID={runID} modifySimState={modifySimState} />
+            {/*<Modify run={run} runID={runID} modifySimState={modifySimState} />*/}
         </>
     );
 }
