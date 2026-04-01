@@ -3,11 +3,11 @@ import { defaultRegions } from './regions.js';
 import { step } from './stateFunctions.js';
 import * as behaviors from './behaviors.js';
 import { latLngToCartesian } from '../utils/coords.js';
-
+ 
 import { somaliaMerchantPaths } from './somaliaPaths.js';
 import { somaliaPiratePaths } from './somaliaPaths.js';
 import { somaliaPatrolPaths } from './somaliaPaths.js';
-
+ 
 function simStateReducer(state, action) {
   switch (action.type) {
     case 'initialize':
@@ -24,7 +24,7 @@ function simStateReducer(state, action) {
     case 'load-run':
       return loadRun(state, action.run);
     case 'start-run':
-      return startRun(state, action.index);
+      return startRun(state, action.index, action.startPaused);
     case 'modify-run':
       return { ...state, runs: state.runs.map((run, i) => i === action.index ? { ...run, [action.setting]: action.value } : run) };
     case 'delete-run':
@@ -37,7 +37,7 @@ function simStateReducer(state, action) {
       return { ...state, display: { type: 'run', index: action.runA },
         controls: { type: 'compare-runs', runA: action.runA, runB: action.runB }};
     case 'view-run-list':
-      return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'list-runs' }};
+      return viewRunList(state, action.run, action.selected);
     case 'view-run-controls':
       return viewRunControls(state, action.run);
     case 'view-run-end':
@@ -49,7 +49,7 @@ function simStateReducer(state, action) {
       return state;
   }
 }
-
+ 
 function appStartState() {
   return {
     regions: defaultRegions(),
@@ -63,7 +63,7 @@ function appStartState() {
     }
   };
 }
-
+ 
 function createRun(state) {
   const run = { ...buildNewRun(), expanded: true };
   return {
@@ -72,7 +72,7 @@ function createRun(state) {
     controls: { ...state.controls }
   };
 }
-
+ 
 function loadRun(state, run) {
   const withExpanded = { ...run, expanded: true };
   return {
@@ -81,7 +81,7 @@ function loadRun(state, run) {
     controls: { ...state.controls },
   };
 }
-
+ 
 function deleteRun(state, index) {
   const deletedRun = state.runs[index];
   const newRuns = state.runs.toSpliced(index, 1);
@@ -91,7 +91,7 @@ function deleteRun(state, index) {
     : newRuns;
   return { ...state, runs: finalRuns, display: newDisplay, controls: { ...state.controls } };
 }
-
+ 
 function duplicateRun(state, index) {
   const source = state.runs[index];
   const duplicate = {
@@ -113,17 +113,22 @@ function duplicateRun(state, index) {
     run.uuid === duplicate.uuid ? { ...run, expanded: true } : run
   )};
 }
-
+ 
 function collapseAll(runs) {
   return runs.map(({ expanded, ...rest }) => rest);
 }
-
+ 
 function expandRun(runs, uuid) {
   return collapseAll(runs).map(run =>
     run.uuid === uuid ? { ...run, expanded: true } : run
   );
 }
-
+ 
+function deselectAll(runs, exceptThese) {
+  exceptThese = Array.isArray(exceptThese) ? exceptThese : [exceptThese];
+  return runs.map((run, index) => { return { ...run, selected: exceptThese.includes(index) }});
+}
+ 
 function buildNewRun() {
   const config = newConfig(
     Math.floor(Math.random() * 10000) + 1,
@@ -132,78 +137,68 @@ function buildNewRun() {
   const run = newRun('Untitled Run', config, 'r1');
   return { ...run, uuid: crypto.randomUUID() };
 }
-
-function spawnShips(run, regions) { // Iterate through spawning Points and give them all a chance to spawn their respective ships
+ 
+function spawnShips(run, regions) {
   const region = regions[run.regionId];
   if (!region) return run;
  
   const ships = {};
  
-  // get presence rates. should probably refactor name to be more accurate
   const merchantChance = (run.maxMerchants ?? 0) / 100;
   const pirateChance   = (run.maxPirates   ?? 0) / 100;
   const patrolChance   = (run.maxPatrols   ?? 0) / 100;
-
+ 
   let merchantPaths;
   let piratePaths;
   let patrolPaths;
-
-  switch (region.name) { // TODO: make the rest of these paths
+ 
+  switch (region.name) {
     case "Somalian Coast":
       merchantPaths = somaliaMerchantPaths;
       piratePaths = somaliaPiratePaths;
       patrolPaths = somaliaPatrolPaths;
       break;
-
     case "Gulf of Guinea":
-      // merchantPaths = guineaMerchantPaths;
-      // piratePaths = guineaPiratePaths;
-      // patrolPaths = guineaPatrolPaths;
       break;
-
     case "Malacca Strait":
-      // merchantPaths = malaccaMerchantPaths;
-      // piratePaths = malaccaPiratePaths;
-      // patrolPaths = malaccaPatrolPaths;
       break;
-  
     default:
-      console.error("Unrecognized region name; no paths will be made! This is probably gonna break something!");
+      console.error("Unrecognized region name; no paths will be made!");
       break;
   }
  
   for (const [pointId, point] of Object.entries(region.points)) {
     const pos = point.pos;
-
+ 
     if (point.type === 'port') {
       if (Math.random() < merchantChance) {
         const id = crypto.randomUUID();
-        const paths = merchantPaths[pointId];
+        const paths = merchantPaths ? merchantPaths[pointId] : null;
         const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
         ships[id] = buildShipWithMover('merchant', pos, 'medium', region.center, path);
       }
     }
-
+ 
     if (point.type === 'patrolBase') {
       if (Math.random() < patrolChance) {
-          const id = crypto.randomUUID();
-          const paths = patrolPaths[pointId];
-          const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
-          ships[id] = buildShipWithMover('patrol', pos, 'medium', region.center, path);
-        }
+        const id = crypto.randomUUID();
+        const paths = patrolPaths ? patrolPaths[pointId] : null;
+        const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
+        ships[id] = buildShipWithMover('patrol', pos, 'medium', region.center, path);
+      }
     }
-
+ 
     if (point.type === 'pirateCove') {
       if (Math.random() < pirateChance) {
         const id = crypto.randomUUID();
-        const paths = piratePaths[pointId];
+        const paths = piratePaths ? piratePaths[pointId] : null;
         const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
         ships[id] = buildShipWithMover('pirate', pos, 'small', region.center, path);
       }
     }
   }
  
-  return { // return run w/ updated state
+  return {
     ...run,
     currentState: {
       ...run.currentState,
@@ -211,18 +206,14 @@ function spawnShips(run, regions) { // Iterate through spawning Points and give 
     }
   };
 }
-
-// NEW: passing in region center for coord conversion. ALSO NEW: all ships start as path followers, so a path arg is now needed
-function buildShipWithMover(type, pos, size, regionCenter, path) { // Construct a ship AND attach a mover object 
-  
-  // Predefined, constant state of our ship types. May need balancing!!
+ 
+function buildShipWithMover(type, pos, size, regionCenter, path) {
   const stats = {
-    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1000, maxSpeed: 10000 },
-    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10000, maxSpeed: 10000 },
-    patrol:   { crewSize: 10, durability: 20, armament: 60, sightRange: 2000,  maxSpeed: 10000 },
-  }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1000, maxSpeed: 5000 };
-
-  // NEW: convert position to cartesian before building
+    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1, maxSpeed: 10 },
+    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10, maxSpeed: 10 },
+    patrol:   { crewSize: 10, durability: 20, armament: 60, sightRange: 2,  maxSpeed: 10 },
+  }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1, maxSpeed: 5 };
+ 
   const cartesianPos = latLngToCartesian(pos[0], pos[1], {
     originLat: regionCenter[0],
     originLon: regionCenter[1],
@@ -230,37 +221,33 @@ function buildShipWithMover(type, pos, size, regionCenter, path) { // Construct 
     headingDegrees: 0,
   });
  
-  // Build the kinematic: ships start stationary at their spawn point
   const kinematic = behaviors.newKinematic(
-    cartesianPos,   // position
-    0,     // orientation (radians)
-    [0, 0],// velocity
-    0      // rotation
+    cartesianPos,
+    0,
+    [0, 0],
+    0
   );
  
-  // NEW: not using wander anymore because it sucks and doesnt work and also sucks
   const wander = behaviors.newWander(
     kinematic,
-    0.5,   // maxAcceleration
-    0.1,   // maxAngularAcc
-    0.05,  // maxRotation
-    1,     // slowThreshold
-    0.5,   // targetThreshold
+    0.5,
+    0.1,
+    0.05,
+    1,
+    0.5,
     stats.maxSpeed
-  ); 
-
-  // NEW: using followPath as default ship behavior now, NOTE: also may need balancing/ number tweaking
+  );
+ 
   let behavior;
   if (path) {
     behavior = behaviors.newFollowPath(
-    path,
-    0.04,  // pathOffset — small value, just look slightly ahead
-    0,     // currentParam — always start at beginning of path
-    kinematic,
-    10 * 100  // BOOSTED ACCELERATION FOR TESTING REMOVE *100 LATER
+      path,
+      0.04,
+      0,
+      kinematic,
+      1000
     );
-  } 
-  else {
+  } else {
     behavior = wander;
   }
  
@@ -268,23 +255,32 @@ function buildShipWithMover(type, pos, size, regionCenter, path) { // Construct 
  
   return {
     type,
-    pos: cartesianPos,            // keep top-level pos in sync with mover for ShipIcons to read
+    pos: cartesianPos,
     size,
     sightRange: stats.sightRange,
     crewSize:   stats.crewSize,
     armament:   stats.armament,
     durability: stats.durability,
-    state: 1,       // 1 = idle
+    state: 1,
     fuel: 100,
     inCombat: false,
     mover,
   };
 }
-
+ 
+function viewRunList(state, runIndex, selectedRuns) {
+  let runs = deselectAll(state.runs, selectedRuns);
+  let display = state.display;
+  if (runIndex !== undefined) {
+    display = { type: 'run', index: runIndex };
+  }
+  return { ...state, runs: runs, display: display, controls: { type: 'list-runs' }};
+}
+ 
 function viewRunControls(state, runIndex) {
   const run = state.runs[runIndex];
   if (!run) return state;
-
+ 
   return {
     ...state,
     runs: state.runs,
@@ -292,21 +288,21 @@ function viewRunControls(state, runIndex) {
     controls: { type: 'active-run', index: runIndex },
   };
 }
-
-function startRun(state, runIndex) {
+ 
+// Spawns ships and sets run status; called by 'start-run' action dispatched from BottomRightButtons
+function startRun(state, runIndex, startPaused) {
   const run = state.runs[runIndex];
   if (!run) return state;
-
+ 
   const startedRun = run.status === 'new'
-    ? spawnShips({ ...run, status: 'running' }, state.regions)
-    : { ...run, status: 'running' };
-
+    ? spawnShips({ ...run, status: startPaused ? 'paused' : 'running' }, state.regions)
+    : { ...run, status: startPaused ? 'paused' : 'running' };
+ 
   return {
     ...state,
     runs: state.runs.map((candidate, i) => i === runIndex ? startedRun : candidate),
   };
 }
-
-
+ 
 export { simStateReducer, appStartState, buildNewRun };
 export { spawnShips, buildShipWithMover, viewRunControls, startRun };

@@ -88,33 +88,29 @@ function newMover(initialKinematic, acceleration, maxSpeed, behavior) { // retur
 }
 
 function updateMover(mover, steering, maxSpeed, time) {
+    // Compute new kinematic values
     let newPos = add(mover.kinematic.pos, scalarMult(mover.kinematic.velocity, time));
     let newOrientation = mover.kinematic.orientation + mover.kinematic.rotation * time;
     let newVelocity = add(mover.kinematic.velocity, scalarMult(steering.linear, time));
     let newRotation = mover.kinematic.rotation + steering.angular * time;
 
+    // Clamp velocity if over maxSpeed
     if (getLength(newVelocity) > maxSpeed) {
         newVelocity = scalarMult(normalize(newVelocity), maxSpeed);
     }
 
-    const newKinematic = {
-        pos: newPos,
-        orientation: newOrientation,
-        velocity: newVelocity,
-        rotation: newRotation
-    };
-
+    // construct new mover object
     return {
         ...mover,
-        kinematic: newKinematic,
-        behavior: {
-            ...mover.behavior,
-            k1: newKinematic  // keep k1 in sync w/ updated kinematic
+        kinematic: {
+            pos: newPos,
+            orientation: newOrientation,
+            velocity: newVelocity,
+            rotation: newRotation
         },
         acceleration: steering.linear
     };
 }
-
 function newContinue(k1) { // behavior obj; a mover keeping its current trajectory; no change in orientation or velocity
     return {
         k1 : k1, // k1 = character to continue
@@ -479,26 +475,19 @@ function newFollowPath(path, pathOffset, currentParam, k1, maxAcceleration) { //
 }
     
 function getFollowPathSteering(followPathBehavior) {
-    // Recalculate where we are on the path from current position
-    const newParam = getPathParam(followPathBehavior.path, followPathBehavior.k1.pos);
-    console.log('newParam:', newParam, '| currentParam:', followPathBehavior.currentParam);
-    
-    // Only advance currentParam forward, never let it go backward
-    // This prevents latching onto a closer point on the return leg
-    if (newParam > followPathBehavior.currentParam) {
-        followPathBehavior.currentParam = newParam;
-    }
+    // compute updated path param
+    let currentParam = getPathParam(followPathBehavior.path, followPathBehavior.k1.pos);
+    let targetParam = currentParam + followPathBehavior.pathOffset;
+    let targetPos = getPathPosition(followPathBehavior.path, targetParam);
 
-    const targetParam = followPathBehavior.currentParam + followPathBehavior.pathOffset;
-    const targetPos = getPathPosition(followPathBehavior.path, targetParam);
-    console.log('targetPos:', targetPos, '| ship pos:', followPathBehavior.k1.pos);
-
-    const tempSeekBehavior = {
+    // create temp Seek object
+    let tempSeekBehavior = {
         k1: followPathBehavior.k1,
-        k2: { ...followPathBehavior.k2, pos: targetPos },
+        k2: { ...followPathBehavior.k2, pos: targetPos }, // override pos only
         maxAcceleration: followPathBehavior.maxAcceleration
     };
 
+    // compute and return Seek steering
     return getSeekSteering(tempSeekBehavior);
 }
 
@@ -615,5 +604,5 @@ function getSteering(behavior) {  // "Master" getSteering function to be called 
 // c = Behaviors.clampOreintation(...)
 
 export  {getLength, normalize, add, subtract, scalarMult, dotProduct, closestPointOnSegment, orientationToVector, clampOreintation, newMover, newKinematic, newSteeringOutput, newSeek, newFlee,
-    newArrive, newPursue, newPath, newFollowPath, newWander, newFace, newAlign, newContinue, updateMover, assemblePath, getSteering, getPathParam}
+    newArrive, newPursue, newPath, newFollowPath, newWander, newFace, newAlign, newContinue, updateMover, assemblePath, getSteering}
 
