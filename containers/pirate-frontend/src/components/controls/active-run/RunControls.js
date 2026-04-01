@@ -18,6 +18,7 @@ export default function RunControls({ simState, modifySimState, runID }) {
         }
         const interval = setInterval(() => {
             modifySimState({ type: 'increment-run-time', index: runID, seconds: 1 });
+            modifySimState({ type: 'step-run', index: runID });
         }, 1000 / speed);
 
     return () => clearInterval(interval);

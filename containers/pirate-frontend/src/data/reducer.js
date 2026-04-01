@@ -7,6 +7,8 @@ import { latLngToCartesian } from '../utils/coords.js';
 import { somaliaMerchantPaths } from './somaliaPaths.js';
 import { somaliaPiratePaths } from './somaliaPaths.js';
 import { somaliaPatrolPaths } from './somaliaPaths.js';
+
+console.log('\n\n\n\n HI THIS IS THE somaliaMerchantPaths import:', somaliaMerchantPaths);
  
 function simStateReducer(state, action) {
   switch (action.type) {
@@ -152,6 +154,8 @@ function spawnShips(run, regions) {
   let piratePaths;
   let patrolPaths;
  
+  console.log('region.name:', region.name);
+  console.log('merchantPaths after switch:', merchantPaths);
   switch (region.name) {
     case "Somalian Coast":
       merchantPaths = somaliaMerchantPaths;
@@ -209,10 +213,10 @@ function spawnShips(run, regions) {
  
 function buildShipWithMover(type, pos, size, regionCenter, path) {
   const stats = {
-    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1, maxSpeed: 10 },
-    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10, maxSpeed: 10 },
-    patrol:   { crewSize: 10, durability: 20, armament: 60, sightRange: 2,  maxSpeed: 10 },
-  }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1, maxSpeed: 5 };
+    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1000, maxSpeed: 10000 },
+    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10000, maxSpeed: 10000 },
+    patrol:   { crewSize: 10, durability: 20, armament: 60, sightRange: 2000,  maxSpeed: 10000 },
+  }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1000, maxSpeed: 5000 };
  
   const cartesianPos = latLngToCartesian(pos[0], pos[1], {
     originLat: regionCenter[0],
