@@ -1,8 +1,6 @@
 import { latLngToCartesian } from "../utils/coords.js";
 import * as behaviors from './behaviors.js'
 
-console.log('somaliaPaths module loaded');
-
 function toCart(lat, lon) { // convert latlon to cartesian specifically for the Somalia Region 
     let xY = latLngToCartesian(lat, lon, {
         originLat: 9.5,

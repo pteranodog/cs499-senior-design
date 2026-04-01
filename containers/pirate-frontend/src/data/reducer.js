@@ -7,8 +7,6 @@ import { latLngToCartesian } from '../utils/coords.js';
 import { somaliaMerchantPaths } from './somaliaPaths.js';
 import { somaliaPiratePaths } from './somaliaPaths.js';
 import { somaliaPatrolPaths } from './somaliaPaths.js';
-
-console.log('\n\n\n\n HI THIS IS THE somaliaMerchantPaths import:', somaliaMerchantPaths);
  
 function simStateReducer(state, action) {
   switch (action.type) {
@@ -154,8 +152,6 @@ function spawnShips(run, regions) {
   let piratePaths;
   let patrolPaths;
  
-  console.log('region.name:', region.name);
-  console.log('merchantPaths after switch:', merchantPaths);
   switch (region.name) {
     case "Somalian Coast":
       merchantPaths = somaliaMerchantPaths;
