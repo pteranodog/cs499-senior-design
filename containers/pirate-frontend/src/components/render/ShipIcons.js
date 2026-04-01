@@ -1,16 +1,27 @@
+// MERGE NOTE: replaced this whole file with version from my branch, i dont think it will break things since 
+// my changes mainly just adjusted to new coord stuff -ljj
 import ShipIcon from './ShipIcon.js';
+import { cartesianToLatLng } from '../../utils/coords.js';
 
-function ShipIcons({ shipList }) {
+function ShipIcons({ shipList, regionCenter }) {
   return (
     <>
-      {shipList.map((ship, index) => (
-        <ShipIcon
-          key={ship.id || `${ship.type}-${index}-${ship.lat}-${ship.lon}`}
-          type={ship.type}
-          lat={ship.pos[0]}
-          lon={ship.pos[1]}
-        />
-      ))}
+      {shipList.map((ship, index) => {
+        const { lat, lng } = cartesianToLatLng(ship.pos[0], ship.pos[1], {
+          originLat: regionCenter[0],
+          originLon: regionCenter[1],
+          metersPerUnit: 1,
+          headingDegrees: 0,
+        });
+        return (
+          <ShipIcon
+            key={ship.id || `${ship.type}-${index}-${lat}-${lng}`}
+            type={ship.type}
+            lat={lat}
+            lon={lng}
+          />
+        );
+      })}
     </>
   );
 }

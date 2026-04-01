@@ -1,4 +1,4 @@
-import { latLngToCartesian } from "../utils/coords";
+import { latLngToCartesian } from "../utils/coords.js";
 import * as behaviors from './behaviors.js'
 
 function toCart(lat, lon) { // convert latlon to cartesian specifically for the Somalia Region 

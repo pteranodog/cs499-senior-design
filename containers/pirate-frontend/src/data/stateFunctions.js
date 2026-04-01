@@ -136,18 +136,19 @@ function checkForCombatScenario(ship, shipId, shipsById) { // return updated shi
   return shipsById; // no combat triggered
 }
 
-function checkForPortArrival(ship) { // Reverses this ship's course if it has reached its home port
-  if (!ship.homePort || !ship.mover.behavior?.path) {
-    return ship;
-  }
+function checkForPortArrival(ship) {
+  if (!ship.mover?.behavior?.path) return ship;
 
-  const dist = behaviors.getLength(
-    behaviors.subtract(ship.mover.kinematic.pos, ship.homePort.pos)
-  );
-
-  if (dist > COMBAT_RANGE) return ship;
+  if (ship.mover.behavior.currentParam < 0.98) return ship;
 
   const reversePath = arr => [...arr].reverse();
+  const path = ship.mover.behavior.path;
+  const reversedPath = {
+    ...path,
+    points:    reversePath(path.points),
+    distances: reversePath(path.distances),
+    params:    reversePath(path.params),
+  };
 
   return {
     ...ship,
@@ -155,13 +156,8 @@ function checkForPortArrival(ship) { // Reverses this ship's course if it has re
       ...ship.mover,
       behavior: {
         ...ship.mover.behavior,
-        path: {
-          ...ship.mover.behavior.path,
-          points: reversePath(ship.mover.behavior.path.points),
-          distances: reversePath(ship.mover.behavior.path.distances),
-          segments: reversePath(ship.mover.behavior.path.segments),
-          params: reversePath(ship.mover.behavior.path.params),
-        }
+        path: reversedPath,
+        currentParam: 0,
       }
     }
   };
@@ -173,10 +169,10 @@ function updateShipBehavior(ship, timeStep) {
   }
 
   const newMover = behaviors.updateMover(
-    ship.mover,
-    behaviors.getSteering(ship.mover.behavior),
-    ship.maxSpeed,
-    timeStep
+  ship.mover,
+  behaviors.getSteering(ship.mover.behavior),
+  ship.mover.maxSpeed,
+  timeStep
   );
 
   return {
