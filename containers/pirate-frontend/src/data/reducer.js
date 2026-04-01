@@ -147,6 +147,34 @@ function spawnShips(run, regions) {
   const merchantChance = (run.maxMerchants ?? 0) / 100;
   const pirateChance   = (run.maxPirates   ?? 0) / 100;
   const patrolChance   = (run.maxPatrols   ?? 0) / 100;
+
+  let merchantPaths;
+  let piratePaths;
+  let patrolPaths;
+
+  switch (region.name) { // TODO: make the rest of these paths
+    case "Somalian Coast":
+      merchantPaths = somaliaMerchantPaths;
+      piratePaths = somaliaPiratePaths;
+      patrolPaths = somaliaPatrolPaths;
+      break;
+
+    case "Gulf of Guinea":
+      // merchantPaths = guineaMerchantPaths;
+      // piratePaths = guineaPiratePaths;
+      // patrolPaths = guineaPatrolPaths;
+      break;
+
+    case "Malacca Strait":
+      // merchantPaths = malaccaMerchantPaths;
+      // piratePaths = malaccaPiratePaths;
+      // patrolPaths = malaccaPatrolPaths;
+      break;
+  
+    default:
+      console.error("Unrecognized region name; no paths will be made! This is probably gonna break something!");
+      break;
+  }
  
   let merchantPaths;
   let piratePaths;
