@@ -167,8 +167,7 @@ function newPoint(name, pointType, pointPos) {
 
 /** Subclass of Points; each instance represents a point where merchant
  * ships either pick up or drop off goods. These points also "spawn"
- * new merchant ships (this functionality will be added once additional key
- * decisions regarding combat, trade routes, and ship data are made)
+ * new merchant ships.
  */
 function newPort(name, portPos, merchantSpawnChance, toPorts, fromPorts)
 {
@@ -179,10 +178,10 @@ function newPort(name, portPos, merchantSpawnChance, toPorts, fromPorts)
   point.merchantSpawnChance = merchantSpawnChance
 
   // Merchants export goods from this port *to* where?
-  point.toPorts = toPorts // array of Ports (or maybe just IDs?)
+  point.toPorts = toPorts // array of Ports 
 
   // Merchants import goods to this port *from* where?
-  point.fromPorts = fromPorts // array of Ports (TODO: or maybe just IDs?)
+  point.fromPorts = fromPorts // array of Ports 
 
   return point;
 }
@@ -194,8 +193,19 @@ function newPirateCove(name, covePos, pirateSpawnChance)
   let point = newPoint(name, "pirateCove", covePos)
 
   // Probability at each step that this Cove spawns a new Pirate 
-  // (NOTE: pirate count should not exceed a certain maximum)
   point.pirateSpawnChance = pirateSpawnChance
+
+  return point;
+}
+
+/** Subclass of Points; each instance represents a point from which
+ * naval Patrol ships emerge. */
+function newBase(name, basePos, patrolSpawnChance)
+{
+  let point = newPoint(name, "patrolBase", basePos);
+
+  // Probability at each step that this Base spawns a new Patrol
+  point.patrolSpawnChance = patrolSpawnChance;
 
   return point;
 }
@@ -319,4 +329,4 @@ let dataStructure = {
 printData("data.json", dataStructure);
 */
 
-export { newPirateShip, newPatrolShip, newMerchantShip, newRegion, newPort, newPirateCove, newConfig, newRun };
+export { newPirateShip, newPatrolShip, newMerchantShip, newRegion, newPort, newBase, newPirateCove, newConfig, newRun };

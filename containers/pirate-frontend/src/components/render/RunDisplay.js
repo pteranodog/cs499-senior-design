@@ -63,7 +63,7 @@ export default function RunDisplay({ simState, run }) {
     <>
       <TileLayer attribution={DAY_TILE_ATTRIBUTION} url={DAY_TILE_URL} />
       <PointIcons pointList={pointList} />
-      <ShipIcons shipList={shipList} />
+      <ShipIcons shipList={shipList} regionCenter={region.center} />
       <DisplayBadge simState={simState} />
     </>
   );

@@ -1,14 +1,19 @@
-import { newPort, newPirateCove, newRegion } from './classes.js';
+import { newPort, newBase, newPirateCove, newRegion } from './classes.js';
 
 function defaultRegions() {
   let somaliaPoints = {};
-  somaliaPoints["p1"] = newPort("Port Said (Egypt)", [31.2685, 32.3080], 0.01, [], []);
-  somaliaPoints["p2"] = newPort("Mombasa (Kenya)", [-4.0717, 39.6730], 0.01, [], []);
+  somaliaPoints["p2"] = newPort("Mombasa (Port)", [-4.0717, 39.6730], 0.01, [], []);
   somaliaPoints["p3"] = newPort("Dar es Salaam (Tanzania)", [-6.7640, 39.2747], 0.01, [], []); 
-  somaliaPoints["p4"] = newPort("Djibouti", [11.6048, 43.1497], 0.01, [], []);
-  somaliaPoints["p5"] = newPirateCove("Cove One", [11.1705, 47.4048], 0.01); 
-  somaliaPoints["p6"] = newPirateCove("Cove Two", [5.0659, 48.2978], 0.01);
-  somaliaPoints["p7"] = newPort("Camp Lemonnier (U.S.A.)", [11.5434, 43.1790], 0, [], []);
+  somaliaPoints["p4"] = newPort("Djibouti (Port)", [11.6048, 43.1497], 0.01, [], []);
+
+  somaliaPoints["p5"] = newPort("Mumbai", [18.9, 72.8], 0, [], []);
+  somaliaPoints["p6"] = newPort("Port Salah (Oman)", [16.9, 54.0], 0, [], []);
+  
+  somaliaPoints["p7"] = newPirateCove("Cove One", [11.1705, 47.4048], 0.01);
+  somaliaPoints["p8"] = newPirateCove("Cove Two", [5.0659, 48.2978], 0.01);
+  somaliaPoints["p9"] = newBase("Camp Lemonnier (U.S.A.)", [11.5434, 43.1790], 0, [], []);
+  somaliaPoints["p10"] = newBase("Kenya Navy", [-4.3, 39.6], 0, [], []);
+  somaliaPoints["p11"] = newBase("Mahé (Naval Base)", [-4.7, 55.5], 0, [], []);
 
   let regions = {};
   regions["r1"] = newRegion([9.5, 46], somaliaPoints, "Somalian Coast", 1500, 1500, 6);
