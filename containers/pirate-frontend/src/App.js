@@ -1,8 +1,16 @@
 import { isMobile } from 'react-device-detect';
 import PirateMap from './components/PirateMap.js';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+const MIN_SUPPORTED_WIDTH = 1200;
+const MIN_SUPPORTED_HEIGHT = 700;
 
 function App() {
+  const [viewportSize, setViewportSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       e.preventDefault();
@@ -12,6 +20,22 @@ function App() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
+
+  useEffect(() => {
+    const updateViewportSize = () => {
+      setViewportSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener('resize', updateViewportSize);
+    return () => window.removeEventListener('resize', updateViewportSize);
+  }, []);
+
+  const isTooSmall =
+    viewportSize.width < MIN_SUPPORTED_WIDTH ||
+    viewportSize.height < MIN_SUPPORTED_HEIGHT;
 
   if (isMobile) {
     return (
@@ -27,6 +51,27 @@ function App() {
         <p>This application is not supported on mobile devices.</p>
       </div>
     )
+  }
+
+  if (isTooSmall) {
+    return (
+      <div style={{ textAlign: 'center', marginTop: '50px' }}>
+        <div className="marquee">
+          <div className="marquee-content">
+            <img src="/patrol-icon.png" alt="Patrol" style={{ height: '50px', marginRight: '40px' }} />
+            <img src="/pirate-icon.png" alt="Pirate" style={{ height: '50px', marginRight: '40px' }} />
+            <img src="/merchant-icon.png" alt="Merchant" style={{ height: '50px' }} />
+          </div>
+        </div>
+        <h1>Window too small</h1>
+        <p>
+          Please resize your browser window to at least {MIN_SUPPORTED_WIDTH}x{MIN_SUPPORTED_HEIGHT}.
+        </p>
+        <p>
+          Current size: {viewportSize.width}x{viewportSize.height}
+        </p>
+      </div>
+    );
   }
 
   return (
