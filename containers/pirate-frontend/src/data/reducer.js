@@ -175,7 +175,7 @@ function spawnShips(run, regions) {
       console.error("Unrecognized region name; no paths will be made! This is probably gonna break something!");
       break;
   }
- 
+  /*
   let merchantPaths;
   let piratePaths;
   let patrolPaths;
@@ -194,6 +194,7 @@ function spawnShips(run, regions) {
       console.error("Unrecognized region name; no paths will be made!");
       break;
   }
+  */
  
   for (const [pointId, point] of Object.entries(region.points)) {
     const pos = point.pos;
