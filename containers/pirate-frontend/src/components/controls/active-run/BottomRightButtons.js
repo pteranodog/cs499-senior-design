@@ -11,8 +11,17 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
   }
 
   const modifyRun = (setting, value) => modifySimState({ type: 'modify-run', index: runID, setting, value });
+  const speed = run.speed || 1;
+
+  const isRunning = run.status === 'running';
+  const isNew = run.status === 'new';
 
   const handleTerminate = () => {
+    if (isNew) {
+      modifySimState({ type: 'view-run-list', run: runID, selected: runID })
+      return;
+    }
+
     const confirmed = window.confirm(
       'Are you sure you want to terminate this run?\nYou will not be able to resume.',
     );
@@ -27,22 +36,32 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
   };
 
   const onPauseToggle = () => {
-    alert('This button is not yet implemented.');
+    if (isNew) {
+      modifySimState({ type: 'start-run', index: runID });
+      return;
+    }
+
+    modifyRun('status', isRunning ? 'paused' : 'running');
   }
 
   const onStep = () => {
-      modifySimState({ type: 'step-run', index: runID });
+    if (isNew) {
+      modifySimState({ type: 'start-run', index: runID, startPaused: true });
+      return;
+    }
+
+    if (isRunning) {
+      modifyRun('status', 'paused');
+    }
+
+    modifySimState({ type: 'step-run', index: runID });
     };
 
   const onSpeedChange = () => {
-    alert('This button is not yet implemented.');
+    const nextSpeed = speed === 1 ? 2 : speed === 2 ? 4 : 1;
+    modifyRun('speed', nextSpeed);
   }
 
-  const speed = () => {
-    alert('This button is not yet implemented.');
-  }
-
-  const isRunning = run.status === 'running';
 
   return (
     <div
@@ -55,17 +74,17 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
       }}
     >
       <ButtonGroup aria-label="Run controls">
-        <Button variant="primary" onClick={onPauseToggle}>
-          {isRunning ? 'Resume' : 'Pause'}
+        <Button variant={isNew ? "success" : "primary"} onClick={onPauseToggle}>
+          {isNew ? 'Start' : isRunning ? 'Pause' : 'Resume'}
         </Button>
-        <Button variant="secondary" onClick={onStep} disabled={false}>
+        <Button variant="secondary" onClick={onStep}>
           Step
         </Button>
         <Button variant="warning" onClick={onSpeedChange}>
           Speed ({speed}x)
         </Button>
-        <Button variant="danger" onClick={handleTerminate}>
-          Terminate
+        <Button variant={isNew ? "primary" : "danger"} onClick={handleTerminate}>
+          {isNew ? "Modify" : "Terminate" }
         </Button>
       </ButtonGroup>
     </div>

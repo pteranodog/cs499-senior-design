@@ -88,29 +88,33 @@ function newMover(initialKinematic, acceleration, maxSpeed, behavior) { // retur
 }
 
 function updateMover(mover, steering, maxSpeed, time) {
-    // Compute new kinematic values
     let newPos = add(mover.kinematic.pos, scalarMult(mover.kinematic.velocity, time));
     let newOrientation = mover.kinematic.orientation + mover.kinematic.rotation * time;
     let newVelocity = add(mover.kinematic.velocity, scalarMult(steering.linear, time));
     let newRotation = mover.kinematic.rotation + steering.angular * time;
 
-    // Clamp velocity if over maxSpeed
     if (getLength(newVelocity) > maxSpeed) {
         newVelocity = scalarMult(normalize(newVelocity), maxSpeed);
     }
 
-    // construct new mover object
+    const newKinematic = {
+        pos: newPos,
+        orientation: newOrientation,
+        velocity: newVelocity,
+        rotation: newRotation
+    };
+
     return {
         ...mover,
-        kinematic: {
-            pos: newPos,
-            orientation: newOrientation,
-            velocity: newVelocity,
-            rotation: newRotation
+        kinematic: newKinematic,
+        behavior: {
+            ...mover.behavior,
+            k1: newKinematic  // NEW: keep k1 in sync
         },
         acceleration: steering.linear
     };
 }
+
 function newContinue(k1) { // behavior obj; a mover keeping its current trajectory; no change in orientation or velocity
     return {
         k1 : k1, // k1 = character to continue
@@ -473,17 +477,23 @@ function newFollowPath(path, pathOffset, currentParam, k1, maxAcceleration) { //
     result.type = "followPath"
     return result;
 }
+
     
 function getFollowPathSteering(followPathBehavior) {
+    const newParam = getPathParam(followPathBehavior.path, followPathBehavior.k1.pos);
+    
     // compute updated path param
-    let currentParam = getPathParam(followPathBehavior.path, followPathBehavior.k1.pos);
-    let targetParam = currentParam + followPathBehavior.pathOffset;
-    let targetPos = getPathPosition(followPathBehavior.path, targetParam);
+    if (newParam > followPathBehavior.currentParam) {
+        followPathBehavior.currentParam = newParam;
+    }
+
+    const targetParam = followPathBehavior.currentParam + followPathBehavior.pathOffset;
+    const targetPos = getPathPosition(followPathBehavior.path, targetParam);
 
     // create temp Seek object
-    let tempSeekBehavior = {
+    const tempSeekBehavior = {
         k1: followPathBehavior.k1,
-        k2: { ...followPathBehavior.k2, pos: targetPos }, // override pos only
+        k2: { ...followPathBehavior.k2, pos: targetPos },
         maxAcceleration: followPathBehavior.maxAcceleration
     };
 

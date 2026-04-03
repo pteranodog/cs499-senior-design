@@ -19,12 +19,16 @@ export default function CompareControls({ simState, modifySimState }) {
         {runs.map((run) => (
           <div key={run.uuid} style={{ flex: 1 }} className="border border-secondary rounded p-2">
             <div className="fw-bold mb-1">{run.name}</div>
-            <RunSettingsSummary runSettings={run} regions={simState.regions} />
+            <RunSettingsSummary
+              runSettings={run}
+              regions={simState.regions}
+              warning={run.status === 'new' ? "This run has not started yet!" : ""}
+            />
           </div>
         ))}
       </div>
       <Button variant="primary" size="sm" className="w-100"
-        onClick={() => modifySimState({ type: 'view-run-list', run: runA })}>
+        onClick={() => modifySimState({ type: 'view-run-list', run: null })}>
         View All Runs
       </Button>
     </div>
