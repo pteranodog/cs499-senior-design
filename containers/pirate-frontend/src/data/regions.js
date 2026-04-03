@@ -1,5 +1,31 @@
 import { newPort, newBase, newPirateCove, newRegion } from './classes.js';
 
+// Bounding boxes are intentionally moderate (not huge) so future polygon clipping
+// and auto-zoom can target useful simulation extents.
+// Coordinates are geographic lat/lon rectangle edges:
+// - top: max latitude
+// - left: min longitude
+// - right: max longitude
+// - bottom: min latitude
+const regionBoundingBoxes = {
+  r1: { name: "Somalian Coast", top: 14.0, left: 38.0, right: 57.0, bottom: -8.0 },
+  r2: { name: "Gulf of Guinea", top: 8.0, left: -4.0, right: 12.0, bottom: 2.0 },
+  r3: { name: "Malacca Strait", top: 7.0, left: 97.0, right: 106.0, bottom: 0.0 },
+  r4: { name: "Caribbean Sea", top: 22.0, left: -82.0, right: -66.0, bottom: 8.0 },
+  r5: { name: "Red Sea", top: 23.0, left: 35.0, right: 47.0, bottom: 10.0 },
+  r6: { name: "Mozambique Channel", top: -10.0, left: 31.0, right: 51.0, bottom: -28.0 },
+  r7: { name: "South China Sea", top: 24.0, left: 105.0, right: 122.0, bottom: 8.0 },
+  r8: { name: "Sulu-Celebes Seas", top: 8.0, left: 117.0, right: 126.5, bottom: 0.0 },
+};
+
+function boundsCenter(bounds) {
+  // Assumes bounds do not cross the antimeridian (no +/-180 wrap).
+  return [
+    (bounds.top + bounds.bottom) / 2,
+    (bounds.left + bounds.right) / 2,
+  ];
+}
+
 function defaultRegions() {
   let somaliaPoints = {};
   somaliaPoints["p2"] = newPort("Mombasa (Port)", [-4.0717, 39.6730], 0.01, [], []);
@@ -76,16 +102,21 @@ function defaultRegions() {
   suluCelebesPoints["s7"] = newBase("Indonesian North Sulawesi", [1.47, 124.83], 0);
 
   let regions = {};
-  regions["r1"] = newRegion([9.5, 46], somaliaPoints, "Somalian Coast", 1200, 1200, 6);
-  regions["r2"] = newRegion([2.5, 1.5], guineaPoints, "Gulf of Guinea", 1200, 1200, 6);
-  regions["r3"] = newRegion([3, 101.5], malaccaPoints, "Malacca Strait", 1100, 1100, 7);
-  regions["r4"] = newRegion([15.2, -74.5], caribbeanPoints, "Caribbean Sea", 1300, 1300, 6);
-  regions["r5"] = newRegion([17.0, 40.5], redSeaPoints, "Red Sea", 1100, 1100, 6);
-  regions["r6"] = newRegion([-17.0, 41.5], mozambiquePoints, "Mozambique Channel", 1200, 1200, 6);
-  regions["r7"] = newRegion([15.5, 113.0], southChinaSeaPoints, "South China Sea", 1500, 1500, 5);
-  regions["r8"] = newRegion([5.2, 122.1], suluCelebesPoints, "Sulu-Celebes Seas", 1000, 1000, 7);
+  regions["r1"] = newRegion(boundsCenter(regionBoundingBoxes["r1"]), somaliaPoints, "Somalian Coast", 1200, 1200, 6);
+  regions["r2"] = newRegion(boundsCenter(regionBoundingBoxes["r2"]), guineaPoints, "Gulf of Guinea", 1200, 1200, 6);
+  regions["r3"] = newRegion(boundsCenter(regionBoundingBoxes["r3"]), malaccaPoints, "Malacca Strait", 1100, 1100, 7);
+  regions["r4"] = newRegion(boundsCenter(regionBoundingBoxes["r4"]), caribbeanPoints, "Caribbean Sea", 1300, 1300, 6);
+  regions["r5"] = newRegion(boundsCenter(regionBoundingBoxes["r5"]), redSeaPoints, "Red Sea", 1100, 1100, 6);
+  regions["r6"] = newRegion(boundsCenter(regionBoundingBoxes["r6"]), mozambiquePoints, "Mozambique Channel", 1200, 1200, 6);
+  regions["r7"] = newRegion(boundsCenter(regionBoundingBoxes["r7"]), southChinaSeaPoints, "South China Sea", 1500, 1500, 5);
+  regions["r8"] = newRegion(boundsCenter(regionBoundingBoxes["r8"]), suluCelebesPoints, "Sulu-Celebes Seas", 1000, 1000, 7);
+
+  // Expose bounds on each region so clipping/auto-zoom can consume these later.
+  for (const [regionId, region] of Object.entries(regions)) {
+    region.bounds = regionBoundingBoxes[regionId];
+  }
 
   return regions;
 }
 
-export { defaultRegions };
+export { defaultRegions, regionBoundingBoxes };
