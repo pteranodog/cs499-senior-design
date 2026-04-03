@@ -5,11 +5,21 @@ import { useEffect, useState } from 'react';
 const MIN_SUPPORTED_WIDTH = 1200;
 const MIN_SUPPORTED_HEIGHT = 700;
 
+const getViewportMetrics = () => {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const pixelRatio = window.devicePixelRatio || 1;
+
+  return {
+    width,
+    height,
+    effectiveWidth: Math.round(width * pixelRatio),
+    effectiveHeight: Math.round(height * pixelRatio),
+  };
+};
+
 function App() {
-  const [viewportSize, setViewportSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  });
+  const [viewportSize, setViewportSize] = useState(getViewportMetrics);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -23,19 +33,21 @@ function App() {
 
   useEffect(() => {
     const updateViewportSize = () => {
-      setViewportSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
+      setViewportSize(getViewportMetrics());
     };
 
     window.addEventListener('resize', updateViewportSize);
-    return () => window.removeEventListener('resize', updateViewportSize);
+    window.visualViewport?.addEventListener('resize', updateViewportSize);
+
+    return () => {
+      window.removeEventListener('resize', updateViewportSize);
+      window.visualViewport?.removeEventListener('resize', updateViewportSize);
+    };
   }, []);
 
   const isTooSmall =
-    viewportSize.width < MIN_SUPPORTED_WIDTH ||
-    viewportSize.height < MIN_SUPPORTED_HEIGHT;
+    viewportSize.effectiveWidth < MIN_SUPPORTED_WIDTH ||
+    viewportSize.effectiveHeight < MIN_SUPPORTED_HEIGHT;
 
   if (isMobile) {
     return (
@@ -63,12 +75,15 @@ function App() {
             <img src="/merchant-icon.png" alt="Merchant" style={{ height: '50px' }} />
           </div>
         </div>
-        <h1>Window too small</h1>
+        <h1>Your Window is too small!</h1>
         <p>
           Please resize your browser window to at least {MIN_SUPPORTED_WIDTH}x{MIN_SUPPORTED_HEIGHT}.
         </p>
         <p>
-          Current size: {viewportSize.width}x{viewportSize.height}
+          Current viewport: {viewportSize.width}x{viewportSize.height} (CSS px)
+        </p>
+        <p>
+          Effective size: {viewportSize.effectiveWidth}x{viewportSize.effectiveHeight} (screen px)
         </p>
       </div>
     );
