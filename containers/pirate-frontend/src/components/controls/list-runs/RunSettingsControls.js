@@ -72,9 +72,9 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
       </FloatingLabel>
 
       {[
-        { id: 'maxMerchants', label: 'Merchants/Day', max: 500},
-        { id: 'maxPirates',   label: 'Pirates/Day', max: 400},
-        { id: 'maxPatrols',   label: 'Total Security', max: 450},
+        { id: 'maxMerchants', label: 'Merchants/Day', max: 100},
+        { id: 'maxPirates',   label: 'Pirates/Day', max: 45},
+        { id: 'maxPatrols',   label: 'Total Security', max: 25},
       ].map(({ id, label, max }) => (
         <div key={id} className="d-flex align-items-center gap-2">
           <Form.Label className="floating-dark small mb-0 text-nowrap" style={{ width: '120px' }}>
