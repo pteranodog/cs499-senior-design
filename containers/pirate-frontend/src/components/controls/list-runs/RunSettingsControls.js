@@ -51,6 +51,7 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
         <Form.Select size="sm" className="bg-dark text-light border-secondary"
           value={runSettings.regionId}
           onChange={(e) => modifyRegion(e.target.value)}
+          data-testid="region-select"
         >
           {Object.entries(regions || {}).map(([regionId, region]) => (
             <option key={regionId} value={regionId}>{region.name}</option>
@@ -62,6 +63,7 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
         <Form.Select size="sm" className="bg-dark text-light border-secondary"
           value={runSettings.weatherType}
           onChange={(e) => modifyRun('weatherType', e.target.value)}
+          data-testid="weather"
         >
           <option value="clear">Clear</option>
           <option value="storm">Storm</option>
@@ -70,19 +72,20 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
       </FloatingLabel>
 
       {[
-        { id: 'maxMerchants', label: 'Merchant' },
-        { id: 'maxPirates',   label: 'Pirates'  },
-        { id: 'maxPatrols',   label: 'Security' },
-      ].map(({ id, label }) => (
+        { id: 'maxMerchants', label: 'Merchants/Day', max: 100},
+        { id: 'maxPirates',   label: 'Pirates/Day', max: 45},
+        { id: 'maxPatrols',   label: 'Total Security', max: 25},
+      ].map(({ id, label, max }) => (
         <div key={id} className="d-flex align-items-center gap-2">
           <Form.Label className="floating-dark small mb-0 text-nowrap" style={{ width: '120px' }}>
-            {label}: {runSettings[id]}%
+            {label}: {runSettings[id]}
           </Form.Label>
           <Form.Range
             className="flex-fill mb-0"
-            min="0" max="100"
+            min="0" max={max}
+            step="1"
             value={runSettings[id]}
-            onChange={(e) => modifyRatios(id, e.target.value)}
+            onChange={(e) => modifyRatios(id, parseInt(e.target.value, 10))}
           />
         </div>
       ))}

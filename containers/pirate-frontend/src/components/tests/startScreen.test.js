@@ -11,7 +11,7 @@ jest.mock('react-leaflet-custom-control', () => () => <div>Mock Control</div>);
 import '@testing-library/jest-dom'
 import { render, screen, fireEvent} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import Controls from '../controls/Controls'
+import Controls from '../Controls'
 
 
 // TEST: TEXT BOX FOR SIMULATION NAME
@@ -117,4 +117,3 @@ test('start button starts disabled initially', () => {
   const button = screen.getByRole('button', {name : /Start Simulation/i});
   expect(button).toBeDisabled();
 });
-
