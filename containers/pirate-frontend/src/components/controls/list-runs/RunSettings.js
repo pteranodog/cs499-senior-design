@@ -93,7 +93,7 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
               {(showSelectionButton || shiftHeld) && (
                 <Button
                   size="sm"
-                  variant={shiftHeld ? 'danger' : (runSettings.selected ? 'primary' : 'outline-primary')}
+                  variant={shiftHeld ? 'danger' : (runSettings.selected ? 'primary' : 'outline-success')}
                   onClick={() => shiftHeld
                     ? modifySimState({ type: 'delete-run', index: runID })
                     : modifyRun('selected', !runSettings.selected)
@@ -113,7 +113,7 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
               : <RunSettingsSummary  runSettings={runSettings} regions={regions} warning={disallowedEditingWarning} />
             }
             <ButtonGroup className="d-flex mt-1">
-              <Button variant="outline-primary" size="sm" className="flex-fill"
+              <Button variant="outline-success" size="sm" className="flex-fill"
                 onClick={() => modifySimState({ type: 'duplicate-run', index: runID })}>
                 Duplicate
               </Button>
