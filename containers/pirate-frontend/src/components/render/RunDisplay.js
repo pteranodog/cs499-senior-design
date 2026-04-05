@@ -1,4 +1,4 @@
-import { TileLayer, useMap } from 'react-leaflet';
+import { TileLayer, useMap, Rectangle } from 'react-leaflet';
 import PointIcons from './PointIcons.js';
 import ShipIcons from './ShipIcons.js';
 import DisplayBadge from './DisplayBadge'
@@ -76,6 +76,16 @@ export default function RunDisplay({ simState, run }) {
       <PointIcons pointList={pointList} />
       <ShipIcons shipList={shipList} regionCenter={region.center} />
       <DisplayBadge simState={simState} />
+
+      {/* TEMPORARY: bounding box of region */}
+
+      <Rectangle
+        bounds={[
+          [region.bounds.bottom, region.bounds.left],
+          [region.bounds.top, region.bounds.right]
+        ]}
+        pathOptions={{ color: 'red', weight: 2, fill: false }}
+      />
     </>
   );
 }

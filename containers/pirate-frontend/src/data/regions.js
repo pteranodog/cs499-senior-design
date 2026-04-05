@@ -1,4 +1,5 @@
 import { newPort, newBase, newPirateCove, newRegion } from './classes.js';
+import { buildNavGraph } from './graphBuilder.js';
 
 // Bounding boxes are intentionally moderate (not huge) so future polygon clipping
 // and auto-zoom can target useful simulation extents.
@@ -114,6 +115,12 @@ function defaultRegions() {
   // Expose bounds on each region so clipping/auto-zoom can consume these later.
   for (const [regionId, region] of Object.entries(regions)) {
     region.bounds = regionBoundingBoxes[regionId];
+  }
+
+  for (const [regionId, region] of Object.entries(regions)) {
+  region.bounds = regionBoundingBoxes[regionId];
+  region.navgraph = buildNavGraph(region, 30);
+  console.log('navgraph nodes:', Object.keys(region.navgraph).length);
   }
 
   return regions;
