@@ -1,5 +1,6 @@
 import * as data from './classes.js'
 import * as behaviors from './behaviors.js'
+import { getOceanCurrent } from './oceanCurrents.js'
 
 const COMBAT_RANGE = 40;
 
@@ -175,9 +176,30 @@ function updateShipBehavior(ship, timeStep) {
   timeStep
   );
 
+  // Apply ocean current displacement to the ship's new position
+  const pos = newMover.kinematic.pos;
+  const [cx, cy] = getOceanCurrent(pos[0], pos[1]);
+  const currentOffset = [cx * timeStep, cy * timeStep];
+  const adjustedPos = behaviors.add(pos, currentOffset);
+
+  const moverWithCurrent = {
+    ...newMover,
+    kinematic: {
+      ...newMover.kinematic,
+      pos: adjustedPos,
+    },
+    behavior: {
+      ...newMover.behavior,
+      k1: {
+        ...newMover.kinematic,
+        pos: adjustedPos,
+      },
+    },
+  };
+
   return {
     ...ship,
-    mover: newMover
+    mover: moverWithCurrent
   };
 }
 
