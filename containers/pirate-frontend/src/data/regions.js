@@ -8,6 +8,12 @@ import { buildNavGraph } from './graphBuilder.js';
 // - left: min longitude
 // - right: max longitude
 // - bottom: min latitude
+
+
+
+
+
+
 const regionBoundingBoxes = {
   r1: { name: "Somalian Coast", top: 14.0, left: 38.0, right: 57.0, bottom: -8.0 },
   r2: { name: "Gulf of Guinea", top: 8.0, left: -4.0, right: 12.0, bottom: 2.0 },

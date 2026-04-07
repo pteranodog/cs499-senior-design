@@ -9,6 +9,9 @@ import { somaliaMerchantPaths } from './somaliaPaths.js';
 import { somaliaPiratePaths } from './somaliaPaths.js';
 import { somaliaPatrolPaths } from './somaliaPaths.js';
 
+import { getSomaliaMerhchantDestination } from '../utils/pointChoosing.js';
+import { getSomaliaHotspot } from '../utils/pointChoosing.js';
+
 function simStateReducer(state, action) {
   switch (action.type) {
     case 'initialize':
@@ -149,10 +152,13 @@ function spawnShips(run, regions) {
   const pirateChance   = (run.maxPirates   ?? 0) / 100;
   const patrolChance   = (run.maxPatrols   ?? 0) / 100;
 
-  // Collect all port positions for merchant destination picking
+  // NOTE: temporarily choose ports from a predefined list, which includes some
+  // that aren't technically ports, rather a point on the region's boundary that
+  // many merchants would be leaving/arriving from
   const allPorts = Object.entries(region.points)
     .filter(([, point]) => point.type === 'port')
     .map(([id, point]) => ({ id, pos: point.pos }));
+
 
   let piratePaths;
   let patrolPaths;

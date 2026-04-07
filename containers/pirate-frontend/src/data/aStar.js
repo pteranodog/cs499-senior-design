@@ -1,6 +1,6 @@
 import * as behaviors from './behaviors.js';
 
-// Danger weight per ship type.
+// Danger weight per ship type. (How "scary" is pirate presence to each ship type)
 // Merchants fully consider danger zones, all others ignore them.
 const DANGER_WEIGHTS = {
   merchant: 1.0,
