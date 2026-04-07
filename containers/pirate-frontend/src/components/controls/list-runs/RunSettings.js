@@ -93,7 +93,7 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
               {(showSelectionButton || shiftHeld) && (
                 <Button
                   size="sm"
-                  variant={shiftHeld ? 'danger' : (runSettings.selected ? 'primary' : 'outline-success')}
+                  variant={shiftHeld ? 'danger' : (runSettings.selected ? 'success' : 'outline-success')}
                   onClick={() => shiftHeld
                     ? modifySimState({ type: 'delete-run', index: runID })
                     : modifyRun('selected', !runSettings.selected)
