@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
+import Modal from 'react-bootstrap/Modal';
 
 export default function BottomRightButtons({ simState, modifySimState, runID }) {
+  const [showTerminateModal, setShowTerminateModal] = useState(false);
+  
   const run = typeof runID === 'number'
     ? simState?.runs?.[runID]
     : simState?.runs?.find((candidate) => candidate?.uuid === runID);
@@ -21,19 +25,14 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
       modifySimState({ type: 'view-run-list', run: runID, selected: runID })
       return;
     }
+    setShowTerminateModal(true);
+  };
 
-    const confirmed = window.confirm(
-      'Are you sure you want to terminate this run?\nYou will not be able to resume.',
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+  const confirmTerminate = () => {
     modifyRun('status', 'terminated-before-natural-completion');
     modifySimState({ type: 'view-run-end', run: runID });
-
-  };
+    setShowTerminateModal(false);
+  }
 
   const onPauseToggle = () => {
     if (isNew) {
@@ -87,6 +86,26 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
           {isNew ? "Modify" : "Terminate" }
         </Button>
       </ButtonGroup>
+
+      {/* NEW TERMINATION WARNING POPUP */}
+      <Modal show={showTerminateModal} onHide={() => setShowTerminateModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Termination</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to terminate this run?
+          <br />
+          You will not be able to resume.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowTerminateModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={confirmTerminate}>
+            Terminate
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
