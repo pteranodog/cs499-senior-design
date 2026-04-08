@@ -12,6 +12,9 @@ import { somaliaPatrolPaths } from './somaliaPaths.js';
 import { getSomaliaMerchantDestination } from '../utils/pointChoosing.js';
 import { getSomaliaHotspot } from '../utils/pointChoosing.js';
 
+
+import { shouldSpawn, perDaytoProbability } from '../utils/spawnRates.js';
+
 function simStateReducer(state, action) {
   switch (action.type) {
     case 'initialize':
@@ -22,7 +25,17 @@ function simStateReducer(state, action) {
     case 'display-run':
       return { ...state, display: { type: 'run', index: action.index } };
     case 'step-run':
-      return { ...state, runs: state.runs.map((run, i) => i === action.index ? step(run, state.regions) : run) };
+      return {
+        ...state,
+        runs: state.runs.map((run, i) => {
+          if (i !== action.index) return run;
+          const stepped = step(run, state.regions);
+          if ((stepped.elapsedTime ?? 0) % 60 === 0) {
+            return spawnMoreShips(stepped, state.regions);
+          }
+          return stepped;
+        })
+      };
     case 'create-run':
       return createRun(state);
     case 'load-run':
@@ -144,13 +157,16 @@ function buildNewRun() {
 
 function spawnShips(run, regions) {
   const region = regions[run.regionId];
+
+  console.log('spawnShips called, region:', region?.name, 'merchantChance:', run.maxMerchants, 'pirateChance:', run.maxPirates);
+
   if (!region) return run;
 
   const ships = {};
 
-  const merchantChance = (run.maxMerchants ?? 0) / 100;
-  const pirateChance   = (run.maxPirates   ?? 0) / 100;
-  const patrolChance   = (run.maxPatrols   ?? 0) / 100;
+  const merchantChance = (run.maxMerchants ?? 0);
+  const pirateChance   = (run.maxPirates   ?? 0);
+  const patrolChance   = (run.maxPatrols   ?? 0);
 
   const allPorts = Object.entries(region.points)
     .filter(([, point]) => point.type === 'port')
@@ -176,8 +192,9 @@ function spawnShips(run, regions) {
   for (const [pointId, point] of Object.entries(region.points)) {
     const pos = point.pos;
 
-    if (point.type === 'port') {
-      if (Math.random() < merchantChance) {
+    if (point.type === 'port') {            
+      if (shouldSpawn(merchantChance)) { 
+        console.log("merchant spawn roll succeeded");
         const id = crypto.randomUUID();
 
         // Pick a random destination port from predefined, prioritized destination list
@@ -193,7 +210,8 @@ function spawnShips(run, regions) {
     }
 
     if (point.type === 'patrolBase') {
-      if (Math.random() < patrolChance) {
+      if (shouldSpawn(patrolChance)) { 
+        console.log("patrol spawn roll succeeded");
         const id    = crypto.randomUUID();
         const paths = patrolPaths ? patrolPaths[pointId] : null;
         const path  = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
@@ -202,7 +220,8 @@ function spawnShips(run, regions) {
     }
 
     if (point.type === 'pirateCove') {
-      if (Math.random() < pirateChance) {
+      if (shouldSpawn(pirateChance)) {
+        console.log("pirate spawn roll succeeded"); 
         const id    = crypto.randomUUID();
         
         // Pick a random destination port from predefined, prioritized destination list
@@ -245,7 +264,7 @@ function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null
   let behavior;
   let destination = null; // stored on ship for repath
 
-  if (type === 'merchant' && destPos && region.navgraph) {
+  if ((type === 'merchant' || type === 'pirate') && destPos && region.navgraph) {
     const destCartesian = latLngToCartesian(destPos[0], destPos[1], {
       originLat: region.center[0],
       originLon: region.center[1],
@@ -328,6 +347,84 @@ function startRun(state, runIndex, startPaused) {
   return {
     ...state,
     runs: state.runs.map((candidate, i) => i === runIndex ? startedRun : candidate),
+  };
+}
+
+// need another function to spawn ships at successive steps besides first
+function spawnMoreShips(run, regions, maxShips = 30) {
+  const region = regions[run.regionId];
+  if (!region) return run;
+
+  // Don't spawn if we're at the cap
+  const currentCount = Object.keys(run.currentState.ships).length;
+  if (currentCount >= maxShips) return run;
+
+  const newShips = { ...run.currentState.ships };
+
+  const merchantChance = (run.maxMerchants ?? 0);
+  const pirateChance   = (run.maxPirates   ?? 0);
+  const patrolChance   = (run.maxPatrols   ?? 0);
+
+  let piratePaths;
+  let patrolPaths;
+
+  switch (region.name) {
+    case "Somalian Coast":
+      piratePaths = somaliaPiratePaths;
+      patrolPaths = somaliaPatrolPaths;
+      break;
+    case "Gulf of Guinea":
+    case "Malacca Strait":
+    default:
+      break;
+  }
+
+  let pathIdCounter = Date.now(); // avoid ID collisions with initial spawn
+
+  for (const [pointId, point] of Object.entries(region.points)) {
+    if (Object.keys(newShips).length >= maxShips) break;
+    const pos = point.pos;
+
+    if (point.type === 'port') {
+      if (shouldSpawn(merchantChance)) {
+        const id           = crypto.randomUUID();
+        const destLatLng   = getSomaliaMerchantDestination();
+        newShips[id] = buildShip(
+          'merchant', pos, 'medium', region,
+          destLatLng ?? null,
+          pathIdCounter++
+        );
+      }
+    }
+
+    if (point.type === 'patrolBase') {
+      if (shouldSpawn(patrolChance * 0.3)) {
+        const id    = crypto.randomUUID();
+        const paths = patrolPaths ? patrolPaths[pointId] : null;
+        const path  = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
+        newShips[id] = buildShip('patrol', pos, 'medium', region, null, pathIdCounter++, path);
+      }
+    }
+
+    if (point.type === 'pirateCove') {
+      if (shouldSpawn(pirateChance * 0.3)) {
+        const id         = crypto.randomUUID();
+        const destLatLng = getSomaliaHotspot();
+        newShips[id] = buildShip(
+          'pirate', pos, 'medium', region,
+          destLatLng ?? null,
+          pathIdCounter++
+        );
+      }
+    }
+  }
+
+  return {
+    ...run,
+    currentState: {
+      ...run.currentState,
+      ships: newShips
+    }
   };
 }
 
