@@ -16,12 +16,20 @@ describe('Tier 1 - Core Requirements', () => {
     cy.contains('Simulation Complete').should('be.visible');
   });
 
-  /* DEFINE WHAT A VALID SETUP IS  
   it('AT 1.3 - Setup required before start', () => {
+    //cy.createValidRun();
+      cy.contains('Create Run').click();
+    cy.get('input[placeholder="Simulation Name"]').clear();
+    cy.get('input[placeholder="HH"]').clear().type("17");
+    cy.get('input[placeholder="MM"]').clear().type("59");
+    cy.get('input[placeholder="Duration"]').clear().type("2");
+    cy.contains('Region').parent().find('select').select('Somalian Coast');
+    //cy.contains('Weather Condition').parent().find('select').select('Clear');
+    cy.contains('Select').click();
+    cy.contains('View').click();
     cy.contains('Start').should('be.disabled');
   });
-  */
-
+  
   it('AT 1.4 - Run controls work', () => {
     cy.createValidRun();
     cy.contains('Start').click();
@@ -39,7 +47,8 @@ describe('Tier 1 - Core Requirements', () => {
   it('AT 1.6 - Participants visible', () => {
     cy.createValidRun();
     cy.contains('Start').click();
-    cy.get('.participant').should('exist');
+    cy.wait(500)
+    cy.get('.participant-marker').should('exist');
   });
 
   it('AT 1.7 - Time indicator updates during run', () => {

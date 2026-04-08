@@ -20,6 +20,9 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
   const isRunning = run.status === 'running';
   const isNew = run.status === 'new';
 
+  const isNameValid = run.name && run.name.trim() !== '';
+  const isStartDisabled = isNew && !isNameValid;  
+
   const handleTerminate = () => {
     if (isNew) {
       modifySimState({ type: 'view-run-list', run: runID, selected: runID })
@@ -35,6 +38,9 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
   }
 
   const onPauseToggle = () => {
+    if (isNew && !isNameValid) {
+      return;
+    }
     if (isNew) {
       modifySimState({ type: 'start-run', index: runID });
       return;
@@ -44,6 +50,9 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
   }
 
   const onStep = () => {
+    if (isNew && !isNameValid) {
+      return;
+    }
     if (isNew) {
       modifySimState({ type: 'start-run', index: runID, startPaused: true });
       return;
@@ -61,7 +70,6 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
     modifyRun('speed', nextSpeed);
   }
 
-
   return (
     <div
       onClick={(e) => e.stopPropagation()}
@@ -73,7 +81,11 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
       }}
     >
       <ButtonGroup aria-label="Run controls">
-        <Button variant={isNew ? "success" : "primary"} onClick={onPauseToggle}>
+        <Button 
+          variant={isNew ? "success" : "primary"} 
+          onClick={onPauseToggle}
+          disabled={isStartDisabled}
+        >
           {isNew ? 'Start' : isRunning ? 'Pause' : 'Resume'}
         </Button>
         <Button variant="secondary" onClick={onStep}>

@@ -79,6 +79,8 @@ function ShipIcons({ shipList, regionCenter }) {
     }
   });
 
+  console.log('Ship List:', shipList);
+  
   return (
     <>
       {shipList.map((ship, index) => {
@@ -106,6 +108,12 @@ function ShipIcons({ shipList, regionCenter }) {
               lat={lat}
               lon={lng}
               zoom={zoom}
+            />
+
+            <div 
+              className="participant-marker"
+              data-type={ship.type}
+              style={{ display: 'none'}}
             />
           </Fragment>
         );
