@@ -38,32 +38,33 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
   }
 
   const onPauseToggle = () => {
-    if (isNew && !isNameValid) {
-      return;
-    }
+    // Only block if the name is actually empty
+    if (isNew && !isNameValid) return;
+
+    // Always start new runs
     if (isNew) {
       modifySimState({ type: 'start-run', index: runID });
       return;
     }
 
+    // Toggle running/paused for existing runs
     modifyRun('status', isRunning ? 'paused' : 'running');
+  };
+
+const onStep = () => {
+  // Only block if the name is empty
+  if (isNew && !isNameValid) return;
+
+  if (isNew) {
+    // Start paused for new runs
+    modifySimState({ type: 'start-run', index: runID, startPaused: true });
+    return;
   }
 
-  const onStep = () => {
-    if (isNew && !isNameValid) {
-      return;
-    }
-    if (isNew) {
-      modifySimState({ type: 'start-run', index: runID, startPaused: true });
-      return;
-    }
+  if (isRunning) modifyRun('status', 'paused');
 
-    if (isRunning) {
-      modifyRun('status', 'paused');
-    }
-
-    modifySimState({ type: 'step-run', index: runID });
-    };
+  modifySimState({ type: 'step-run', index: runID });
+};
 
   const onSpeedChange = () => {
     const nextSpeed = speed === 1 ? 2 : speed === 2 ? 4 : 1;

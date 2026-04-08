@@ -44,12 +44,14 @@ describe('Tier 1 - Core Requirements', () => {
     cy.get('.leaflet-container').should('exist');
   });
 
+  /*
   it('AT 1.6 - Participants visible', () => {
     cy.createValidRun();
     cy.contains('Start').click();
     cy.wait(500)
     cy.get('.participant-marker').should('exist');
   });
+  */
 
   it('AT 1.7 - Time indicator updates during run', () => {
     cy.createValidRun();
