@@ -33,7 +33,7 @@ describe('Tier 1 - Core Requirements', () => {
   it('AT 1.5 - Operating area displayed', () => {
     cy.createValidRun();
     cy.contains('Start').click();
-    cy.get('react-leaflet').should('exist');
+    cy.get('.leaflet-container').should('exist');
   });
 
   it('AT 1.6 - Participants visible', () => {
