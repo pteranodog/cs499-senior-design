@@ -153,12 +153,12 @@ function checkForCombatScenario(ship, shipId, shipsById) {
   return shipsById;
 }
 
-// ============================= Port arrival / path reversal =============================
+// ============================= Dest arrival / path reversal =============================
 
-function checkForPortArrival(ship) {
-  console.log('checkForPortArrival:', ship.type, 'currentParam:', ship.behavior?.currentParam, 'has path:', !!ship.behavior?.path);
+function checkForDestinationArrival(ship) {
+  console.log('checkForDestinationArrival:', ship.type, 'currentParam:', ship.behavior?.currentParam, 'has path:', !!ship.behavior?.path);
   if (!ship.behavior?.path) return ship;
-  if (ship.behavior.currentParam < 0.98) return ship;
+  if (ship.behavior.currentParam < 0.97) return ship;
   return null; // despawn
 }
 
@@ -192,7 +192,7 @@ function step(run, regions, timeStep = 1) {
     let updatedShip = shipsById[id];
 
     // If this ship is a merchant who has arrived at its port, despawn it
-    updatedShip = checkForPortArrival(updatedShip);
+    updatedShip = checkForDestinationArrival(updatedShip);
     if (updatedShip === null) {
       delete shipsById[id];
       continue;

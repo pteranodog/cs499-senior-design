@@ -9,7 +9,7 @@ import { somaliaMerchantPaths } from './somaliaPaths.js';
 import { somaliaPiratePaths } from './somaliaPaths.js';
 import { somaliaPatrolPaths } from './somaliaPaths.js';
 
-import { getSomaliaMerhchantDestination } from '../utils/pointChoosing.js';
+import { getSomaliaMerchantDestination } from '../utils/pointChoosing.js';
 import { getSomaliaHotspot } from '../utils/pointChoosing.js';
 
 function simStateReducer(state, action) {
@@ -152,9 +152,6 @@ function spawnShips(run, regions) {
   const pirateChance   = (run.maxPirates   ?? 0) / 100;
   const patrolChance   = (run.maxPatrols   ?? 0) / 100;
 
-  // NOTE: temporarily choose ports from a predefined list, which includes some
-  // that aren't technically ports, rather a point on the region's boundary that
-  // many merchants would be leaving/arriving from
   const allPorts = Object.entries(region.points)
     .filter(([, point]) => point.type === 'port')
     .map(([id, point]) => ({ id, pos: point.pos }));
@@ -183,15 +180,13 @@ function spawnShips(run, regions) {
       if (Math.random() < merchantChance) {
         const id = crypto.randomUUID();
 
-        // Pick a random destination port different from spawn
-        const otherPorts = allPorts.filter(p => p.id !== pointId);
-        const destPort   = otherPorts.length > 0
-          ? otherPorts[Math.floor(Math.random() * otherPorts.length)]
-          : null;
+        // Pick a random destination port from predefined, prioritized destination list
+        // TODO: generalize for other regions
+        const destPortLatLn = getSomaliaMerchantDestination();
 
         ships[id] = buildShip(
-          'merchant', pos, 'medium', region,
-          destPort?.pos ?? null,
+          'merchant', pos, 'medium', region, // TODO: sizes?
+          destPortLatLn ?? null,
           pathIdCounter++
         );
       }
@@ -202,16 +197,22 @@ function spawnShips(run, regions) {
         const id    = crypto.randomUUID();
         const paths = patrolPaths ? patrolPaths[pointId] : null;
         const path  = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
-        ships[id]   = buildShip('patrol', pos, 'medium', region, null, pathIdCounter++, path);
+        ships[id]   = buildShip('patrol', pos, 'medium', region, null, pathIdCounter++, path); // TODO: sizes?
       }
     }
 
     if (point.type === 'pirateCove') {
       if (Math.random() < pirateChance) {
         const id    = crypto.randomUUID();
-        const paths = piratePaths ? piratePaths[pointId] : null;
-        const path  = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
-        ships[id]   = buildShip('pirate', pos, 'small', region, null, pathIdCounter++, path);
+        
+        // Pick a random destination port from predefined, prioritized destination list
+        // TODO: generalize for other regions
+        const destPortLatLn = getSomaliaHotspot();
+        ships[id] = buildShip(
+          'pirate', pos, 'medium', region, // TODO: sizes?
+          destPortLatLn ?? null,
+          pathIdCounter++
+        );
       }
     }
   }

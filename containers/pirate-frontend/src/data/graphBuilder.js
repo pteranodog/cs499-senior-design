@@ -8,10 +8,10 @@ import { latLngToCartesian } from '../utils/coords.js';
 
 const DANGER_ZONES = {
   "Somalian Coast": [
-    { lat: 11.1705, lon: 47.4048, radius: 300000, intensity: 1.0 }, // Cove One area
-    { lat: 5.0659,  lon: 48.2978, radius: 300000, intensity: 1.0 }, // Cove Two area
-    { lat: 10.0,    lon: 50.5,    radius: 500000, intensity: 0.6 }, // Open Somali basin
-    { lat: 12.0,    lon: 44.5,    radius: 250000, intensity: 0.5 }, // Gulf of Aden corridor
+    { lat: 11.1705, lon: 47.4048, radius: 300000, intensity: 1.0 }, // Cove One
+    { lat: 5.0659,  lon: 48.2978, radius: 300000, intensity: 1.0 }, // Cove Two
+    { lat: 10.0,    lon: 50.5,    radius: 500000, intensity: 0.6 },
+    { lat: 12.0,    lon: 44.5,    radius: 250000, intensity: 0.5 }, // Gulf of Aden
   ],
   "Gulf of Guinea": [],
   "Malacca Strait": [],
@@ -28,7 +28,7 @@ const DANGER_ZONES = {
  * Inputs are a region object (from regions.js) and a grid size in meters; i.e.
  * how far apart two nodes "next to each other" are.
  */
-export function buildNavGraph(region, gridSize = 30) {
+export function buildNavGraph(region, gridSize = 40) {
 const { center, name } = region;
   const [originLat, originLon] = center;
   const { top, bottom, left, right } = region.bounds;
@@ -164,12 +164,10 @@ function computeShoreScore(graph, nodeId, gridSize) {
   // increasing radius = increasing distance from shore.
   // radius of 1 = 1 node "from shore"
   const rings = [
-    { radius: 1, score: 1.5 },
-    { radius: 2, score: 1.2 },
-    { radius: 3, score: 1.0 },
-    { radius: 4, score: 0.8 },
-    { radius: 5, score: 0.6 },
-    { radius: 6, score: 0.4 },
+    { radius: 1, score: 1.3 },
+    { radius: 2, score: 1.0 },
+    { radius: 3, score: 0.8 },
+    { radius: 4, score: 0.6 }
   ];
 
   let maxScore = 0;

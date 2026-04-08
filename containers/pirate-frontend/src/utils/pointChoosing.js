@@ -8,30 +8,30 @@ let somalia = defaultRegions().r1; // used to get port locations
 // analyzes an grayscale image of a heatmap to determine the actual most likely points for use
 const somalianPirateHotspots = [ 
   {
-    latlng: [12.5, 48.0], 
+    latLng: [12.5, 48.0], 
     prob: 0.6  
   },
 
   {
 
-    latlng: [12.4, 56.3], 
+    latLng: [12.4, 56.3], 
     prob: 0.2 
   },
 
   {
-    latlng: [1.1, 51.1],
+    latLng: [1.1, 51.1],
     prob: 0.1
   },
 
   {
-    latlng: [10.8, 56.4],
+    latLng: [10.8, 56.4],
     prob: 0.1
   }
 ]
 
 const somaliaPrioMerhcantPoints = [
     { // Upper left part of our Somalia region in the red sea
-        latlng: [14.0, 42.6],
+        latLng: [14.0, 42.6],
         prob: 0.5, // loads of ships coming and going through here
     },
 
@@ -61,12 +61,12 @@ function choosePirateHotspot(hotspotArr) {
   for (const hotspot of hotspotArr) {
     probSum += hotspot.prob;
     if (p < probSum) {
-      return hotspot.latlng;
+      return hotspot.latLng;
     }
   }
 
   // fallback return in case probSum doesnt reach 1
-  return hotspotArr[hotspotArr.length - 1].latlng;
+  return hotspotArr[hotspotArr.length - 1].latLng;
 }
 
 function choosePort(portArr) {
@@ -75,12 +75,12 @@ function choosePort(portArr) {
   for (const port of portArr) {
     probSum += port.prob;
     if (p < probSum) {
-      return port.latlng;
+      return port.latLng;
     }
   }
 
   // fallback return in case probSum doesnt reach 1
-  return portArr[portArr.length - 1].latlng;
+  return portArr[portArr.length - 1].latLng;
 }
 
 // export somalia-specific destination getters
@@ -88,7 +88,7 @@ export function getSomaliaHotspot() {
     return choosePirateHotspot(somalianPirateHotspots);
 }
 
-export  function getSomaliaMerhchantDestination() {
-    return choosePirateHotspot(somaliaPrioMerhcantPoints);
+export  function getSomaliaMerchantDestination() {
+    return choosePort(somaliaPrioMerhcantPoints);
 }
 
