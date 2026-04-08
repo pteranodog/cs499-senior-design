@@ -47,13 +47,13 @@ export default function ConfigDisplay({
                     <strong>Weather:</strong> {weather || 'n/a'}
                   </div>
                   <div>
-                    <strong>Merchant Presence:</strong> {merchantRate}%
+                    <strong>Merchant Presence:</strong> {merchantRate}
                   </div>
                   <div>
-                    <strong>Pirate Presence:</strong> {pirateRate}%
+                    <strong>Pirate Presence:</strong> {pirateRate}
                   </div>
                   <div>
-                    <strong>Security Presence:</strong> {securityRate}%
+                    <strong>Security Presence:</strong> {securityRate}
                   </div>
                 </Card.Body>
               </Card>

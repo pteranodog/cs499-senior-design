@@ -19,12 +19,12 @@ export default function RunSettingsSummary({ runSettings, regions, warning }) {
 
       <div className="d-flex gap-2">
         {[
-          { label: 'Merchants', value: runSettings.maxMerchants, color: 'text-info'    },
-          { label: 'Pirates',   value: runSettings.maxPirates,   color: 'text-danger'  },
-          { label: 'Security',  value: runSettings.maxPatrols,   color: 'text-success' },
+          { label: 'Merchants per Day', value: runSettings.maxMerchants, color: 'text-info'    },
+          { label: 'Pirates per Day',   value: runSettings.maxPirates,   color: 'text-danger'  },
+          { label: 'Total Security',  value: runSettings.maxPatrols,   color: 'text-success' },
         ].map(({ label, value, color }) => (
           <div key={label} className="border border-secondary rounded px-2 py-1 small flex-fill text-center">
-            <div className={`${color} fw-bold`}>{value}%</div>
+            <div className={`${color} fw-bold`}>{value}</div>
             <div className="text-secondary">{label}</div>
           </div>
         ))}
