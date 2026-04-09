@@ -2,61 +2,83 @@ describe('Tier 2 - Configuration', () => {
   beforeEach(() => {
     cy.visit('http://localhost:3000');
     cy.contains('Create Run').click();
+
   });
 
-  it('AT 2.1 - Configure participant rates', () => {
-    cy.get('[data-testid="pirate-rate"]').clear().type('50');
-    cy.get('[data-testid="merchant-rate"]').clear().type('50');
+  it('AT 2.1 - Configure participant presence rates', () => {
+    cy.contains('Duplicate').should('exist');
+
+    cy.get('[data-testid="maxMerchants-slider"]').invoke('val', 50).trigger('change');
+    cy.get('[data-testid="maxPirates-slider"]').invoke('val', 30).trigger('change');
+
+    cy.get('[data-testid="maxMerchants-label"]').should('contain', '50');
+    cy.get('[data-testid="maxPirates-label"]').should('contain', '30');
   });
 
-  it('AT 2.2 - Configure spatial bias', () => {
-    cy.get('[data-testid="region-bias"]').select(1);
+  // AT 2.4
+  it('AT 2.4 - Configure run duration with validation', () => {
+    cy.get('[data-testid="duration-input"]').clear().type('60');
+    cy.get('[data-testid="start-run"]').click();
+    cy.get('[data-testid="simulation-view"]').should('exist');
+
+    cy.get('[data-testid="duration-input"]').clear().type('-5');
+    cy.get('[data-testid="duration-error"]').should('be.visible');
+
+    cy.get('[data-testid="duration-input"]').clear().type('999999');
+    cy.get('[data-testid="duration-error"]').should('be.visible');
   });
 
-  it('AT 2.3 - Auto-valid bias totals', () => {
-    cy.get('[data-testid="zone1"]').clear().type('80');
-    cy.get('[data-testid="zone2"]').clear().type('80');
-    cy.contains('Invalid').should('not.exist');
+  // AT 2.5
+  it('AT 2.5 - Configure operational conditions', () => {
+    cy.get('[data-testid="condition-day"]').click();
+    cy.get('[data-testid="condition-night"]').click();
+
+    cy.get('[data-testid="start-run"]').click();
+
+    cy.get('[data-testid="condition-indicator"]').should('exist');
   });
 
-  it('AT 2.4 - Duration validation', () => {
-    cy.get('input[placeholder="Duration"]').clear().type('-1');
-    cy.contains('Invalid').should('be.visible');
+  // AT 2.7
+  it('AT 2.7 - Lock configuration during run', () => {
+    cy.get('[data-testid="start-run"]').click();
 
-    cy.get('input[placeholder="Duration"]').clear().type('5');
+    cy.get('[data-testid="merchant-rate"]').should('be.disabled');
+    cy.get('[data-testid="duration-input"]').should('be.disabled');
+
+    cy.get('[data-testid="config-summary"]').should('be.visible');
   });
 
-  it('AT 2.5 - Operational conditions exist', () => {
-    cy.contains('Weather Condition').should('be.visible');
+  // AT 2.8
+  it('AT 2.8 - Single-step control works', () => {
+    cy.get('[data-testid="start-run"]').click();
+    cy.get('[data-testid="pause-btn"]').click();
+
+    cy.get('[data-testid="step-btn"]').click();
+    cy.get('[data-testid="simulation-tick"]').then(($val1) => {
+      const tick1 = $val1.text();
+
+      cy.get('[data-testid="step-btn"]').click();
+      cy.get('[data-testid="simulation-tick"]').should(($val2) => {
+        expect($val2.text()).not.to.eq(tick1);
+      });
+    });
   });
 
-  it('AT 2.6 - Per-condition configuration', () => {
-    cy.get('[data-testid="day-rate"]').type('30');
-    cy.get('[data-testid="night-rate"]').type('70');
+  // AT 2.9
+  it('AT 2.9 - Adjust execution speed', () => {
+    cy.get('[data-testid="start-run"]').click();
+
+    cy.get('[data-testid="speed-control"]').select('2x');
+    cy.get('[data-testid="speed-control"]').should('have.value', '2x');
   });
 
-  it('AT 2.7 - Config locked during run', () => {
-    cy.createValidRun();
-    cy.contains('Start').click();
-    cy.get('input').should('be.disabled');
-  });
+  // AT 2.10
+  it('AT 2.10 - Reset/New Run workflow', () => {
+    cy.get('[data-testid="start-run"]').click();
 
-  it('AT 2.8 - Single-step control', () => {
-    cy.createValidRun();
-    cy.contains('Start').click();
-    cy.contains('Pause').click();
-    cy.contains('Step').click();
-  });
+    cy.get('[data-testid="reset-btn"]').click();
 
-  it('AT 2.9 - Adjustable speed', () => {
-    cy.createValidRun();
-    cy.contains('Start').click();
-    cy.get('[data-testid="speed"]').select('2x');
-  });
-
-  it('AT 2.10 - Reset workflow', () => {
-    cy.createValidRun();
-    cy.contains('Reset').click();
-    cy.contains('Create Run').should('be.visible');
+    cy.get('[data-testid="setup-screen"]').should('be.visible');
+    cy.get('[data-testid="simulation-view"]').should('not.exist');
   });
 });

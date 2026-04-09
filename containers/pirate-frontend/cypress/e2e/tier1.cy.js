@@ -18,7 +18,7 @@ describe('Tier 1 - Core Requirements', () => {
 
   it('AT 1.3 - Setup required before start', () => {
     //cy.createValidRun();
-      cy.contains('Create Run').click();
+    cy.contains('Create Run').click();
     cy.get('input[placeholder="Simulation Name"]').clear();
     cy.get('input[placeholder="HH"]').clear().type("17");
     cy.get('input[placeholder="MM"]').clear().type("59");

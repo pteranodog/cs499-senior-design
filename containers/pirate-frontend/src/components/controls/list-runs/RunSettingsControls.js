@@ -77,10 +77,11 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
         { id: 'maxPatrols',   label: 'Total Security', max: 25},
       ].map(({ id, label, max }) => (
         <div key={id} className="d-flex align-items-center gap-2">
-          <Form.Label className="floating-dark small mb-0 text-nowrap" style={{ width: '120px' }}>
+          <Form.Label data-testid={`${id}-label`} className="floating-dark small mb-0 text-nowrap" style={{ width: '120px' }}>
             {label}: {runSettings[id]}
           </Form.Label>
           <Form.Range
+            data-testid={`${id}-slider`}
             className="flex-fill mb-0"
             min="0" max={max}
             step="1"
