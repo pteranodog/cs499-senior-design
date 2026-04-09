@@ -8,7 +8,7 @@ export default function RunSettingsSummary({ runSettings, regions, warning }) {
           { label: 'Start',    value: `${String(runSettings.startHour).padStart(2,'0')}:${String(runSettings.startMinute).padStart(2,'0')}` },
           { label: 'Duration', value: `${runSettings.duration} min` },
           { label: 'Region',   value: region?.name ?? runSettings.regionId },
-          { label: 'Weather',  value: runSettings.weatherType },
+          // { label: 'Weather',  value: runSettings.weatherType }, // TODO: Weather temporarily removed
         ].map(({ label, value }) => (
           <div key={label} className="border border-secondary rounded px-2 py-1 small">
             <span className="text-secondary me-1">{label}:</span>
