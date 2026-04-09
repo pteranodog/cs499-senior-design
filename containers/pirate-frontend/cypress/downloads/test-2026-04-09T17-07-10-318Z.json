@@ -1,5 +1,5 @@
 {
-  "seed": 7791,
+  "seed": 7656,
   "startHour": "17",
   "startMinute": "59",
   "duration": "2",
@@ -19,7 +19,7 @@
       "sinks": 0
     },
     "ships": {
-      "fe93c57d-5486-4d4c-8a86-79e72d293e6a": {
+      "29eb53b9-352d-4dcc-af97-cf3708b589aa": {
         "type": "merchant",
         "pos": [
           -704318.4182490418,
@@ -127,6 +127,174 @@
             },
             "pathOffset": 0.04,
             "currentParam": 0
+          },
+          "isCollided": false
+        }
+      },
+      "c8c2532c-4cc7-4bba-bab5-07003e21547c": {
+        "type": "merchant",
+        "pos": [
+          -317293.94460806716,
+          238350.37635286432
+        ],
+        "size": "medium",
+        "sightRange": 1000,
+        "crewSize": 21,
+        "armament": 25,
+        "durability": 70,
+        "state": 1,
+        "fuel": 100,
+        "inCombat": false,
+        "mover": {
+          "kinematic": {
+            "pos": [
+              -317293.94460806716,
+              238350.37635286432
+            ],
+            "orientation": 0,
+            "velocity": [
+              0,
+              0
+            ],
+            "rotation": 0
+          },
+          "acceleration": [
+            0,
+            0
+          ],
+          "maxSpeed": 10000,
+          "behavior": {
+            "k1": {
+              "pos": [
+                -317293.94460806716,
+                238350.37635286432
+              ],
+              "orientation": 0,
+              "velocity": [
+                0,
+                0
+              ],
+              "rotation": 0
+            },
+            "k2": {
+              "pos": [
+                0,
+                0
+              ],
+              "orientation": 0,
+              "velocity": [
+                0,
+                0
+              ],
+              "rotation": 0
+            },
+            "maxAcceleration": 1000,
+            "type": "followPath",
+            "path": {
+              "id": 1,
+              "points": [
+                [
+                  -317293.94460806716,
+                  238350.37635286432
+                ],
+                [
+                  1257910.2459639907,
+                  226442.86922837305
+                ],
+                [
+                  2059410.5796755617,
+                  420176.74916023505
+                ],
+                [
+                  2983362.353259731,
+                  1080751.754555472
+                ]
+              ],
+              "segments": 3,
+              "distances": [
+                0,
+                1575249.196388207,
+                2399831.2730629384,
+                3535633.2882320653
+              ],
+              "params": [
+                0,
+                0.44553523173097065,
+                0.6787557072308633,
+                1
+              ],
+              "totalLength": 3535633.2882320653
+            },
+            "pathOffset": 0.04,
+            "currentParam": 0
+          },
+          "isCollided": false
+        }
+      },
+      "2d23e3f9-053c-4efc-857b-98e7435e7ac0": {
+        "type": "merchant",
+        "pos": [
+          890555.9263461893,
+          846773.2404265355
+        ],
+        "size": "medium",
+        "sightRange": 1000,
+        "crewSize": 21,
+        "armament": 25,
+        "durability": 70,
+        "state": 1,
+        "fuel": 100,
+        "inCombat": false,
+        "mover": {
+          "kinematic": {
+            "pos": [
+              890555.9263461893,
+              846773.2404265355
+            ],
+            "orientation": 0,
+            "velocity": [
+              0,
+              0
+            ],
+            "rotation": 0
+          },
+          "acceleration": [
+            0,
+            0
+          ],
+          "maxSpeed": 10000,
+          "behavior": {
+            "k1": {
+              "pos": [
+                890555.9263461893,
+                846773.2404265355
+              ],
+              "orientation": 0,
+              "velocity": [
+                0,
+                0
+              ],
+              "rotation": 0
+            },
+            "k2": {
+              "pos": [
+                0,
+                0
+              ],
+              "orientation": 0
+            },
+            "maxAngularAcc": 0.1,
+            "maxRotation": 0.05,
+            "slowThreshold": 1,
+            "targetThreshold": 0.5,
+            "timeToTarget": 0.4,
+            "type": "wander",
+            "maxSpeed": 10000,
+            "wanderOffset": 10,
+            "wanderRadius": 5,
+            "wanderRate": 6,
+            "wanderOrientation": 0,
+            "maxAcceleration": 0.5
           },
           "isCollided": false
         }
@@ -246,8 +414,8 @@
     "defaultZoom": 6
   },
   "outcomes": {
-    "activeShips": 1,
-    "activeMerchants": 1,
+    "activeShips": 3,
+    "activeMerchants": 3,
     "activePirates": 0,
     "activePatrols": 0
   }
