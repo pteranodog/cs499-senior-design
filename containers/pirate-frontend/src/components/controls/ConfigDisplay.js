@@ -6,7 +6,7 @@ export default function ConfigDisplay({
   // These are all the props that need passing from Controls.js:
   simName,
   region,
-  weather,
+  // weather, // TODO: Weather temporarily removed
   duration,
 
   merchantRate,
@@ -43,9 +43,7 @@ export default function ConfigDisplay({
                   <div>
                     <strong>Region:</strong> {region || 'n/a'}
                   </div>
-                  <div>
-                    <strong>Weather:</strong> {weather || 'n/a'}
-                  </div>
+                  {/* <div><strong>Weather:</strong> {weather || 'n/a'}</div> TODO: Weather temporarily removed */}
                   <div>
                     <strong>Merchant Presence:</strong> {merchantRate}
                   </div>

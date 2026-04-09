@@ -11,14 +11,17 @@ const ICON_CONFIG = {
   pirate: {
     iconUrl: '/pirate-icon.png',
     iconSize: [52, 40],
+    className: 'ship-icon-pirate',
   },
   merchant: {
     iconUrl: '/merchant-icon.png',
     iconSize: [81, 25],
+    className: 'ship-icon-merchant',
   },
   patrol: {
     iconUrl: '/patrol-icon.png',
     iconSize: [70, 40],
+    className: 'ship-icon-patrol',
   },
   default: {
     iconUrl: '/boat-icon.png',
@@ -51,7 +54,8 @@ function ShipIcons({ type, lat, lon, zoom }) {
       iconUrl: iconConfig.iconUrl,
       iconSize: [width, height],
       iconAnchor: [Math.round(width / 2), height],
-      popupAnchor: [0, -height + 5]
+      popupAnchor: [0, -height + 5],
+      className: iconConfig.className || '',
     });
   }, [type, zoom]);
 

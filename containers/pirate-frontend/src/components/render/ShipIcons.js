@@ -11,10 +11,10 @@ const ARROW_BASE_ZOOM = 8;
 const ARROW_MIN_SCALE = 0.7;
 const ARROW_MAX_SCALE = 1.35;
 const ARROW_STYLE_BY_TYPE = {
-  pirate: { offset: 30, length: 34, head: 8 },
-  merchant: { offset: 36, length: 40, head: 9 },
-  patrol: { offset: 33, length: 37, head: 8 },
-  default: { offset: 32, length: 35, head: 8 },
+  pirate: { offset: 30, length: 34, head: 8, color: '#8B0000' },
+  merchant: { offset: 36, length: 40, head: 9, color: '#1B5E20' },
+  patrol: { offset: 33, length: 37, head: 8, color: '#0D47A1' },
+  default: { offset: 32, length: 35, head: 8, color: '#000000' },
 };
 
 function getShipHeading(ship) {
@@ -53,12 +53,13 @@ function createArrowIcon(type, heading, zoom) {
   const headTopY = centerY - head;
   const headBottomY = centerY + head;
   const rotationDegrees = (-heading * 180) / Math.PI;
+  const arrowColor = arrowStyle.color || '#000000';
 
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <line x1="${startX}" y1="${centerY}" x2="${tipX}" y2="${centerY}" stroke="#000000" stroke-width="${stroke}" stroke-linecap="round" />
-      <line x1="${headLeftX}" y1="${headTopY}" x2="${tipX}" y2="${centerY}" stroke="#000000" stroke-width="${stroke}" stroke-linecap="round" />
-      <line x1="${headLeftX}" y1="${headBottomY}" x2="${tipX}" y2="${centerY}" stroke="#000000" stroke-width="${stroke}" stroke-linecap="round" />
+      <line x1="${startX}" y1="${centerY}" x2="${tipX}" y2="${centerY}" stroke="${arrowColor}" stroke-width="${stroke}" stroke-linecap="round" />
+      <line x1="${headLeftX}" y1="${headTopY}" x2="${tipX}" y2="${centerY}" stroke="${arrowColor}" stroke-width="${stroke}" stroke-linecap="round" />
+      <line x1="${headLeftX}" y1="${headBottomY}" x2="${tipX}" y2="${centerY}" stroke="${arrowColor}" stroke-width="${stroke}" stroke-linecap="round" />
     </svg>
   `.trim();
 
