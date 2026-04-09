@@ -1,4 +1,5 @@
-import { TileLayer, useMap, Rectangle } from 'react-leaflet';
+import { TileLayer, useMap, Polyline, Rectangle } from 'react-leaflet';
+import { cartesianToLatLng } from '../../utils/coords.js'; // temporary
 import PointIcons from './PointIcons.js';
 import ShipIcons from './ShipIcons.js';
 import DisplayBadge from './DisplayBadge'
@@ -75,7 +76,35 @@ export default function RunDisplay({ simState, run }) {
       <TileLayer attribution={DAY_TILE_ATTRIBUTION} url={DAY_TILE_URL} />
       <PointIcons pointList={pointList} />
       <ShipIcons shipList={shipList} regionCenter={region.center} />
+
+      {/* TEMPORARY: render patrol paths */}
+      {Object.values(run.currentState.ships)
+        .filter(ship => ship.type === 'patrol' && ship.behavior?.path?.points)
+        .map((ship, i) => {
+          const positions = ship.behavior.path.points.map(point => {
+            const { lat, lng } = cartesianToLatLng(point[0], point[1], {
+              originLat: region.center[0],
+              originLon: region.center[1],
+              metersPerUnit: 1,
+              headingDegrees: 0,
+            });
+            return [lat, lng];
+          });
+          return <Polyline key={i} positions={positions} pathOptions={{ color: 'cyan', weight: 1, opacity: 0.5 }} />;
+        })
+}
+
       <DisplayBadge simState={simState} />
+
+      {/* TEMPORARY: bounding box of region */}
+
+      <Rectangle
+        bounds={[
+          [region.bounds.bottom, region.bounds.left],
+          [region.bounds.top, region.bounds.right]
+        ]}
+        pathOptions={{ color: 'red', weight: 2, fill: false }}
+      />
     </>
   );
 }

@@ -210,6 +210,7 @@ function spawnShips(run, regions) {
         const id    = crypto.randomUUID();
         const paths = patrolPaths ? patrolPaths[pointId] : null;
         const path  = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
+        console.log("here is the path the newly spawned patrol will be useing:\n\n", path)
         ships[id]   = buildShip('patrol', pos, 'medium', region, null, pathIdCounter++, path);
       }
     }
@@ -300,6 +301,7 @@ function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null
     durability: stats.durability,
     fuel:       100,
     inCombat:   false,
+    state: 1, // always start in default state
     // Persistent behavior
     behavior,
     // Merchant-only: destination for repath
@@ -344,7 +346,9 @@ function startRun(state, runIndex, startPaused) {
 }
 
 // need another function to spawn ships at successive steps besides first
-function spawnMoreShips(run, regions, maxShips = 30) {
+function spawnMoreShips(run, regions) {
+  const maxShips = Math.ceil((run.maxMerchants + run.maxPirates + run.maxPatrols) * 0.40); // make max ships 40% of what we'd expect total ships per day to be
+  console.log('spawnMoreShips called, shipCount:', Object.keys(run.currentState.ships).length, 'maxShips:', maxShips);
   const region = regions[run.regionId];
   if (!region) return run;
 
