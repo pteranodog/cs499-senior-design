@@ -11,17 +11,17 @@ const ICON_CONFIG = {
   pirate: {
     iconUrl: '/pirate-icon.png',
     iconSize: [52, 40],
-    filter: 'invert(20%) sepia(100%) saturate(10000%) hue-rotate(0deg) brightness(70%)',
+    filter: 'invert(100%) sepia(100%) saturate(10000%) hue-rotate(0deg) brightness(100%) contrast(100%)',
   },
   merchant: {
     iconUrl: '/merchant-icon.png',
     iconSize: [81, 25],
-    filter: 'invert(30%) sepia(100%) saturate(10000%) hue-rotate(100deg) brightness(60%)',
+    filter: 'invert(100%) sepia(100%) saturate(10000%) hue-rotate(85deg) brightness(100%) contrast(100%)',
   },
   patrol: {
     iconUrl: '/patrol-icon.png',
     iconSize: [70, 40],
-    filter: 'invert(25%) sepia(100%) saturate(10000%) hue-rotate(220deg) brightness(60%)',
+    filter: 'invert(100%) sepia(100%) saturate(10000%) hue-rotate(190deg) brightness(100%) contrast(100%)',
   },
   default: {
     iconUrl: '/boat-icon.png',
