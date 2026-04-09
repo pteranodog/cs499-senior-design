@@ -11,21 +11,22 @@ const ICON_CONFIG = {
   pirate: {
     iconUrl: '/pirate-icon.png',
     iconSize: [52, 40],
-    className: 'ship-icon-pirate',
+    filter: 'invert(20%) sepia(100%) saturate(10000%) hue-rotate(0deg) brightness(70%)',
   },
   merchant: {
     iconUrl: '/merchant-icon.png',
     iconSize: [81, 25],
-    className: 'ship-icon-merchant',
+    filter: 'invert(30%) sepia(100%) saturate(10000%) hue-rotate(100deg) brightness(60%)',
   },
   patrol: {
     iconUrl: '/patrol-icon.png',
     iconSize: [70, 40],
-    className: 'ship-icon-patrol',
+    filter: 'invert(25%) sepia(100%) saturate(10000%) hue-rotate(220deg) brightness(60%)',
   },
   default: {
     iconUrl: '/boat-icon.png',
     iconSize: [60, 60],
+    filter: '',
   }
 };
 
@@ -50,12 +51,14 @@ function ShipIcons({ type, lat, lon, zoom }) {
     const width = Math.round(baseWidth * scale);
     const height = Math.round(baseHeight * scale);
 
-    return L.icon({
-      iconUrl: iconConfig.iconUrl,
+    const filterStyle = iconConfig.filter ? `filter:${iconConfig.filter};` : '';
+
+    return L.divIcon({
+      className: '',
+      html: `<img src="${iconConfig.iconUrl}" width="${width}" height="${height}" style="${filterStyle}" />`,
       iconSize: [width, height],
       iconAnchor: [Math.round(width / 2), height],
       popupAnchor: [0, -height + 5],
-      className: iconConfig.className || '',
     });
   }, [type, zoom]);
 
