@@ -45,7 +45,7 @@ export function exportRunAsCsv(run, region) {
 		csvRow('Seed', run.seed),
 		csvRow('Start Time', formatClock(run.startHour, run.startMinute)),
 		csvRow('Duration (minutes)', Number(run.duration ?? 0)),
-		csvRow('Weather', run.weatherType),
+		// csvRow('Weather', run.weatherType), // TODO: Weather temporarily removed
 		csvRow('Max Merchants (%)', Number(run.maxMerchants ?? 0)),
 		csvRow('Max Pirates (%)', Number(run.maxPirates ?? 0)),
 		csvRow('Max Patrols (%)', Number(run.maxPatrols ?? 0)),

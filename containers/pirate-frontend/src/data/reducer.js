@@ -132,7 +132,7 @@ function deselectAll(runs, exceptThese) {
 function buildNewRun() {
   const config = newConfig(
     Math.floor(Math.random() * 10000) + 1,
-    0, 0, 1500, 'clear', 33, 34, 33
+    0, 0, 1500, 'clear', 0, 40, 0
   );
   const run = newRun('Untitled Run', config, 'r1');
   return { ...run, uuid: crypto.randomUUID() };
