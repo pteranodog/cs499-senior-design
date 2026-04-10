@@ -1,5 +1,7 @@
 import { buildNewRun } from '../data/reducer.js';
 
+const VALID_POINT_TYPES = new Set(['port', 'pirateCove', 'patrolBase']);
+
 function createDownload(fileName, content, type) {
 	const blob = new Blob([content], { type });
 	const url = URL.createObjectURL(blob);
@@ -43,7 +45,7 @@ export function exportRunAsCsv(run, region) {
 		csvRow('Seed', run.seed),
 		csvRow('Start Time', formatClock(run.startHour, run.startMinute)),
 		csvRow('Duration (minutes)', Number(run.duration ?? 0)),
-		csvRow('Weather', run.weatherType),
+		// csvRow('Weather', run.weatherType), // TODO: Weather temporarily removed
 		csvRow('Max Merchants (%)', Number(run.maxMerchants ?? 0)),
 		csvRow('Max Pirates (%)', Number(run.maxPirates ?? 0)),
 		csvRow('Max Patrols (%)', Number(run.maxPatrols ?? 0)),
@@ -100,12 +102,94 @@ export function buildRunPayload(run, region) {
 	};
 }
 
-export function importRun(payload) {
-  const { region, outcomes, uuid, expanded, selected, ...run } = payload;
-  return { ...buildNewRun(), ...run, uuid: crypto.randomUUID() };
+function requireObject(value, message) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(message);
+  }
 }
 
-export async function readRunFile(file) {
+function requireFiniteNumber(value, message) {
+  if (!Number.isFinite(value)) {
+    throw new Error(message);
+  }
+}
+
+function validateCoordinatePair(value, message) {
+  if (!Array.isArray(value) || value.length !== 2) {
+    throw new Error(message);
+  }
+
+  value.forEach((coord) => requireFiniteNumber(coord, message));
+}
+
+function validatePoint(pointId, point) {
+  requireObject(point, `Point "${pointId}" is invalid.`);
+
+  if (typeof point.name !== 'string' || !point.name.trim()) {
+    throw new Error(`Point "${pointId}" is missing a valid name.`);
+  }
+
+  if (!VALID_POINT_TYPES.has(point.type)) {
+    throw new Error(`Point "${pointId}" has invalid type "${point.type}".`);
+  }
+
+  validateCoordinatePair(point.pos, `Point "${pointId}" must have a valid [lat, lon] position.`);
+}
+
+export function validateRegion(region) {
+  requireObject(region, 'Imported file is missing a valid region object.');
+
+  if (typeof region.name !== 'string' || !region.name.trim()) {
+    throw new Error('Imported region is missing a valid name.');
+  }
+
+  validateCoordinatePair(region.center, 'Imported region center must be a [lat, lon] pair.');
+  requireFiniteNumber(region.length, 'Imported region length must be a finite number.');
+  requireFiniteNumber(region.width, 'Imported region width must be a finite number.');
+  requireFiniteNumber(region.defaultZoom, 'Imported region default zoom must be a finite number.');
+
+  requireObject(region.points, 'Imported region points must be an object.');
+  Object.entries(region.points).forEach(([pointId, point]) => validatePoint(pointId, point));
+}
+
+function resolveRegionId(run, region, regions) {
+  requireObject(regions, 'Import could not verify available regions.');
+
+  if (typeof run.regionId === 'string' && regions[run.regionId]) {
+    return run.regionId;
+  }
+
+  if (!region) {
+    throw new Error('Imported run references an unknown region and does not include region details.');
+  }
+
+  validateRegion(region);
+
+  const match = Object.entries(regions).find(([, candidate]) => candidate?.name === region.name);
+  if (!match) {
+    throw new Error(`Region "${region.name}" is not available in this app.`);
+  }
+
+  return match[0];
+}
+
+export function importRun(payload, regions) {
+  requireObject(payload, 'Imported file does not contain a valid run payload.');
+
+  const { region, outcomes, uuid, expanded, selected, ...run } = payload;
+  const regionId = resolveRegionId(run, region, regions);
+  return { ...buildNewRun(), ...run, regionId, uuid: crypto.randomUUID() };
+}
+
+export async function readRunFile(file, regions) {
   const text = await file.text();
-  return importRun(JSON.parse(text));
+
+  let payload;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    throw new Error('The selected file is not valid JSON.');
+  }
+
+  return importRun(payload, regions);
 }

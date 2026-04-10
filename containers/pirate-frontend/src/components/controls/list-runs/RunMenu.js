@@ -33,9 +33,15 @@ export default function RunMenu ({ simState, modifySimState }) {
   const handleImport = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const run = await readRunFile(file);
-    modifySimState({ type: 'load-run', run });
-    e.target.value = null; // reset so the same file can be re-imported
+
+    try {
+      const run = await readRunFile(file, simState.regions);
+      modifySimState({ type: 'load-run', run });
+    } catch (error) {
+      window.alert(error.message);
+    } finally {
+      e.target.value = null; // reset so the same file can be re-imported
+    }
   };
 
   const handleViewCompare = () => {

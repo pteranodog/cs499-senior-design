@@ -48,6 +48,8 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
   }
 
   const modifyRatios = (setting, value) => {
+    modifyRun(setting, Number(value));
+    /*
     const val = Number(value);
     if (setting === 'maxPatrols') {
       const remaining = 100 - val;
@@ -67,6 +69,7 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
       modifyRun('maxPirates', clamped);
       modifyRun('maxMerchants', maxAllowed - clamped);
     }
+    */
   };
 
   return (
@@ -90,7 +93,7 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
               {(showSelectionButton || shiftHeld) && (
                 <Button
                   size="sm"
-                  variant={shiftHeld ? 'danger' : (runSettings.selected ? 'primary' : 'outline-success')}
+                  variant={shiftHeld ? 'danger' : (runSettings.selected ? 'success' : 'outline-success')}
                   onClick={() => shiftHeld
                     ? modifySimState({ type: 'delete-run', index: runID })
                     : modifyRun('selected', !runSettings.selected)

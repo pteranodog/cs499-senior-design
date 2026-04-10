@@ -30,7 +30,7 @@ function Controls({
   const [merchantRate, setMerchantRate] = useState(50);
   const [pirateRate, setPirateRate] = useState(50);
   const [securityRate, setSecurityRate] = useState(0);
-  const [weather, setWeather] = useState('');
+  // const [weather, setWeather] = useState(''); // TODO: Weather temporarily removed
   const [startHour, setStartHour] = useState('');
   const [startMinute, setStartMinute] = useState('');
 
@@ -69,7 +69,7 @@ function Controls({
       region !== '' &&
       durationValid &&
       startTimeValid &&
-      weather !== '' &&
+      // weather !== '' && // TODO: Weather temporarily removed
       percentValid;
 
   const resetMetrics = () => {
@@ -184,7 +184,7 @@ function Controls({
       onSimulationStart({
         simulationName: simName.trim(),
         region,
-        weather,
+        // weather, // TODO: Weather temporarily removed
         durationMinutes: Number(duration),
         startTime: `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`,
         startTimeMinutes: Number(startHour) * 60 + Number(startMinute),
@@ -242,7 +242,7 @@ function Controls({
     const runData = {
       simulationName: simName,
       region,
-      weather,
+      // weather, // TODO: Weather temporarily removed
       durationMinutes: Number(duration),
       elapsedTime: formatTime(seconds),
       outcomes: { entries, exits, captures, defeats, rescues, evasions },
@@ -259,7 +259,6 @@ function Controls({
     } else if (format === 'csv') {
       fileContent = `Simulation Name,${simName}
 Region,${region}
-Weather,${weather}
 Duration (minutes),${duration}
 Elapsed Time,${formatTime(seconds)}
 Entries,${entries}

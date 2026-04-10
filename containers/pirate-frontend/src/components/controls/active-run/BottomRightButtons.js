@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
+import Modal from 'react-bootstrap/Modal';
 
 export default function BottomRightButtons({ simState, modifySimState, runID }) {
+  const [showTerminateModal, setShowTerminateModal] = useState(false);
+  
   const run = typeof runID === 'number'
     ? simState?.runs?.[runID]
     : simState?.runs?.find((candidate) => candidate?.uuid === runID);
@@ -16,52 +20,56 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
   const isRunning = run.status === 'running';
   const isNew = run.status === 'new';
 
+  const isNameValid = run.name && run.name.trim() !== '';
+  const isStartDisabled = isNew && !isNameValid;  
+
   const handleTerminate = () => {
     if (isNew) {
       modifySimState({ type: 'view-run-list', run: runID, selected: runID })
       return;
     }
-
-    const confirmed = window.confirm(
-      'Are you sure you want to terminate this run?\nYou will not be able to resume.',
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    modifyRun('status', 'terminated-before-natural-completion');
-    modifySimState({ type: 'view-run-end', run: runID });
-
+    setShowTerminateModal(true);
   };
 
+  const confirmTerminate = () => {
+    modifyRun('status', 'terminated-before-natural-completion');
+    modifySimState({ type: 'view-run-end', run: runID });
+    setShowTerminateModal(false);
+  }
+
   const onPauseToggle = () => {
+    // Only block if the name is actually empty
+    if (isNew && !isNameValid) return;
+
+    // Always start new runs
     if (isNew) {
       modifySimState({ type: 'start-run', index: runID });
       return;
     }
 
+    // Toggle running/paused for existing runs
     modifyRun('status', isRunning ? 'paused' : 'running');
+  };
+
+const onStep = () => {
+  // Only block if the name is empty
+  if (isNew && !isNameValid) return;
+
+  if (isNew) {
+    // Start paused for new runs
+    modifySimState({ type: 'start-run', index: runID, startPaused: true });
+    return;
   }
 
-  const onStep = () => {
-    if (isNew) {
-      modifySimState({ type: 'start-run', index: runID, startPaused: true });
-      return;
-    }
+  if (isRunning) modifyRun('status', 'paused');
 
-    if (isRunning) {
-      modifyRun('status', 'paused');
-    }
-
-    modifySimState({ type: 'step-run', index: runID });
-    };
+  modifySimState({ type: 'step-run', index: runID });
+};
 
   const onSpeedChange = () => {
     const nextSpeed = speed === 1 ? 2 : speed === 2 ? 4 : 1;
     modifyRun('speed', nextSpeed);
   }
-
 
   return (
     <div
@@ -74,7 +82,11 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
       }}
     >
       <ButtonGroup aria-label="Run controls">
-        <Button variant={isNew ? "success" : "primary"} onClick={onPauseToggle}>
+        <Button 
+          variant={isNew ? "success" : "primary"} 
+          onClick={onPauseToggle}
+          disabled={isStartDisabled}
+        >
           {isNew ? 'Start' : isRunning ? 'Pause' : 'Resume'}
         </Button>
         <Button variant="secondary" onClick={onStep}>
@@ -87,6 +99,26 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
           {isNew ? "Modify" : "Terminate" }
         </Button>
       </ButtonGroup>
+
+      {/* NEW TERMINATION WARNING POPUP */}
+      <Modal show={showTerminateModal} onHide={() => setShowTerminateModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Termination</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to terminate this run?
+          <br />
+          You will not be able to resume.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowTerminateModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={confirmTerminate}>
+            Terminate
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

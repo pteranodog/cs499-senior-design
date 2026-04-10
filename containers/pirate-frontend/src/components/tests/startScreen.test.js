@@ -63,16 +63,13 @@ test('user can select a region', async() => {
 });
 
 
-//TEST: WEATHER CONDITION DROPDOWN INPUT
-test('user can select weather', async() => {
-  render(<Controls />);
-
-  const weatherSelect = screen.getByRole('combobox' , {name : /Weather Condition/i});
-
-  await userEvent.selectOptions(weatherSelect, 'Clear');
-
-  expect(weatherSelect).toHaveValue('Clear');
-});
+// TODO: Weather temporarily removed
+// test('user can select weather', async() => {
+//   render(<Controls />);
+//   const weatherSelect = screen.getByRole('combobox' , {name : /Weather Condition/i});
+//   await userEvent.selectOptions(weatherSelect, 'Clear');
+//   expect(weatherSelect).toHaveValue('Clear');
+// });
 
 
 //TEST: MERCHANT POPULATION SLIDER
