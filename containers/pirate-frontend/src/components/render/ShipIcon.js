@@ -3,24 +3,24 @@ import { useMemo } from 'react';
 import L from 'leaflet';
 
 const BASE_ZOOM = 6;
-const BASE_SCALE = 0.6;
-const MIN_SCALE = 0.45;
-const MAX_SCALE = 1.25;
+const BASE_SCALE = 1.0;
+const MIN_SCALE = 0.8;
+const MAX_SCALE = 2.0;
 
 const ICON_CONFIG = {
   pirate: {
     iconUrl: '/pirate-icon.png',
-    iconSize: [52, 40],
+    iconSize: [65, 50],
     filter: '',
   },
   merchant: {
     iconUrl: '/merchant-icon.png',
-    iconSize: [81, 25],
+    iconSize: [100, 40],
     filter: '',
   },
   patrol: {
     iconUrl: '/patrol-icon.png',
-    iconSize: [70, 40],
+    iconSize: [85, 50],
     filter: '',
   },
   default: {
