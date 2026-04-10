@@ -3,29 +3,29 @@ import { useMemo } from 'react';
 import L from 'leaflet';
 
 const BASE_ZOOM = 6;
-const BASE_SCALE = 0.6;
-const MIN_SCALE = 0.45;
-const MAX_SCALE = 1.25;
+const BASE_SCALE = 1.8;
+const MIN_SCALE = 1.2;
+const MAX_SCALE = 3.0;
 
 const ICON_CONFIG = {
   pirate: {
     iconUrl: '/pirate-icon.png',
-    iconSize: [52, 40],
+    iconSize: [156, 120],
     filter: 'invert(100%) sepia(100%) saturate(10000%) hue-rotate(0deg) brightness(100%) contrast(100%)',
   },
   merchant: {
     iconUrl: '/merchant-icon.png',
-    iconSize: [81, 25],
+    iconSize: [243, 75],
     filter: 'invert(100%) sepia(100%) saturate(10000%) hue-rotate(85deg) brightness(100%) contrast(100%)',
   },
   patrol: {
     iconUrl: '/patrol-icon.png',
-    iconSize: [70, 40],
+    iconSize: [210, 120],
     filter: 'invert(100%) sepia(100%) saturate(10000%) hue-rotate(190deg) brightness(100%) contrast(100%)',
   },
   default: {
     iconUrl: '/boat-icon.png',
-    iconSize: [60, 60],
+    iconSize: [180, 180],
     filter: '',
   }
 };
