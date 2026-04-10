@@ -46,14 +46,3 @@ code {
   to { transform: translateX(-50%); } /* Moves halfway to show the duplicate */
 }
 
-/* Ship icon color tints (dark shades for visibility on ocean map) */
-.ship-icon-pirate img {
-  filter: brightness(0) saturate(100%) invert(12%) sepia(95%) saturate(6000%) hue-rotate(358deg) brightness(85%) contrast(115%);
-}
-.ship-icon-merchant img {
-  filter: brightness(0) saturate(100%) invert(25%) sepia(70%) saturate(600%) hue-rotate(100deg) brightness(80%) contrast(105%);
-}
-.ship-icon-patrol img {
-  filter: brightness(0) saturate(100%) invert(20%) sepia(90%) saturate(3000%) hue-rotate(210deg) brightness(75%) contrast(110%);
-}
-
