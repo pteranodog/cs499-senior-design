@@ -1,6 +1,8 @@
 import * as behaviors from './behaviors.js';
 import { aStar } from './aStar.js';
 import { getSomaliaHotspot } from '../utils/pointChoosing.js';
+import * as data from './classes.js'
+import { getOceanCurrent } from './oceanCurrents.js'
 
 const COMBAT_RANGE   = 40;
 const REPATH_INTERVAL = 20; // steps between A* recomputes for merchants
@@ -174,6 +176,39 @@ function checkForDestinationArrival(ship) {
     if (!rebuiltPath) {
       return ship; // zero length path, keep going
     }
+
+    // WEIRD MERGE ISSUE
+    // I don't think the following block of code is supposed to be here
+    // I'm also not sure where it's supposed to go
+    // So I've just gotta comment it out for the time being
+    // And we'll figure out where it goes soon
+
+//   // Apply ocean current displacement to the ship's new position
+//   const pos = newMover.kinematic.pos;
+//   const [cx, cy] = getOceanCurrent(pos[0], pos[1]);
+//   const currentOffset = [cx * timeStep, cy * timeStep];
+//   const adjustedPos = behaviors.add(pos, currentOffset);
+//
+//   const moverWithCurrent = {
+//     ...newMover,
+//     kinematic: {
+//       ...newMover.kinematic,
+//       pos: adjustedPos,
+//     },
+//     behavior: {
+//       ...newMover.behavior,
+//       k1: {
+//         ...newMover.kinematic,
+//         pos: adjustedPos,
+//       },
+//     },
+//   };
+//
+//   return {
+//     ...ship,
+//     mover: moverWithCurrent
+//   };
+// }
 
     return {
       ...ship,
