@@ -121,8 +121,36 @@ function advanceCombat(thisShip, shipsById) {
   return { ...shipsById, [enemyId]: updatedEnemy };
 }
 
-function checkForCombatScenario(ship, shipId, shipsById) {
-  if (ship.inCombat) return shipsById;
+function getEncounterIncrements(ship, otherShip) {
+  const types = [ship?.type, otherShip?.type];
+  const hasPirate = types.includes('pirate');
+  if (!hasPirate) {
+    return null;
+  }
+
+  if (types.includes('merchant')) {
+    return {
+      merchantPirateEncounters: 1,
+      patrolPirateEncounters: 0,
+      totalPirateEncounters: 1,
+    };
+  }
+
+  if (types.includes('patrol')) {
+    return {
+      merchantPirateEncounters: 0,
+      patrolPirateEncounters: 1,
+      totalPirateEncounters: 1,
+    };
+  }
+
+  return null;
+}
+
+function checkForCombatScenario(ship, shipId, shipsById) { // return updated shipsById + encounter increments if combat begins
+  if (ship.state === 10 || ship.state === 1) { // if this ship is in combat already or idle, ignore
+    return { shipsById, encounterIncrements: null };
+  }
 
   const otherEntries = Object.entries(shipsById).filter(([id]) => id !== shipId);
 
@@ -137,14 +165,17 @@ function checkForCombatScenario(ship, shipId, shipsById) {
 
     if (dist <= COMBAT_RANGE) {
       return {
-        ...shipsById,
-        [shipId]: { ...ship,      inCombat: true, state: 10, currentEnemyId: otherId, hp: ship.hp      ?? 100 },
-        [otherId]: { ...otherShip, inCombat: true, state: 10, currentEnemyId: shipId,  hp: otherShip.hp ?? 100 },
+        shipsById: {
+          ...shipsById,
+          [shipId]: updatedShip,
+          [otherId]: updatedOther
+        },
+        encounterIncrements: getEncounterIncrements(ship, otherShip),
       };
     }
   }
 
-  return shipsById;
+  return { shipsById, encounterIncrements: null }; // no combat triggered
 }
 
 // ============================= Dest arrival / path reversal =============================
@@ -241,6 +272,12 @@ const pathIdRef = { value: 10000 };
 
 function step(run, regions, timeStep = 1) {
   let shipsById = { ...run.currentState.ships };
+  let points = {...run.points};
+  let encounterTotals = {
+    merchantPirateEncounters: 0,
+    patrolPirateEncounters: 0,
+    totalPirateEncounters: 0,
+  };
 
   
 
@@ -267,8 +304,19 @@ function step(run, regions, timeStep = 1) {
     updatedShip = maybeRepath(updatedShip, navgraph, pathIdRef);
     shipsById[id] = updatedShip;
 
-    // Combat check
-    shipsById   = checkForCombatScenario(updatedShip, id, shipsById);
+    // Check if this ship should enter combat with anyone
+    const combatResult = checkForCombatScenario(updatedShip, id, shipsById);
+    shipsById = combatResult.shipsById;
+    if (combatResult.encounterIncrements) {
+      encounterTotals = {
+        merchantPirateEncounters:
+          encounterTotals.merchantPirateEncounters + combatResult.encounterIncrements.merchantPirateEncounters,
+        patrolPirateEncounters:
+          encounterTotals.patrolPirateEncounters + combatResult.encounterIncrements.patrolPirateEncounters,
+        totalPirateEncounters:
+          encounterTotals.totalPirateEncounters + combatResult.encounterIncrements.totalPirateEncounters,
+      };
+    }
     updatedShip = shipsById[id];
 
     // Damage dealing
@@ -286,6 +334,15 @@ function step(run, regions, timeStep = 1) {
     ...run,
     currentState: {
       ...run.currentState,
+      stats: {
+        ...run.currentState?.stats,
+        merchantPirateEncounters:
+          (run.currentState?.stats?.merchantPirateEncounters ?? 0) + encounterTotals.merchantPirateEncounters,
+        patrolPirateEncounters:
+          (run.currentState?.stats?.patrolPirateEncounters ?? 0) + encounterTotals.patrolPirateEncounters,
+        totalPirateEncounters:
+          (run.currentState?.stats?.totalPirateEncounters ?? 0) + encounterTotals.totalPirateEncounters,
+      },
       ships: shipsById
     }
   };

@@ -238,7 +238,8 @@ function newRun(name, runConfig, regionId) {
     regionId: regionId, // Region ID
     status: 'new',
     speed: 1,
-    elapsedTime: 0, // in seconds; will be updated as the run progresses
+    ticksPerMinute: 1,
+    elapsedTime: 0, // stored as elapsed simulation ticks; use ticksPerMinute to format clock time
     selected: false,
     // Infer initial run state info from config. currentState is comprised of all the CHANGING values of this run:
     currentState: {
@@ -246,7 +247,12 @@ function newRun(name, runConfig, regionId) {
       stats: {
         captures: 0,
         rescues: 0,
-        sinks: 0
+        sinks: 0,
+        merchantPirateEncounters: 0,
+        patrolPirateEncounters: 0,
+        totalPirateEncounters: 0,
+        merchantsSpawned: 0,
+        piratesSpawned: 0
       },
       // Ships is an ID-indexed object of all active Ship objects.
       ships: {}

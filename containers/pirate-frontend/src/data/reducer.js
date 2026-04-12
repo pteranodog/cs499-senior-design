@@ -57,7 +57,12 @@ function simStateReducer(state, action) {
     case 'view-run-end':
       return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'end-run', index: action.run }};
     case 'increment-run-time':
-      return { ...state, runs: state.runs.map((run, i) => i === action.index ? { ...run, elapsedTime: run.elapsedTime + action.seconds } : run) };
+      return {
+        ...state,
+        runs: state.runs.map((run, i) => i === action.index
+          ? { ...run, elapsedTime: run.elapsedTime + (action.ticks ?? 1) }
+          : run),
+      };
     default:
       console.warn('Action type "' + action.type + '" not found.');
       return state;
@@ -161,6 +166,9 @@ function spawnShips(run, regions) {
 
   const ships = {};
 
+  let merchantsSpawned = 0;
+  let piratesSpawned = 0;
+  
   const merchantsPerDay = (run.maxMerchants ?? 0);
   const piratesPerDay   = (run.maxPirates   ?? 0);
   const maxPatrols   = (run.maxPatrols   ?? 0);
@@ -189,6 +197,7 @@ function spawnShips(run, regions) {
 
     if (point.type === 'port' && shouldSpawn(merchantsPerDay)) {            
       console.log("merchant spawn roll succeeded");
+      merchantsSpawned += 1;
       const id = crypto.randomUUID();
 
       // Pick a random destination port from predefined, prioritized destination list
@@ -217,6 +226,7 @@ function spawnShips(run, regions) {
 
     if ((point.type === 'pirateCove' ) && shouldSpawn(piratesPerDay)) {
       console.log("pirate spawn roll succeeded"); 
+      piratesSpawned += 1;
       const id    = crypto.randomUUID();
       
       // Pick a random destination port from predefined, prioritized destination list
@@ -234,6 +244,11 @@ function spawnShips(run, regions) {
     ...run,
     currentState: {
       ...run.currentState,
+      stats: {
+        ...run.currentState?.stats,
+        merchantsSpawned: (run.currentState?.stats?.merchantsSpawned ?? 0) + merchantsSpawned,
+        piratesSpawned: (run.currentState?.stats?.piratesSpawned ?? 0) + piratesSpawned,
+      },
       ships
     }
   };

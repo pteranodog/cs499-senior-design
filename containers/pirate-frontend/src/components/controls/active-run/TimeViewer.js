@@ -1,10 +1,12 @@
 import Card from 'react-bootstrap/Card';
 
-export default function TimeViewer({ seconds }) {
-  const formatTime = (value) => {
-    const hrs = String(Math.floor(value / 3600)).padStart(2, '0');
-    const mins = String(Math.floor((value % 3600) / 60)).padStart(2, '0');
-    const secs = String(value % 60).padStart(2, '0');
+export default function TimeViewer({ elapsedTicks = 0, ticksPerMinute = 1 }) {
+  const formatTime = (ticks, minuteTickRate) => {
+    const safeTicksPerMinute = Math.max(Number(minuteTickRate) || 1, 1);
+    const totalMinutes = Math.floor((Number(ticks) || 0) / safeTicksPerMinute);
+    const hrs = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
+    const mins = String(totalMinutes % 60).padStart(2, '0');
+    const secs = '00';
     return `${hrs}:${mins}:${secs}`;
   };
 
@@ -20,7 +22,7 @@ export default function TimeViewer({ seconds }) {
         zIndex: 1000,
       }}
     >
-      <div><strong>Time Elapsed:</strong> {formatTime(seconds)}</div>
+      <div><strong>Time Elapsed:</strong> {formatTime(elapsedTicks, ticksPerMinute)}</div>
     </Card>
   );
 }
