@@ -35,6 +35,9 @@ export function exportRunAsCsv(run, region) {
 	const captures = Number(stats.captures ?? 0);
 	const rescues = Number(stats.rescues ?? 0);
 	const sinks = Number(stats.sinks ?? 0);
+	const merchantPirateEncounters = Number(stats.merchantPirateEncounters ?? 0);
+	const patrolPirateEncounters = Number(stats.patrolPirateEncounters ?? 0);
+	const totalPirateEncounters = Number(stats.totalPirateEncounters ?? 0);
 	const shipCounts = countShips(ships);
 	const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 	const safeName = (run.name || 'simulation-run').trim().replace(/\s+/g, '-').toLowerCase();
@@ -52,6 +55,9 @@ export function exportRunAsCsv(run, region) {
 		csvRow('Captures', captures),
 		csvRow('Rescues', rescues),
 		csvRow('Sinks', sinks),
+		csvRow('Merchant-Pirate Encounters', merchantPirateEncounters),
+		csvRow('Patrol-Pirate Encounters', patrolPirateEncounters),
+		csvRow('Total Pirate Encounters', totalPirateEncounters),
 		csvRow('Active Ships', ships.length),
 		csvRow('Active Merchants', shipCounts.merchants),
 		csvRow('Active Pirates', shipCounts.pirates),

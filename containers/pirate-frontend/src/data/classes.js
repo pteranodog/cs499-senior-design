@@ -248,6 +248,9 @@ function newRun(name, runConfig, regionId) {
         captures: 0,
         rescues: 0,
         sinks: 0,
+        merchantPirateEncounters: 0,
+        patrolPirateEncounters: 0,
+        totalPirateEncounters: 0,
         merchantsSpawned: 0,
         piratesSpawned: 0
       },

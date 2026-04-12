@@ -96,9 +96,35 @@ function advanceCombat(thisShip, shipsById) { // return updated shipsById after 
   };
 }
 
-function checkForCombatScenario(ship, shipId, shipsById) { // return updated shipsById if combat begins
+function getEncounterIncrements(ship, otherShip) {
+  const types = [ship?.type, otherShip?.type];
+  const hasPirate = types.includes('pirate');
+  if (!hasPirate) {
+    return null;
+  }
+
+  if (types.includes('merchant')) {
+    return {
+      merchantPirateEncounters: 1,
+      patrolPirateEncounters: 0,
+      totalPirateEncounters: 1,
+    };
+  }
+
+  if (types.includes('patrol')) {
+    return {
+      merchantPirateEncounters: 0,
+      patrolPirateEncounters: 1,
+      totalPirateEncounters: 1,
+    };
+  }
+
+  return null;
+}
+
+function checkForCombatScenario(ship, shipId, shipsById) { // return updated shipsById + encounter increments if combat begins
   if (ship.state === 10 || ship.state === 1) { // if this ship is in combat already or idle, ignore
-    return shipsById;
+    return { shipsById, encounterIncrements: null };
   }
 
   const otherEntries = Object.entries(shipsById).filter(([id]) => id !== shipId);
@@ -126,14 +152,17 @@ function checkForCombatScenario(ship, shipId, shipsById) { // return updated shi
       };
 
       return {
-        ...shipsById,
-        [shipId]: updatedShip,
-        [otherId]: updatedOther
+        shipsById: {
+          ...shipsById,
+          [shipId]: updatedShip,
+          [otherId]: updatedOther
+        },
+        encounterIncrements: getEncounterIncrements(ship, otherShip),
       };
     }
   }
 
-  return shipsById; // no combat triggered
+  return { shipsById, encounterIncrements: null }; // no combat triggered
 }
 
 function checkForPortArrival(ship) {
@@ -185,6 +214,11 @@ function step(run, timeStep = 1) {
   // Work from a fresh copy of ships
   let shipsById = { ...run.currentState.ships };
   let points = {...run.points};
+  let encounterTotals = {
+    merchantPirateEncounters: 0,
+    patrolPirateEncounters: 0,
+    totalPirateEncounters: 0,
+  };
 
   // Process each ship in turn
   for (const [id, ship] of Object.entries(shipsById)) {
@@ -197,7 +231,18 @@ function step(run, timeStep = 1) {
     shipsById[id] = updatedShip;
 
     // Check if this ship should enter combat with anyone
-    shipsById = checkForCombatScenario(updatedShip, id, shipsById);
+    const combatResult = checkForCombatScenario(updatedShip, id, shipsById);
+    shipsById = combatResult.shipsById;
+    if (combatResult.encounterIncrements) {
+      encounterTotals = {
+        merchantPirateEncounters:
+          encounterTotals.merchantPirateEncounters + combatResult.encounterIncrements.merchantPirateEncounters,
+        patrolPirateEncounters:
+          encounterTotals.patrolPirateEncounters + combatResult.encounterIncrements.patrolPirateEncounters,
+        totalPirateEncounters:
+          encounterTotals.totalPirateEncounters + combatResult.encounterIncrements.totalPirateEncounters,
+      };
+    }
     updatedShip = shipsById[id];
 
     // This ship deals damage to its enemy (if in combat)
@@ -228,6 +273,15 @@ function step(run, timeStep = 1) {
     ...run,
     currentState: {
       ...run.currentState,
+      stats: {
+        ...run.currentState?.stats,
+        merchantPirateEncounters:
+          (run.currentState?.stats?.merchantPirateEncounters ?? 0) + encounterTotals.merchantPirateEncounters,
+        patrolPirateEncounters:
+          (run.currentState?.stats?.patrolPirateEncounters ?? 0) + encounterTotals.patrolPirateEncounters,
+        totalPirateEncounters:
+          (run.currentState?.stats?.totalPirateEncounters ?? 0) + encounterTotals.totalPirateEncounters,
+      },
       ships: shipsById
     }
   };

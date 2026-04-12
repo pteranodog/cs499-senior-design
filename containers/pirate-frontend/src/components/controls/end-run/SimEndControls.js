@@ -17,6 +17,9 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 	const captures = Number(stats.captures ?? 0);
 	const rescues = Number(stats.rescues ?? 0);
 	const sinks = Number(stats.sinks ?? 0);
+	const merchantPirateEncounters = Number(stats.merchantPirateEncounters ?? 0);
+	const patrolPirateEncounters = Number(stats.patrolPirateEncounters ?? 0);
+	const totalPirateEncounters = Number(stats.totalPirateEncounters ?? 0);
 
 	const shipCounts = ships.reduce((acc, ship) => {
 		const type = String(ship?.type ?? '').toLowerCase();
@@ -56,6 +59,9 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 					<div><strong>Captures:</strong> {captures}</div>
 					<div><strong>Rescues:</strong> {rescues}</div>
 					<div><strong>Sinks:</strong> {sinks}</div>
+					<div><strong>Merchant-Pirate Encounters:</strong> {merchantPirateEncounters}</div>
+					<div><strong>Patrol-Pirate Encounters:</strong> {patrolPirateEncounters}</div>
+					<div><strong>Total Pirate Encounters:</strong> {totalPirateEncounters}</div>
 					<div><strong>Active Ships:</strong> {ships.length}</div>
 					<div><strong>Merchants:</strong> {shipCounts.merchants}</div>
 					<div><strong>Pirates:</strong> {shipCounts.pirates}</div>
