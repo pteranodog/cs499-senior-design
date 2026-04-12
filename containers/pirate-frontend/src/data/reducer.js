@@ -43,7 +43,12 @@ function simStateReducer(state, action) {
     case 'view-run-end':
       return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'end-run', index: action.run }};
     case 'increment-run-time':
-      return { ...state, runs: state.runs.map((run, i) => i === action.index ? { ...run, elapsedTime: run.elapsedTime + action.seconds } : run) };
+      return {
+        ...state,
+        runs: state.runs.map((run, i) => i === action.index
+          ? { ...run, elapsedTime: run.elapsedTime + (action.ticks ?? 1) }
+          : run),
+      };
     default:
       console.warn('Action type "' + action.type + '" not found.');
       return state;

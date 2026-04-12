@@ -11,13 +11,14 @@ export default function RunControls({ simState, modifySimState, runID }) {
         ? simState?.runs?.[runID]
         : simState?.runs?.find((candidate) => candidate?.uuid === runID);
     const speed = run?.speed || 1;
+    const ticksPerMinute = run?.ticksPerMinute || 1;
 
     useEffect(() => {
         if (!run || run.status !== 'running') {
             return undefined;
         }
         const interval = setInterval(() => {
-            modifySimState({ type: 'increment-run-time', index: runID, seconds: 1 });
+            modifySimState({ type: 'increment-run-time', index: runID, ticks: 1 });
             modifySimState({ type: 'step-run', index: runID });
         }, 1000 / speed);
 
@@ -33,7 +34,7 @@ export default function RunControls({ simState, modifySimState, runID }) {
             <StatusDisplay simState={simState} runID={runID} />
             <BottomRightButtons simState={simState} modifySimState={modifySimState} runID={runID} />
             <Legend />
-            <TimeViewer seconds={run.elapsedTime || 0} />
+            <TimeViewer elapsedTicks={run.elapsedTime || 0} ticksPerMinute={ticksPerMinute} />
             {/*MERGE NOTE: passing runID down to LiveCounts because it needs it now -ljj*/}
             <LiveCounts simState={simState} runID={runID} /> 
             {/*<Modify run={run} runID={runID} modifySimState={modifySimState} /> MERGE NOTE: should this be commented out? -ljj */}
