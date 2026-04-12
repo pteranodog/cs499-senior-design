@@ -18,7 +18,7 @@ const ARROW_STYLE_BY_TYPE = {
 };
 
 function getShipHeading(ship) {
-  const velocity = ship.mover?.kinematic?.velocity;
+  const velocity = ship.velocity;
 
   if (Array.isArray(velocity) && velocity.length >= 2) {
     const [vx, vy] = velocity;
@@ -27,7 +27,7 @@ function getShipHeading(ship) {
     }
   }
 
-  return ship.mover?.kinematic?.orientation ?? 0;
+  return ship.orientation ?? 0;
 }
 
 function getArrowScale(zoom) {
