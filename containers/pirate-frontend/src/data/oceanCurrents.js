@@ -1,14 +1,7 @@
 import { latLngToCartesian, cartesianToLatLng } from '../utils/coords.js';
 
 /**
- * Ocean current model for the Horn of Africa / Western Indian Ocean region.
- *
- * Modeled current systems:
- *  1. Somali Current – strong, runs NE along the Somali coast
- *  2. East African Coastal Current – northward along Kenya / Tanzania
- *  3. Equatorial Counter Current – eastward band near the equator
- *  4. South Equatorial Current – broad westward flow south of equator
- *  5. Monsoon drift – general NE background flow in the Arabian Sea
+ * Ocean current model for all simulation regions.
  *
  * Each zone is defined with a center, direction, magnitude, radius of
  * influence, and a smooth (Gaussian) falloff so the vector field is
@@ -75,6 +68,167 @@ const CURRENT_ZONES = [
     center: [12.0, 45.0],
     direction: [1.0, 0.2],   // roughly eastward through the gulf
     magnitude: 0.7,
+    radius: 2.5,
+  },
+
+  // --- r2: Gulf of Guinea ---
+  {
+    name: 'Guinea Current',
+    center: [4.0, 2.0],
+    direction: [1.0, 0.0],   // eastward along the coast
+    magnitude: 0.6,
+    radius: 3.5,
+  },
+  {
+    name: 'Benguela–Guinea convergence',
+    center: [3.0, 8.0],
+    direction: [0.8, 0.3],   // NE towards Bight of Biafra
+    magnitude: 0.4,
+    radius: 3.0,
+  },
+  {
+    name: 'Niger Delta outflow',
+    center: [4.5, 5.5],
+    direction: [-0.5, -1.0], // southwestward from river mouth
+    magnitude: 0.3,
+    radius: 2.0,
+  },
+
+  // --- r3: Malacca Strait ---
+  {
+    name: 'Malacca Strait throughflow',
+    center: [3.5, 100.5],
+    direction: [-1.0, 0.3],  // NW through the strait
+    magnitude: 0.7,
+    radius: 3.0,
+  },
+  {
+    name: 'Singapore Strait current',
+    center: [1.2, 104.0],
+    direction: [1.0, 0.0],   // eastward
+    magnitude: 0.5,
+    radius: 2.0,
+  },
+
+  // --- r4: Caribbean Sea ---
+  {
+    name: 'Caribbean Current',
+    center: [15.0, -75.0],
+    direction: [-1.0, 0.3],  // WNW across the basin
+    magnitude: 0.6,
+    radius: 5.0,
+  },
+  {
+    name: 'Yucatan Current',
+    center: [20.0, -80.0],
+    direction: [0.0, 1.0],   // northward toward Florida Strait
+    magnitude: 0.8,
+    radius: 3.0,
+  },
+  {
+    name: 'Windward Passage flow',
+    center: [19.5, -73.5],
+    direction: [-0.5, 1.0],  // NW through passage
+    magnitude: 0.5,
+    radius: 2.5,
+  },
+  {
+    name: 'Panama–Colombia Gyre',
+    center: [10.0, -78.0],
+    direction: [-1.0, -0.3], // WSW
+    magnitude: 0.4,
+    radius: 3.0,
+  },
+
+  // --- r5: Red Sea ---
+  {
+    name: 'Red Sea surface current (north)',
+    center: [20.0, 38.5],
+    direction: [0.0, -1.0],  // southward (inverse estuary)
+    magnitude: 0.3,
+    radius: 3.5,
+  },
+  {
+    name: 'Red Sea surface current (south)',
+    center: [14.0, 42.0],
+    direction: [0.0, -1.0],  // southward toward Bab el-Mandeb
+    magnitude: 0.5,
+    radius: 3.0,
+  },
+  {
+    name: 'Bab el-Mandeb inflow',
+    center: [12.5, 43.3],
+    direction: [0.0, 1.0],   // northward through the strait
+    magnitude: 0.8,
+    radius: 1.5,
+  },
+
+  // --- r6: Mozambique Channel ---
+  {
+    name: 'Mozambique Current',
+    center: [-16.0, 41.0],
+    direction: [0.0, -1.0],  // southward through channel
+    magnitude: 1.0,
+    radius: 4.0,
+  },
+  {
+    name: 'South Equatorial Current (Mozambique)',
+    center: [-12.0, 48.0],
+    direction: [-1.0, 0.0],  // westward feeding into channel
+    magnitude: 0.5,
+    radius: 4.0,
+  },
+  {
+    name: 'Agulhas Current origin',
+    center: [-25.0, 36.0],
+    direction: [0.3, -1.0],  // SW along South Africa coast
+    magnitude: 0.8,
+    radius: 3.5,
+  },
+
+  // --- r7: South China Sea ---
+  {
+    name: 'South China Sea western boundary',
+    center: [14.0, 112.0],
+    direction: [0.0, -1.0],  // southward along Vietnam coast
+    magnitude: 0.5,
+    radius: 4.0,
+  },
+  {
+    name: 'Luzon Strait inflow',
+    center: [20.0, 120.0],
+    direction: [-1.0, 0.0],  // westward into the basin
+    magnitude: 0.6,
+    radius: 3.5,
+  },
+  {
+    name: 'South China Sea southern outflow',
+    center: [10.0, 110.0],
+    direction: [-1.0, -0.3], // WSW toward Malay Peninsula
+    magnitude: 0.4,
+    radius: 4.0,
+  },
+
+  // --- r8: Sulu-Celebes Seas ---
+  {
+    name: 'Sulu Sea throughflow',
+    center: [7.0, 120.0],
+    direction: [0.0, -1.0],  // southward through Sulu Sea
+    magnitude: 0.4,
+    radius: 3.0,
+  },
+  {
+    name: 'Celebes Sea current',
+    center: [3.0, 122.0],
+    direction: [1.0, 0.0],   // eastward
+    magnitude: 0.5,
+    radius: 3.5,
+  },
+  {
+    name: 'Makassar Strait inflow',
+    center: [1.5, 118.5],
+    direction: [0.0, -1.0],  // southward into Makassar
+    magnitude: 0.6,
     radius: 2.5,
   },
 ];
