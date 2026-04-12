@@ -246,7 +246,9 @@ function newRun(name, runConfig, regionId) {
       stats: {
         captures: 0,
         rescues: 0,
-        sinks: 0
+        sinks: 0,
+        merchantsSpawned: 0,
+        piratesSpawned: 0
       },
       // Ships is an ID-indexed object of all active Ship objects.
       ships: {}

@@ -143,6 +143,8 @@ function spawnShips(run, regions) {
   if (!region) return run;
  
   const ships = {};
+  let merchantsSpawned = 0;
+  let piratesSpawned = 0;
  
   const merchantChance = (run.maxMerchants ?? 0) / 100;
   const pirateChance   = (run.maxPirates   ?? 0) / 100;
@@ -205,6 +207,7 @@ function spawnShips(run, regions) {
         const paths = merchantPaths ? merchantPaths[pointId] : null;
         const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
         ships[id] = buildShipWithMover('merchant', pos, 'medium', region.center, path);
+        merchantsSpawned += 1;
       }
     }
  
@@ -223,6 +226,7 @@ function spawnShips(run, regions) {
         const paths = piratePaths ? piratePaths[pointId] : null;
         const path = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
         ships[id] = buildShipWithMover('pirate', pos, 'small', region.center, path);
+        piratesSpawned += 1;
       }
     }
   }
@@ -231,6 +235,11 @@ function spawnShips(run, regions) {
     ...run,
     currentState: {
       ...run.currentState,
+      stats: {
+        ...run.currentState?.stats,
+        merchantsSpawned: (run.currentState?.stats?.merchantsSpawned ?? 0) + merchantsSpawned,
+        piratesSpawned: (run.currentState?.stats?.piratesSpawned ?? 0) + piratesSpawned,
+      },
       ships
     }
   };

@@ -64,7 +64,9 @@
 				"stats": {
 					"captures": 0,
 					"rescues": 0,
-					"sinks": 0
+					"sinks": 0,
+					"merchantsSpawned": 0,
+					"piratesSpawned": 0
 				},
 				"ships": {
 					"5c9689fe-9465-4e27-b7c7-a6a7ee4b1258": {
