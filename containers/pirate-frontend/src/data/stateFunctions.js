@@ -164,6 +164,20 @@ function checkForCombatScenario(ship, shipId, shipsById) { // return updated shi
     const dist = behaviors.getLength(behaviors.subtract(ship.pos, otherShip.pos));
 
     if (dist <= COMBAT_RANGE) {
+      const updatedShip = {
+        ...ship,
+        inCombat: true,
+        state: 10,
+        currentEnemyId: otherId, // store ID, not the object
+        hp: ship.hp ?? 100       // don't reset hp if already set
+      };
+      const updatedOther = {
+        ...otherShip,
+        inCombat: true,
+        state: 10,
+        currentEnemyId: shipId,
+        hp: otherShip.hp ?? 100
+      };
       return {
         shipsById: {
           ...shipsById,
