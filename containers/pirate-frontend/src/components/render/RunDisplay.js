@@ -2,6 +2,7 @@ import { TileLayer, useMap, Polyline, Rectangle } from 'react-leaflet';
 import { cartesianToLatLng } from '../../utils/coords.js'; // temporary
 import PointIcons from './PointIcons.js';
 import ShipIcons from './ShipIcons.js';
+import OceanCurrentArrows from './OceanCurrentArrows.js';
 import DisplayBadge from './DisplayBadge'
 import { useEffect } from 'react';
 
@@ -76,6 +77,7 @@ export default function RunDisplay({ simState, run }) {
       <TileLayer attribution={DAY_TILE_ATTRIBUTION} url={DAY_TILE_URL} />
       <PointIcons pointList={pointList} />
       <ShipIcons shipList={shipList} regionCenter={region.center} />
+      <OceanCurrentArrows regionBounds={region.bounds} />
 
       {/* TEMPORARY: render patrol paths */}
       {Object.values(run.currentState.ships)
