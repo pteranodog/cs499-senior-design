@@ -2,9 +2,9 @@ import { Marker, Popup } from 'react-leaflet';
 import { useMemo } from 'react';
 import L from 'leaflet';
 
-const BASE_ZOOM = 6;
-const BASE_SCALE = 1.0;
-const MIN_SCALE = 0.8;
+const BASE_ZOOM = 10;
+const BASE_SCALE = 0.5;
+const MIN_SCALE = 0.1;
 const MAX_SCALE = 2.0;
 
 const ICON_CONFIG = {
