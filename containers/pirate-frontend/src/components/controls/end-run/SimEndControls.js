@@ -17,9 +17,13 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 	const captures = Number(stats.captures ?? 0);
 	const rescues = Number(stats.rescues ?? 0);
 	const sinks = Number(stats.sinks ?? 0);
+	const totalMerchantsSpawned = Number(stats.merchantsSpawned ?? 0);
 	const merchantPirateEncounters = Number(stats.merchantPirateEncounters ?? 0);
 	const patrolPirateEncounters = Number(stats.patrolPirateEncounters ?? 0);
 	const totalPirateEncounters = Number(stats.totalPirateEncounters ?? 0);
+	const merchantEncounterChance = totalMerchantsSpawned > 0
+		? ((merchantPirateEncounters / totalMerchantsSpawned) * 100).toFixed(1)
+		: '0.0';
 
 	const shipCounts = ships.reduce((acc, ship) => {
 		const type = String(ship?.type ?? '').toLowerCase();
@@ -60,6 +64,7 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 					<div><strong>Rescues:</strong> {rescues}</div>
 					<div><strong>Sinks:</strong> {sinks}</div>
 					<div><strong>Merchant-Pirate Encounters:</strong> {merchantPirateEncounters}</div>
+					<div><strong>% Chance of Merchants Encountering Pirates:</strong> {merchantEncounterChance}%</div>
 					<div><strong>Patrol-Pirate Encounters:</strong> {patrolPirateEncounters}</div>
 					<div><strong>Total Pirate Encounters:</strong> {totalPirateEncounters}</div>
 					<div><strong>Active Ships:</strong> {ships.length}</div>
