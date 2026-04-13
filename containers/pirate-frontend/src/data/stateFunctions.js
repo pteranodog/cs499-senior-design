@@ -3,6 +3,8 @@ import { aStar } from './aStar.js';
 import { getSomaliaHotspot } from '../utils/pointChoosing.js';
 import * as data from './classes.js'
 import { getOceanCurrent } from './oceanCurrents.js'
+import { isOcean } from '../utils/isOcean.js';
+import { cartesianToLatLng, latLngToCartesian } from '../utils/coords.js';
 
 const COMBAT_RANGE   = 40;
 const REPATH_INTERVAL = 20; // steps between A* recomputes for merchants
@@ -16,37 +18,78 @@ function canSee(ship1, ship2) {
 
 // ============================= Behavior building =============================
 // Constructs a weighted behavior array for a ship each step based on what it
-// can currently see. The ship's persistent behavior (followPath/wander) is
-// always included at weight 1.0. Situational behaviors (flee, pursue) are
-// layered on top with higher weights.
+// can currently see. Also handles state transitions since it is directly related 
+// to said steering
 
-function buildBehaviors(ship, visibleShips) {
+function buildBehaviors(ship, visibleShips, region) { 
   const behaviorList = [];
+  /* ======== SHIP STATE INFORMATION ===========================================
+  Listing behaviors, in descending order of weight/priority of each ship state 
+  (states listed in ascending order of prio):
+  - Merchants:
+  --- State 1: Avoids land, follows A* path to its destination, and flees nearest pirate (iff visible)
+  --- State 10: In combat; i.e. standing still
 
+  - Patrols:
+  --- State 1: Follows strict patroling path
+  --- State 2: Avoids land, pursues a pirate (target achieved via distress call or pirate simply being within its range)
+  --- State 10: In combat; i.e. standing still
+
+  - Pirates:
+  --- State 1: Avoids land, follows A* path to its destination
+  --- State 2: Avoids land, pursues nearest visible merchant 
+  --- State 3: Avoids land, flees nearest patrol ship
+  --- State 4: Avoids land, follows A* path back to its home cove to refuel
+  --- State 10: In combat; i.e. standing still
+  */
+
+  // Patrols in default state don't need land avoidance since they follow a 
+  // strict path; all other ships should though!
+  if (ship.type != "patrol" && ship.state != 1) { 
+    // Project velocity forward ~5 time units (minutes in our case?) and check for land
+    let veloProjection = (behaviors.add(ship.pos, behaviors.scalarMult(ship.velocity, 5)));
+    if (!isOcean(cartesianToLatLng(veloProjection[0], veloProjection[1], {
+      originLat: region.center[0],
+      originLon: region.center[1]
+      } )))
+    {
+      // If we found land there, "hard" flee from it 
+      behaviorList.push({  ...behaviors.newFlee(), target: veloProjection, weight: 3.0 })
+    }
+  }
+  // get all other ships, collected into 3 lists based on their type
   const visiblePirates   = visibleShips.filter(s => s.type === 'pirate');
   const visibleMerchants = visibleShips.filter(s => s.type === 'merchant');
   const visiblePatrols   = visibleShips.filter(s => s.type === 'patrol');
 
-  // Always include persistent behavior (followPath or wander)
+  // Always include persistent behavior (followPath)
   if (ship.behavior) {
     behaviorList.push(Object.assign(ship.behavior, { weight: 1.0 }));
   }
 
-  if (ship.type === 'merchant') {
+  if (ship.type === 'merchant') { // merchants should check for pirates to flee
     if (visiblePirates.length > 0) {
-      const nearest = nearestShip(ship, visiblePirates);
-      behaviorList.push({ ...behaviors.newFlee(), target: nearest, weight: 2.5 });
+      const nearest = nearestShip(ship, visiblePirates); // flee the nearest pirate
+      ship.inDistress = true;
+      ship.distressAnswered = false; // this will be set to true once a patrol answers the call
+      if (canSee(ship, nearest)) { //...if I can see it
+        behaviorList.push({ ...behaviors.newFlee(), target: nearest, weight: 2.5 });
+      }
     }
   }
 
   if (ship.type === 'pirate') {
-    if (visibleMerchants.length > 0) {
-      const nearest = nearestShip(ship, visibleMerchants);
-      behaviorList.push({ ...behaviors.newPursue(1), target: nearest, weight: 2.0 });
+    if (visibleMerchants.length > 0) { 
+      const nearest = nearestShip(ship, visibleMerchants); // pursue the nearest merchant
+      if (canSee(ship, nearest)) { //...if I can see it
+        behaviorList.push({ ...behaviors.newPursue(1), target: nearest, weight: 2.0 });
+      }
     }
-    if (visiblePatrols.length > 0) {
-      const nearest = nearestShip(ship, visiblePatrols);
-      behaviorList.push({ ...behaviors.newFlee(), target: nearest, weight: 3.0 });
+    if (visiblePatrols.length > 0) { 
+      const nearest = nearestShip(ship, visiblePatrols); // flee the nearest patrol ship
+      if (canSee(ship, nearest)) { //...if I can see it
+        behaviorList.push({ ...behaviors.newFlee(), target: nearest, weight: 3.0 });
+      }
     }
   }
 
@@ -270,11 +313,14 @@ function checkForDestinationArrival(ship) {
 // ============================= Movement =============================
 
 function updateShipMovement(ship, visibleShips, timeStep) {
-  if (ship.inCombat) return ship;
+  if (ship.inCombat) return ship; // ships in combat do NOT move
 
-  const behaviorList = buildBehaviors(ship, visibleShips);
-  const steering     = behaviors.getTotalSteering(ship, behaviorList);
+  const behaviorList = buildBehaviors(ship, visibleShips); // determine what behaviors this ship
+  // should currently exhibit based on what ships are visible to it
+  const steering     = behaviors.getTotalSteering(ship, behaviorList); // combine those behaviors
+  // to get ONE steering output
 
+  // return updated version of the passed in ship, whose movement stats now reflect the updated steering
   return behaviors.updateShip(ship, steering, timeStep);
 }
 
