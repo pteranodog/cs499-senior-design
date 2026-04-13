@@ -238,7 +238,8 @@ function newRun(name, runConfig, regionId) {
     regionId: regionId, // Region ID
     status: 'new',
     speed: 1,
-    elapsedTime: 0, // in seconds; will be updated as the run progresses
+    ticksPerMinute: 1,
+    elapsedTime: 0, // stored as elapsed simulation ticks; use ticksPerMinute to format clock time
     selected: false,
     // Infer initial run state info from config. currentState is comprised of all the CHANGING values of this run:
     currentState: {
@@ -246,7 +247,12 @@ function newRun(name, runConfig, regionId) {
       stats: {
         captures: 0,
         rescues: 0,
-        sinks: 0
+        sinks: 0,
+        merchantPirateEncounters: 0,
+        patrolPirateEncounters: 0,
+        totalPirateEncounters: 0,
+        merchantsSpawned: 0,
+        piratesSpawned: 0
       },
       // Ships is an ID-indexed object of all active Ship objects.
       ships: {}
@@ -254,79 +260,5 @@ function newRun(name, runConfig, regionId) {
   }
   return {...runConfig, ...run};
 }
-
-// ================= Helpful Functions For Testing  =================
-
-/*
-function printData(file, dataStructure) {
-  fs.writeFile(file, JSON.stringify(dataStructure, null, "\t"), err => {
-    if (err) {
-      console.error("Could not find " + file)
-    }
-  })
-}
-*/
-
-/*
-function addWithID(targetObj, newObj) {
-  const newUUID = crypto.randomUUID();
-  targetObj[newUUID] = newObj;
-  return newUUID;
-}
-*/
-
-// ================= Testing the above =================
-/*
-var Points = {}
-var Ships = {}
-
-var Regions = {}
-var Runs = []
-
-let testPort1 = newPort("Port One", [0,0], 0.01, [], [])
-let testPort2 = newPort("Port Two", [30,10], 0.01, [], [])
-let testCove = newPirateCove("Pirate Cove One", [-10, 5], 0.02)
-
-// Add points
-let tp1id = addWithID(Points, testPort1);
-let tp2id = addWithID(Points, testPort2);
-let tcid = addWithID(Points, testCove);
-
-Points[tp1id].toPorts.push(tp2id);
-Points[tp1id].fromPorts.push(tp2id);
-Points[tp2id].fromPorts.push(tp1id);
-Points[tp2id].toPorts.push(tp1id);
-
-let testRegion = newRegion([0,0], Points, "The fiery pits of hell", 20, 10)
-
-let trid = addWithID(Regions, testRegion);
-
-let testShip1 = newPirateShip([50.8, -40.7], "medium", tcid);
-let testShip2 = newMerchantShip([75, 55], "medium", tp1id);
-let testShip3 = newPatrolShip([-32.1, 12.9], "large", tp2id);
-
-let ts1id = addWithID(Ships, testShip1);
-let ts2id = addWithID(Ships, testShip2);
-let ts3id = addWithID(Ships, testShip3);
-
-let testConfig = newConfig(0, 1500, "clear", 200, 500, 400)
-let testRun = newRun("Run 1", testConfig, trid)
-
-testRun.currentState.ships = {...Ships}
-
-Runs.push(testRun);
-
-let dataStructure = {
-  regions: Regions,
-  runs: Runs,
-  display: {
-    // Default to 'region' on startup; no runs yet
-    type: 'region',
-    index: trid
-  }
-};
-
-printData("data.json", dataStructure);
-*/
 
 export { newPirateShip, newPatrolShip, newMerchantShip, newRegion, newPort, newBase, newPirateCove, newConfig, newRun };

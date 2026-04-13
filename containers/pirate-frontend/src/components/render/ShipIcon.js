@@ -2,26 +2,26 @@ import { Marker, Popup } from 'react-leaflet';
 import { useMemo } from 'react';
 import L from 'leaflet';
 
-const BASE_ZOOM = 6;
-const BASE_SCALE = 0.6;
-const MIN_SCALE = 0.45;
-const MAX_SCALE = 1.25;
+const BASE_ZOOM = 10;
+const BASE_SCALE = 0.5;
+const MIN_SCALE = 0.1;
+const MAX_SCALE = 2.0;
 
 const ICON_CONFIG = {
   pirate: {
     iconUrl: '/pirate-icon.png',
-    iconSize: [52, 40],
-    filter: 'invert(100%) sepia(100%) saturate(10000%) hue-rotate(0deg) brightness(100%) contrast(100%)',
+    iconSize: [65, 50],
+    filter: '',
   },
   merchant: {
     iconUrl: '/merchant-icon.png',
-    iconSize: [81, 25],
-    filter: 'invert(100%) sepia(100%) saturate(10000%) hue-rotate(85deg) brightness(100%) contrast(100%)',
+    iconSize: [100, 40],
+    filter: '',
   },
   patrol: {
     iconUrl: '/patrol-icon.png',
-    iconSize: [70, 40],
-    filter: 'invert(100%) sepia(100%) saturate(10000%) hue-rotate(190deg) brightness(100%) contrast(100%)',
+    iconSize: [85, 50],
+    filter: '',
   },
   default: {
     iconUrl: '/boat-icon.png',
@@ -38,7 +38,7 @@ function ShipIcons({ type, lat, lon, zoom }) {
   } else if (type === "merchant") {
     markerText = "This is a merchant!";
   } else if (type === "patrol") {
-    markerText = "This is a security vessel!";
+    markerText = "This is a patrol vessel!";
   }
 
   const shipIcon = useMemo(() => {
@@ -63,10 +63,10 @@ function ShipIcons({ type, lat, lon, zoom }) {
   }, [type, zoom]);
 
   return (
-    <Marker position={[lat, lon]} icon={shipIcon}>                                                         
-      <Popup>                                                                                                          
+    <Marker position={[lat, lon]} icon={shipIcon}>
+      <Popup>
         {markerText}
-      </Popup>                                                                                                         
+      </Popup>
     </Marker>
   )
 }
