@@ -37,7 +37,7 @@ export default function StatusDisplay({ simState, runID }) {
       onClick={(e) => e.stopPropagation()}
       style={{
         position: 'absolute',
-        top: 84,
+        top: 12,
         left: 12,
         zIndex: 1000,
         minWidth: 260,

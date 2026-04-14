@@ -1,5 +1,7 @@
 import Dropdown from 'react-bootstrap/Dropdown';
 
+const MAP_CONTROL_CLEARANCE = 44;
+
 export default function LiveCounts({ simState, runID }) {
     const run = typeof runID === 'number'
         ? simState?.runs?.[runID]
@@ -14,8 +16,8 @@ export default function LiveCounts({ simState, runID }) {
             className="p-2 small"
             style={{
                 position: 'absolute',
-                top: 50,
-                right: 16,
+                top: 44,
+                right: MAP_CONTROL_CLEARANCE,
                 zIndex: 1000,
             }}
         >
