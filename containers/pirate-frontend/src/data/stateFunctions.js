@@ -6,7 +6,7 @@ import { getOceanCurrent } from './oceanCurrents.js'
 import { isOcean } from '../utils/isOcean.js';
 import { cartesianToLatLng, latLngToCartesian } from '../utils/coords.js';
 
-const COMBAT_RANGE   = 40;
+const COMBAT_RANGE   = 500;
 const REPATH_INTERVAL = 20; // steps between A* recomputes for merchants
 
 // ============================= Sight =============================
@@ -85,9 +85,9 @@ function buildBehaviors(ship, visibleShips, region) {
   if (ship.type === 'merchant') { // merchants should check for pirates to flee
     if (visiblePirates.length > 0) {
       const nearest = nearestShip(ship, visiblePirates); // flee the nearest pirate
-      ship.inDistress = true;
-      ship.distressAnswered = false; // this will be set to true once a patrol answers the call
       if (canSee(ship, nearest)) { //...if I can see it
+        ship.inDistress = true; // set distress flag so a patrol knows to answer the call
+        ship.distressAnswered = false; // this will be set to true once a patrol answers the call
         console.log("A merchant is fleeing a pirate");
         behaviorList.push({ ...behaviors.newFlee(), target: nearest, weight: 2.5 });
       }
@@ -95,19 +95,28 @@ function buildBehaviors(ship, visibleShips, region) {
   }
 
   if (ship.type === 'pirate') {
-    if (visibleMerchants.length > 0) { 
+    if ((visibleMerchants.length > 0) && (ship.state == 1)) { 
       const nearest = nearestShip(ship, visibleMerchants); // pursue the nearest merchant
       if (canSee(ship, nearest)) { //...if I can see it
+        ship.state = 2;
         console.log("A pirate is pursuing a merchant");
         behaviorList.push({ ...behaviors.newPursue(1), target: nearest, weight: 2.0 });
       }
     }
-    if (visiblePatrols.length > 0) { 
+    if ((visiblePatrols.length > 0) && (ship.state <= 2)) { 
       const nearest = nearestShip(ship, visiblePatrols); // flee the nearest patrol ship
       if (canSee(ship, nearest)) { //...if I can see it
+        ship.state = 3;
         console.log("A pirate is fleeing a patrol");
         behaviorList.push({ ...behaviors.newFlee(), target: nearest, weight: 3.0 });
       }
+    }
+    if (ship.fuel <= 15) {
+      ship.state = 4;
+      ship.behavior = behaviors.newFollowPath(
+        aStar(region.navgraph, ship.pos, ship.homeCove, 'pirate', pathIdRef.value++),
+        0.04
+      );
     }
   }
 
@@ -163,23 +172,33 @@ function maybeRepath(ship, navgraph, pathIdRef) {
 }
 
 // ============================= Combat =============================
-
-function advanceCombat(thisShip, shipsById) {
-  if (thisShip.state !== 10 || !thisShip.currentEnemyId) {
-    return shipsById;
-  }
+// Make a ship engage with its enemy. Combat takes place over one step
+function advanceCombat(thisShip, shipId, shipsById) {
+  if (thisShip.state !== 10 || !thisShip.currentEnemyId) return shipsById;
 
   const enemyId = thisShip.currentEnemyId;
   const enemy = shipsById[enemyId];
   if (!enemy) return shipsById;
 
-  const atk = thisShip.armament * (thisShip.crewSize * 0.5);
-  const updatedEnemy = {
-    ...enemy,
-    hp: enemy.hp - atk / (enemy.durability / 2)
-  };
+  if (thisShip.type === 'patrol') {
+    const newShips = { ...shipsById };
+    delete newShips[enemyId];
+    newShips[shipId] = { ...thisShip, inCombat: false, state: 1, currentEnemyId: null };
+    return newShips;
+  }
 
-  return { ...shipsById, [enemyId]: updatedEnemy };
+  if (thisShip.type === 'merchant') {
+    const newShips = { ...shipsById };
+    if (Math.random() < 0.33) {
+      delete newShips[enemyId]; // pirate loses
+    } else {
+      delete newShips[shipId]; // merchant loses
+      newShips[enemyId] = { ...enemy, inCombat: false, state: 1, currentEnemyId: null };
+    }
+    return newShips;
+  }
+
+  return shipsById;
 }
 
 function getEncounterIncrements(ship, otherShip) {
@@ -266,9 +285,18 @@ function checkForDestinationArrival(ship) {
     // TODO: track total succesful deliveries? would need to pass in run
   }
 
-  if ((ship.type === "pirate" ) && ship.state === 1) {
-    return {...ship,
-      destPos: getSomaliaHotspot() // reached hotspot target without finding merchant to attack; check out a diff area
+  if ((ship.type === "pirate" )) {
+    if (ship.state === 4)
+    {
+      return {...ship,
+        fuel: 100, // refueled!
+        destination: getSomaliaHotspot() // go back to looking for merchants
+      }
+    }
+    else {
+      return {...ship,
+        destination: getSomaliaHotspot() // get new destination
+      }
     }
   }
 
@@ -349,7 +377,6 @@ const pathIdRef = { value: 10000 };
 
 function step(run, regions, timeStep = 1) {
   let shipsById = { ...run.currentState.ships };
-  let points = {...run.points};
   let encounterTotals = {
     merchantPirateEncounters: 0,
     patrolPirateEncounters: 0,
@@ -396,14 +423,12 @@ function step(run, regions, timeStep = 1) {
     }
     updatedShip = shipsById[id];
 
-    // Damage dealing
-    shipsById   = advanceCombat(updatedShip, shipsById);
+    // Performing combat
+    shipsById = advanceCombat(updatedShip, id, shipsById);
     updatedShip = shipsById[id];
 
     // Movement
     updatedShip = updateShipMovement(updatedShip, visibleShips, timeStep, region);
-    shipsById[id] = updatedShip;
-
     shipsById[id] = updatedShip;
   }
 

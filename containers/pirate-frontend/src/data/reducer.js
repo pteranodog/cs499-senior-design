@@ -229,13 +229,13 @@ function spawnShips(run, regions) {
       piratesSpawned += 1;
       const id    = crypto.randomUUID();
       
-      // Pick a random destination port from predefined, prioritized destination list
-      // TODO: generalize for other regions
+      // NEW: choose a random distance and rotation, and weight chances based on distance(if the
+      // point that it lands on isn't ocean, retry)
       const destLatLn = getSomaliaHotspot();
       ships[id] = buildShip(
         'pirate', pos, 'medium', region, 
         destLatLn ?? null,
-        pathIdCounter++
+        pathIdCounter++,
       );
     }
   }
@@ -322,6 +322,8 @@ function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null
     // Merchant-only: destination for repath
     destination,
     stepsSinceRepath: 0,
+    // Pirate-only
+    homeCove: type === 'pirate' ? cartesianPos : null,
   };
 }
 
