@@ -22,6 +22,7 @@ function canSee(ship1, ship2) {
 // to said steering
 
 function buildBehaviors(ship, visibleShips, region) { 
+  
   const behaviorList = [];
   /* ======== SHIP STATE INFORMATION ===========================================
   Listing behaviors, in descending order of weight/priority of each ship state 
@@ -45,18 +46,32 @@ function buildBehaviors(ship, visibleShips, region) {
 
   // Patrols in default state don't need land avoidance since they follow a 
   // strict path; all other ships should though!
-  if (ship.type != "patrol" && ship.state != 1) { 
+  if (!(ship.type == "patrol" && ship.state == 1)) { 
     // Project velocity forward ~5 time units (minutes in our case?) and check for land
-    let veloProjection = (behaviors.add(ship.pos, behaviors.scalarMult(ship.velocity, 5)));
-    if (!isOcean(cartesianToLatLng(veloProjection[0], veloProjection[1], {
-      originLat: region.center[0],
-      originLon: region.center[1]
-      } )))
-    {
+    let veloProjection = (behaviors.add(ship.pos, behaviors.scalarMult(ship.velocity, 2)));
+
+    const latlng = cartesianToLatLng(veloProjection[0], veloProjection[1], {
+    originLat: region.center[0],
+    originLon: region.center[1],
+    metersPerUnit: 1,
+    headingDegrees: 0,
+    });
+    
+
+    if (!isOcean(latlng.lat, latlng.lng)) {
       // If we found land there, "hard" flee from it 
-      behaviorList.push({  ...behaviors.newFlee(), target: veloProjection, weight: 3.0 })
+      console.log("A ship is avoiding land");
+      behaviorList.push({ ...behaviors.newFlee(), target: { pos: veloProjection }, weight: 3.0 });
     }
   }
+
+
+
+
+
+
+
+
   // get all other ships, collected into 3 lists based on their type
   const visiblePirates   = visibleShips.filter(s => s.type === 'pirate');
   const visibleMerchants = visibleShips.filter(s => s.type === 'merchant');
@@ -73,6 +88,7 @@ function buildBehaviors(ship, visibleShips, region) {
       ship.inDistress = true;
       ship.distressAnswered = false; // this will be set to true once a patrol answers the call
       if (canSee(ship, nearest)) { //...if I can see it
+        console.log("A merchant is fleeing a pirate");
         behaviorList.push({ ...behaviors.newFlee(), target: nearest, weight: 2.5 });
       }
     }
@@ -82,12 +98,14 @@ function buildBehaviors(ship, visibleShips, region) {
     if (visibleMerchants.length > 0) { 
       const nearest = nearestShip(ship, visibleMerchants); // pursue the nearest merchant
       if (canSee(ship, nearest)) { //...if I can see it
+        console.log("A pirate is pursuing a merchant");
         behaviorList.push({ ...behaviors.newPursue(1), target: nearest, weight: 2.0 });
       }
     }
     if (visiblePatrols.length > 0) { 
       const nearest = nearestShip(ship, visiblePatrols); // flee the nearest patrol ship
       if (canSee(ship, nearest)) { //...if I can see it
+        console.log("A pirate is fleeing a patrol");
         behaviorList.push({ ...behaviors.newFlee(), target: nearest, weight: 3.0 });
       }
     }
@@ -238,7 +256,6 @@ function checkForCombatScenario(ship, shipId, shipsById) { // return updated shi
 // ============================= Dest arrival / path reversal =============================
 
 function checkForDestinationArrival(ship) {
-  console.log('checkForDestinationArrival:', ship.type, 'currentParam:', ship.behavior?.currentParam, 'has path:', !!ship.behavior?.path, "ship state: ", ship.state);
   if (!ship.behavior?.path) return ship; // ignore ships who don't have a path
   if (ship.behavior.currentParam < 0.97) return ship; // ignore ships who aren't within 3% of completing their path
 
@@ -312,10 +329,10 @@ function checkForDestinationArrival(ship) {
 
 // ============================= Movement =============================
 
-function updateShipMovement(ship, visibleShips, timeStep) {
+function updateShipMovement(ship, visibleShips, timeStep, region) {
   if (ship.inCombat) return ship; // ships in combat do NOT move
 
-  const behaviorList = buildBehaviors(ship, visibleShips); // determine what behaviors this ship
+  const behaviorList = buildBehaviors(ship, visibleShips, region); // determine what behaviors this ship
   // should currently exhibit based on what ships are visible to it
   const steering     = behaviors.getTotalSteering(ship, behaviorList); // combine those behaviors
   // to get ONE steering output
@@ -384,7 +401,7 @@ function step(run, regions, timeStep = 1) {
     updatedShip = shipsById[id];
 
     // Movement
-    updatedShip = updateShipMovement(updatedShip, visibleShips, timeStep);
+    updatedShip = updateShipMovement(updatedShip, visibleShips, timeStep, region);
     shipsById[id] = updatedShip;
 
     shipsById[id] = updatedShip;
