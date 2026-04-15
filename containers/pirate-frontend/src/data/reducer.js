@@ -46,6 +46,8 @@ function simStateReducer(state, action) {
       return deleteRun(state, action.index);
     case 'duplicate-run':
       return duplicateRun(state, action.index);
+    case 'replay-run':
+      return replayRun(state, action.index);
     case 'select-run':
       return { ...state, runs: expandRun(state.runs, action.run) };
     case 'compare-runs':
@@ -161,6 +163,47 @@ function duplicateRun(state, index) {
   return { ...state, runs: collapseAll(newRuns).map(run =>
     run.uuid === duplicate.uuid ? { ...run, expanded: true } : run
   )};
+}
+
+function replayRun(state, index) {
+  const source = state.runs[index];
+  if (!source) return state;
+
+  const duplicate = {
+    ...buildNewRun(),
+    name: appendReplaySuffix(source.name),
+    seed: source.seed,
+    startHour: source.startHour,
+    startMinute: source.startMinute,
+    duration: source.duration,
+    regionId: source.regionId,
+    weatherType: source.weatherType,
+    maxMerchants: source.maxMerchants,
+    maxPirates: source.maxPirates,
+    maxPatrols: source.maxPatrols,
+    speed: source.speed,
+    ticksPerMinute: source.ticksPerMinute,
+    status: 'running',
+    expanded: true,
+  };
+
+  const startedDuplicate = spawnShips(duplicate, state.regions);
+  const insertionIndex = index + 1;
+  const newRuns = [...state.runs.slice(0, insertionIndex), startedDuplicate, ...state.runs.slice(insertionIndex)];
+
+  return {
+    ...state,
+    runs: collapseAll(newRuns).map((run, i) => i === insertionIndex ? { ...run, expanded: true } : run),
+    display: { type: 'run', index: insertionIndex },
+    controls: { type: 'active-run', index: insertionIndex },
+  };
+}
+
+function appendReplaySuffix(name) {
+  const baseName = String(name || 'Untitled Run').trim();
+  return baseName.match(/\(Replay\)$/i)
+    ? baseName
+    : `${baseName} (Replay)`;
 }
 
 function collapseAll(runs) {
