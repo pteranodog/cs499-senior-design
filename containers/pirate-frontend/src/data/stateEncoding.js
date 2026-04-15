@@ -40,6 +40,7 @@ const minifyMap = {
   run: "n",
   running: "rg",
   paused: "p",
+  completed: "co",
   speed: "sp",
   ticksPerMinute: "tm",
 }

@@ -29,6 +29,7 @@ function simStateReducer(state, action) {
         ...state,
         runs: state.runs.map((run, i) => {
           if (i !== action.index) return run;
+          if (!['running', 'paused'].includes(run.status)) return run;
           const stepped = step(run, state.regions);
           return spawnMoreShips(stepped, state.regions);
         })
@@ -60,13 +61,42 @@ function simStateReducer(state, action) {
       return {
         ...state,
         runs: state.runs.map((run, i) => i === action.index
-          ? { ...run, elapsedTime: run.elapsedTime + (action.ticks ?? 1) }
+          ? incrementRunTime(run, action.ticks ?? 1)
           : run),
       };
     default:
       console.warn('Action type "' + action.type + '" not found.');
       return state;
   }
+}
+
+function getRunDurationTicks(run) {
+  const durationHours = Number(run?.duration);
+  const ticksPerMinute = Math.max(Number(run?.ticksPerMinute) || 1, 1);
+
+  if (!Number.isFinite(durationHours) || durationHours <= 0) {
+    return Infinity;
+  }
+
+  return durationHours * 60 * ticksPerMinute;
+}
+
+function incrementRunTime(run, ticksToAdd = 1) {
+  const nextElapsedTime = (Number(run?.elapsedTime) || 0) + ticksToAdd;
+  const durationTicks = getRunDurationTicks(run);
+
+  if (nextElapsedTime >= durationTicks) {
+    return {
+      ...run,
+      elapsedTime: durationTicks,
+      status: 'completed',
+    };
+  }
+
+  return {
+    ...run,
+    elapsedTime: nextElapsedTime,
+  };
 }
 
 function appStartState() {
@@ -151,7 +181,7 @@ function deselectAll(runs, exceptThese) {
 function buildNewRun() {
   const config = newConfig(
     Math.floor(Math.random() * 10000) + 1,
-    0, 0, 1500, 'clear', 0, 40, 0
+    0, 0, 25, 'clear', 0, 40, 0
   );
   const run = newRun('Untitled Run', config, 'r1');
   return { ...run, uuid: crypto.randomUUID() };

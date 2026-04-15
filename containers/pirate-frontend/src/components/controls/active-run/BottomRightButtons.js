@@ -58,11 +58,11 @@ const onStep = () => {
   if (isNew) {
     // Start paused for new runs
     modifySimState({ type: 'start-run', index: runID, startPaused: true });
-    return;
+  } else if (isRunning) {
+    modifyRun('status', 'paused');
   }
 
-  if (isRunning) modifyRun('status', 'paused');
-
+  modifySimState({ type: 'increment-run-time', index: runID, ticks: 1 });
   modifySimState({ type: 'step-run', index: runID });
 };
 
