@@ -3,6 +3,8 @@ import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import Modal from 'react-bootstrap/Modal';
 
+const SPEED_OPTIONS = [1, 2, 5, 10, 30];
+
 export default function BottomRightButtons({ simState, modifySimState, runID }) {
   const [showTerminateModal, setShowTerminateModal] = useState(false);
   
@@ -28,6 +30,10 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
       modifySimState({ type: 'view-run-list', run: runID, selected: runID })
       return;
     }
+    if (isRunning) {
+      modifyRun('status', 'paused');
+    }
+
     setShowTerminateModal(true);
   };
 
@@ -67,7 +73,8 @@ const onStep = () => {
 };
 
   const onSpeedChange = () => {
-    const nextSpeed = speed === 1 ? 2 : speed === 2 ? 4 : 1;
+    const currentIndex = SPEED_OPTIONS.indexOf(speed);
+    const nextSpeed = SPEED_OPTIONS[(currentIndex + 1) % SPEED_OPTIONS.length] ?? SPEED_OPTIONS[0];
     modifyRun('speed', nextSpeed);
   }
 
