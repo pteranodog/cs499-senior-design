@@ -3,7 +3,6 @@ import Form from 'react-bootstrap/Form';
 
 export default function RunSettingsControls({ runSettings, regions, modifyRun, modifyRatios, modifyRegion }) {
   const minDuration = 24;
-  const maxDuration = 999999; // Arbitrary large number, can be adjusted as needed
 
   return (
     <div className="d-flex flex-column gap-2">
@@ -34,17 +33,23 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
       <FloatingLabel label="Duration (hours)" className="floating-dark">
         <Form.Control
           size="sm" type="number" placeholder="Duration"
-          min={minDuration} max={maxDuration}
+          min={minDuration} 
           className="bg-dark text-light border-secondary"
           value={runSettings.duration}
-          onChange={(e) => modifyRun('duration', e.target.value)}
+          onChange={(e) => {
+            const raw = e.target.value;
+
+            if (raw === '') {
+              modifyRun('duration', '');
+              return;
+            }
+
+            modifyRun('duration', Math.max(24, Number(raw)));
+          }}
         />
       </FloatingLabel>
       {runSettings.duration !== '' && Number(runSettings.duration) < minDuration && (
-        <div className="text-danger small">Min {minDuration} hours</div>
-      )}
-      {runSettings.duration !== '' && Number(runSettings.duration) > maxDuration && (
-        <div className="text-danger small">Max {maxDuration} hours</div>
+        <div className="text-danger small">Duration must be at least {minDuration} hours</div>
       )}
 
       <FloatingLabel label="Region" className="floating-dark">

@@ -31,6 +31,7 @@ function SingleMap({ simState, modifySimState, style }) {
       height: '100%',
     }}>
       <MapContainer
+        key={`${simState.controls.type}-${type}-${index}`}
         style={{ width: '100%', height: '100%' }}
         center={[transformConfig.originLat, transformConfig.originLon]}
         zoom={4}
@@ -58,6 +59,7 @@ function CompareMap({ simState, modifySimState, runIndex, side }) {
       height: '100%',
     }}>
       <MapContainer
+        key={run?.uuid || `empty-${side}`}
         style={{ width: '100%', height: '100%' }}
         center={[transformConfig.originLat, transformConfig.originLon]}
         zoom={4}

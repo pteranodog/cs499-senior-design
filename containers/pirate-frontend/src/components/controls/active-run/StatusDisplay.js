@@ -67,9 +67,9 @@ export default function StatusDisplay({ simState, runID }) {
         <div><strong>Duration:</strong> {run.duration || 0} hours</div>
         <div><strong>Region:</strong> {region?.name || 'n/a'}</div>
         {/* <div><strong>Weather:</strong> {run.weatherType || 'n/a'}</div> TODO: Weather temporarily removed */}
-        <div><strong>Merchant Presence:</strong> {run.maxMerchants ?? 0}%</div>
-        <div><strong>Pirate Presence:</strong> {run.maxPirates ?? 0}%</div>
-        <div><strong>Security Presence:</strong> {run.maxPatrols ?? 0}%</div>
+        <div><strong>Merchants per Day:</strong> {run.maxMerchants ?? 0}</div>
+        <div><strong>Pirates per Day:</strong> {run.maxPirates ?? 0}</div>
+        <div><strong>Total Security:</strong> {run.maxPatrols ?? 0}</div>
       </div>
     </div>
   );
