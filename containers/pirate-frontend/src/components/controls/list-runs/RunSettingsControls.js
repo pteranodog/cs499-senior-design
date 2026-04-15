@@ -37,7 +37,7 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
           min={minDuration} max={maxDuration}
           className="bg-dark text-light border-secondary"
           value={runSettings.duration}
-          onChange={(e) => modifyRun('duration', e.target.value)}
+          onChange={(e) => {modifyRun('duration', e.target.value);}}
         />
       </FloatingLabel>
       {runSettings.duration !== '' && Number(runSettings.duration) < minDuration && (
