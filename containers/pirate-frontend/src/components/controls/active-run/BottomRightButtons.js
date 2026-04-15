@@ -28,6 +28,10 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
       modifySimState({ type: 'view-run-list', run: runID, selected: runID })
       return;
     }
+    if (isRunning) {
+      modifyRun('status', 'paused');
+    }
+
     setShowTerminateModal(true);
   };
 
