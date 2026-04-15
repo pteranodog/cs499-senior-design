@@ -49,27 +49,6 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
 
   const modifyRatios = (setting, value) => {
     modifyRun(setting, Number(value));
-    /*
-    const val = Number(value);
-    if (setting === 'maxPatrols') {
-      const remaining = 100 - val;
-      const total = runSettings.maxMerchants + runSettings.maxPirates || 1;
-      const merchantShare = Math.round((runSettings.maxMerchants / total) * remaining);
-      modifyRun('maxPatrols', val);
-      modifyRun('maxMerchants', merchantShare);
-      modifyRun('maxPirates', remaining - merchantShare);
-    } else if (setting === 'maxMerchants') {
-      const maxAllowed = 100 - runSettings.maxPatrols;
-      const clamped = Math.min(val, maxAllowed);
-      modifyRun('maxMerchants', clamped);
-      modifyRun('maxPirates', maxAllowed - clamped);
-    } else if (setting === 'maxPirates') {
-      const maxAllowed = 100 - runSettings.maxPatrols;
-      const clamped = Math.min(val, maxAllowed);
-      modifyRun('maxPirates', clamped);
-      modifyRun('maxMerchants', maxAllowed - clamped);
-    }
-    */
   };
 
   return (
@@ -79,7 +58,6 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
           <div className="d-flex align-items-center gap-2 flex-fill me-2">
             <Form.Control
               size="sm" type="text" placeholder="Simulation Name"
-              data-testid="simulation-name"
               className="border-secondary text-light"
               style={{ width: '50%', backgroundColor: 'var(--bs-gray-900)' }}
               value={runSettings.name}
