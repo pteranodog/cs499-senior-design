@@ -29,6 +29,7 @@ function simStateReducer(state, action) {
         ...state,
         runs: state.runs.map((run, i) => {
           if (i !== action.index) return run;
+          if (!['running', 'paused'].includes(run.status)) return run;
           const stepped = step(run, state.regions);
           return spawnMoreShips(stepped, state.regions);
         })
@@ -60,13 +61,42 @@ function simStateReducer(state, action) {
       return {
         ...state,
         runs: state.runs.map((run, i) => i === action.index
-          ? { ...run, elapsedTime: run.elapsedTime + (action.ticks ?? 1) }
+          ? incrementRunTime(run, action.ticks ?? 1)
           : run),
       };
     default:
       console.warn('Action type "' + action.type + '" not found.');
       return state;
   }
+}
+
+function getRunDurationTicks(run) {
+  const durationHours = Number(run?.duration);
+  const ticksPerMinute = Math.max(Number(run?.ticksPerMinute) || 1, 1);
+
+  if (!Number.isFinite(durationHours) || durationHours <= 0) {
+    return Infinity;
+  }
+
+  return durationHours * 60 * ticksPerMinute;
+}
+
+function incrementRunTime(run, ticksToAdd = 1) {
+  const nextElapsedTime = (Number(run?.elapsedTime) || 0) + ticksToAdd;
+  const durationTicks = getRunDurationTicks(run);
+
+  if (nextElapsedTime >= durationTicks) {
+    return {
+      ...run,
+      elapsedTime: durationTicks,
+      status: 'completed',
+    };
+  }
+
+  return {
+    ...run,
+    elapsedTime: nextElapsedTime,
+  };
 }
 
 function appStartState() {
@@ -258,10 +288,10 @@ function spawnShips(run, regions) {
 function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null) {
   console.log('buildShip:', type, 'pos:', pos, 'center:', region.center);
   const stats = {
-    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1000,  maxSpeed: 10000, maxAcceleration: 1000, maxAngularAcc: 0.1, maxRotation: 0.05 },
-    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10000, maxSpeed: 10000, maxAcceleration: 1000, maxAngularAcc: 0.1, maxRotation: 0.05 },
-    patrol:   { crewSize: 10, durability: 20, armament: 60, sightRange: 2000,  maxSpeed: 10000, maxAcceleration: 1000, maxAngularAcc: 0.1, maxRotation: 0.05 },
-  }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1000, maxSpeed: 5000, maxAcceleration: 500, maxAngularAcc: 0.1, maxRotation: 0.05 };
+    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1000,  maxSpeed: 633.4, maxAcceleration: 1800, maxAngularAcc: 0.0002, maxRotation: 0.52 },
+    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10000, maxSpeed: 766.67, maxAcceleration: 8500, maxAngularAcc: 15, maxRotation: 1.25 },
+    patrol:   { crewSize: 80, durability: 100, armament: 60, sightRange: 2000,  maxSpeed: 771.67, maxAcceleration: 10000, maxAngularAcc: 0.1, maxRotation: 0.78 },
+  }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1000, maxSpeed: 500, maxAcceleration: 500, maxAngularAcc: 0.1, maxRotation: 0.5 };
 
   const cartesianPos = latLngToCartesian(pos[0], pos[1], {
     originLat: region.center[0],

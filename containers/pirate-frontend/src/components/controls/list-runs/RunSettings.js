@@ -61,8 +61,14 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
               className="border-secondary text-light"
               style={{ width: '50%', backgroundColor: 'var(--bs-gray-900)' }}
               value={runSettings.name}
+              disabled={!canBeEdited}
+              readOnly={!canBeEdited}
               onClick={(e) => e.stopPropagation()}
-              onChange={(e) => { e.stopPropagation(); modifyRun('name', e.target.value); }}
+              onChange={(e) => {
+                if (!canBeEdited) return;
+                e.stopPropagation();
+                modifyRun('name', e.target.value);
+              }}
             />
             <span className="text-secondary small text-nowrap">
               {regions?.[runSettings.regionId]?.name ?? 'No Region'}

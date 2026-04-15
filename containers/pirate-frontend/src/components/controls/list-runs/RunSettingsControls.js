@@ -3,7 +3,6 @@ import Form from 'react-bootstrap/Form';
 
 export default function RunSettingsControls({ runSettings, regions, modifyRun, modifyRatios, modifyRegion }) {
   const minDuration = 24;
-  //const maxDuration = 4800;
 
   return (
     <div className="d-flex flex-column gap-2">

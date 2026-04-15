@@ -1,5 +1,7 @@
 import Card from 'react-bootstrap/Card';
 
+const MAP_CONTROL_CLEARANCE = 44;
+
 export default function TimeViewer({ elapsedTicks = 0, ticksPerMinute = 1 }) {
   const formatTime = (ticks, minuteTickRate) => {
     const safeTicksPerMinute = Math.max(Number(minuteTickRate) || 1, 1);
@@ -17,8 +19,8 @@ export default function TimeViewer({ elapsedTicks = 0, ticksPerMinute = 1 }) {
       className="p-2 small"
       style={{
         position: 'absolute',
-        top: 16,
-        right: 16,
+        top: 12,
+        right: MAP_CONTROL_CLEARANCE,
         zIndex: 1000,
       }}
     >

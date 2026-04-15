@@ -25,6 +25,16 @@ export default function RunControls({ simState, modifySimState, runID }) {
     return () => clearInterval(interval);
     }, [run, runID, modifySimState, speed]);
 
+    useEffect(() => {
+        if (!run || run.status !== 'completed') {
+            return;
+        }
+
+        if (simState?.controls?.type !== 'end-run' || simState?.controls?.index !== runID) {
+            modifySimState({ type: 'view-run-end', run: runID });
+        }
+    }, [run, runID, simState, modifySimState]);
+
     if (!run) {
         return null;
     }

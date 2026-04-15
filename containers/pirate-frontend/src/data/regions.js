@@ -41,6 +41,8 @@ function defaultRegions() {
   
   somaliaPoints["p7"] = newPirateCove("Cove One", [11.1705, 47.4048], 0.01);
   somaliaPoints["p8"] = newPirateCove("Cove Two", [5.0659, 48.2978], 0.01);
+  somaliaPoints["p12"] = newPirateCove("Eyl Anchorage", [7.98, 49.82], 0.01);
+  somaliaPoints["p13"] = newPirateCove("Hafun Peninsula", [10.44, 51.39], 0.01);
   somaliaPoints["p9"] = newBase("Camp Lemonnier (U.S.A.)", [11.5434, 43.1790], 0);
   somaliaPoints["p10"] = newBase("Kenya Navy", [-4.3, 39.6], 0);
   somaliaPoints["p11"] = newBase("Mahe (Naval Base)", [-4.7, 55.5], 0);
@@ -51,6 +53,7 @@ function defaultRegions() {
   guineaPoints["g3"] = newPort("Douala", [4.05, 9.70], 0.01, [], []);
   guineaPoints["g4"] = newPirateCove("Niger Delta Coves", [4.90, 6.95], 0.01);
   guineaPoints["g5"] = newPirateCove("Brass Approaches", [4.32, 6.24], 0.01);
+  guineaPoints["g8"] = newPirateCove("Bakassi Peninsula", [4.58, 8.77], 0.01);
   guineaPoints["g6"] = newBase("Tema Naval Base", [5.63, -0.02], 0);
   guineaPoints["g7"] = newBase("Nigerian Navy Forward Base", [6.42, 5.62], 0);
 
@@ -60,6 +63,7 @@ function defaultRegions() {
   malaccaPoints["m3"] = newPort("Belawan", [3.78, 98.69], 0.01, [], []);
   malaccaPoints["m4"] = newPirateCove("Riau Archipelago", [1.01, 104.46], 0.01);
   malaccaPoints["m5"] = newPirateCove("Northern Strait Inlets", [5.67, 100.95], 0.01);
+  malaccaPoints["m8"] = newPirateCove("Anambas Islands", [3.22, 106.25], 0.01);
   malaccaPoints["m6"] = newBase("Changi Naval Base", [1.31, 104.03], 0);
   malaccaPoints["m7"] = newBase("Lumut Naval Base", [4.23, 100.57], 0);
 
@@ -69,6 +73,8 @@ function defaultRegions() {
   caribbeanPoints["c3"] = newPort("Colon", [9.36, -79.90], 0.01, [], []);
   caribbeanPoints["c4"] = newPirateCove("Windward Passage", [19.90, -74.85], 0.01);
   caribbeanPoints["c5"] = newPirateCove("Mona Passage", [18.35, -67.85], 0.01);
+  caribbeanPoints["c8"] = newPirateCove("Mosquito Coast", [14.99, -83.37], 0.01);
+  caribbeanPoints["c9"] = newPirateCove("Los Roques", [11.85, -66.76], 0.01);
   caribbeanPoints["c6"] = newBase("Guantanamo Bay", [19.91, -75.16], 0);
   caribbeanPoints["c7"] = newBase("Aruba Coast Guard", [12.52, -70.03], 0);
 
@@ -78,6 +84,8 @@ function defaultRegions() {
   redSeaPoints["rs3"] = newPort("Aden", [12.77, 45.03], 0.01, [], []);
   redSeaPoints["rs4"] = newPirateCove("Bab el Mandeb East", [12.61, 43.33], 0.01);
   redSeaPoints["rs5"] = newPirateCove("Eritrean Islands", [15.28, 39.77], 0.01);
+  redSeaPoints["rs8"] = newPirateCove("Hanish Islands", [13.72, 42.73], 0.01);
+  redSeaPoints["rs9"] = newPirateCove("Dahlak Archipelago", [15.69, 40.19], 0.01);
   redSeaPoints["rs6"] = newBase("Djibouti Naval Command", [11.58, 43.15], 0);
   redSeaPoints["rs7"] = newBase("Saudi Western Fleet", [21.43, 39.08], 0);
 
@@ -87,6 +95,8 @@ function defaultRegions() {
   mozambiquePoints["mz3"] = newPort("Toamasina", [-18.15, 49.40], 0.01, [], []);
   mozambiquePoints["mz4"] = newPirateCove("Comoros Passages", [-12.41, 43.65], 0.01);
   mozambiquePoints["mz5"] = newPirateCove("Northern Mozambique Channel", [-14.88, 43.75], 0.01);
+  mozambiquePoints["mz8"] = newPirateCove("Ibo Island", [-12.35, 40.59], 0.01);
+  mozambiquePoints["mz9"] = newPirateCove("Nosy Be Approaches", [-13.32, 48.26], 0.01);
   mozambiquePoints["mz6"] = newBase("Maputo Naval Base", [-25.96, 32.61], 0);
   mozambiquePoints["mz7"] = newBase("Antsiranana Naval Station", [-12.28, 49.29], 0);
 
@@ -96,6 +106,7 @@ function defaultRegions() {
   southChinaSeaPoints["sc3"] = newPort("Hong Kong", [22.30, 114.17], 0.01, [], []);
   southChinaSeaPoints["sc4"] = newPirateCove("Spratly Fringe", [9.80, 114.20], 0.01);
   southChinaSeaPoints["sc5"] = newPirateCove("Palawan Approaches", [11.16, 117.42], 0.01);
+  southChinaSeaPoints["sc8"] = newPirateCove("Natuna Islands", [3.81, 108.39], 0.01);
   southChinaSeaPoints["sc6"] = newBase("Subic Bay Naval Base", [14.82, 120.28], 0);
   southChinaSeaPoints["sc7"] = newBase("Cam Ranh Naval Base", [11.93, 109.16], 0);
 
@@ -105,6 +116,7 @@ function defaultRegions() {
   suluCelebesPoints["s3"] = newPort("Bitung", [1.45, 125.20], 0.01, [], []);
   suluCelebesPoints["s4"] = newPirateCove("Jolo Archipelago", [6.05, 121.01], 0.01);
   suluCelebesPoints["s5"] = newPirateCove("Tawi Tawi Channels", [5.08, 119.78], 0.01);
+  suluCelebesPoints["s8"] = newPirateCove("Semporna Coast", [4.48, 118.62], 0.01);
   suluCelebesPoints["s6"] = newBase("Philippine Western Mindanao", [6.91, 122.06], 0);
   suluCelebesPoints["s7"] = newBase("Indonesian North Sulawesi", [1.47, 124.83], 0);
 

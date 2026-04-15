@@ -1,6 +1,6 @@
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, useMap } from 'react-leaflet';
 import { useEffect } from 'react';
+import { MapContainer, useMap, ZoomControl } from 'react-leaflet';
 import RunDisplay from './RunDisplay';
 import RegionDisplay from './RegionDisplay';
 import DisplayBadge from './DisplayBadge';
@@ -35,7 +35,9 @@ function SingleMap({ simState, modifySimState, style }) {
         style={{ width: '100%', height: '100%' }}
         center={[transformConfig.originLat, transformConfig.originLon]}
         zoom={4}
+        zoomControl={false}
       >
+        <ZoomControl position="topright" />
         <MapResizeHandler controlsType={simState.controls.type} />
         <DisplayBadge simState={simState} />
         {type === 'run'    && <RunDisplay    simState={simState} run={simState.runs[index]} />}
@@ -62,6 +64,7 @@ function CompareMap({ simState, modifySimState, runIndex, side }) {
         center={[transformConfig.originLat, transformConfig.originLon]}
         zoom={4}
       >
+        <ZoomControl position="topright" />
         <MapResizeHandler controlsType={simState.controls.type} />
         {run && (
           <>
