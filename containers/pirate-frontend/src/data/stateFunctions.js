@@ -47,8 +47,8 @@ function buildBehaviors(ship, visibleShips, region) {
   // Patrols in default state don't need land avoidance since they follow a 
   // strict path; all other ships should though!
   if (!(ship.type == "patrol" && ship.state == 1)) { 
-    // Project velocity forward ~5 time units (minutes in our case?) and check for land
-    let veloProjection = (behaviors.add(ship.pos, behaviors.scalarMult(ship.velocity, 2)));
+    // Project velocity forward A FEW time units (minutes in our case?) and check for land
+    let veloProjection = (behaviors.add(ship.pos, behaviors.scalarMult(ship.velocity, 5)));
 
     const latlng = cartesianToLatLng(veloProjection[0], veloProjection[1], {
     originLat: region.center[0],
@@ -61,7 +61,7 @@ function buildBehaviors(ship, visibleShips, region) {
     if (!isOcean(latlng.lat, latlng.lng)) {
       // If we found land there, "hard" flee from it 
       console.log("A ship is avoiding land");
-      behaviorList.push({ ...behaviors.newFlee(), target: { pos: veloProjection }, weight: 3.0 });
+      behaviorList.push({ ...behaviors.newFlee(), target: { pos: veloProjection }, weight: 2.0 });
     }
   }
 

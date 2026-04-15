@@ -8,7 +8,8 @@ const DANGER_WEIGHTS = {
   patrol:   0.0,
 };
 
-const shoreWeight = 0.5;
+// TEMPORARILY MAKING THIS 0 TO PREVENT CORNER TRAPS!!!!
+const shoreWeight = 0.0;
 
 /**
  * Finds the lowest-cost path through the navgraph from startPos to endPos
