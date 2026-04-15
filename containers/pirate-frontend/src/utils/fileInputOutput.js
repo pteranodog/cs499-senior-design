@@ -47,7 +47,7 @@ export function exportRunAsCsv(run, region) {
 		csvRow('Region', region?.name ?? run.regionId),
 		csvRow('Seed', run.seed),
 		csvRow('Start Time', formatClock(run.startHour, run.startMinute)),
-		csvRow('Duration (minutes)', Number(run.duration ?? 0)),
+		csvRow('Duration (hours)', Number(run.duration ?? 0)),
 		// csvRow('Weather', run.weatherType), // TODO: Weather temporarily removed
 		csvRow('Max Merchants (%)', Number(run.maxMerchants ?? 0)),
 		csvRow('Max Pirates (%)', Number(run.maxPirates ?? 0)),
@@ -75,7 +75,7 @@ export function formatClock(startHour, startMinute) {
 
 export function formatStatus(status) {
 	if (status === 'terminated-before-natural-completion') return 'Terminated Early';
-	if (!status) return 'Completed';
+	if (status === 'completed' || !status) return 'Completed';
 	return status;
 }
 

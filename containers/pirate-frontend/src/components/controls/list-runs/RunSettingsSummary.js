@@ -6,7 +6,7 @@ export default function RunSettingsSummary({ runSettings, regions, warning }) {
       <div className="d-flex flex-wrap gap-2">
         {[
           { label: 'Start',    value: `${String(runSettings.startHour).padStart(2,'0')}:${String(runSettings.startMinute).padStart(2,'0')}` },
-          { label: 'Duration', value: `${runSettings.duration} min` },
+          { label: 'Duration', value: `${runSettings.duration} hr` },
           { label: 'Region',   value: region?.name ?? runSettings.regionId },
           // { label: 'Weather',  value: runSettings.weatherType }, // TODO: Weather temporarily removed
         ].map(({ label, value }) => (
