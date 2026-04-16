@@ -1,10 +1,10 @@
 import * as behaviors from './behaviors.js';
 import { aStar } from './aStar.js';
-import { getSomaliaHotspot } from '../utils/pointChoosing.js';
 import * as data from './classes.js'
 import { getOceanCurrent } from './oceanCurrents.js'
 import { isOcean } from '../utils/isOcean.js';
 import { cartesianToLatLng, latLngToCartesian } from '../utils/coords.js';
+import { regionBoundingBoxes } from './regions.js';
 
 const COMBAT_RANGE   = 500;
 const REPATH_INTERVAL = 20; // steps between A* recomputes for merchants
@@ -44,40 +44,50 @@ function buildBehaviors(ship, visibleShips, region) {
   --- State 10: In combat; i.e. standing still
   */
 
-  // Patrols in default state don't need land avoidance since they follow a 
-  // strict path; all other ships should though!
-  if (!(ship.type == "patrol" && ship.state == 1)) { 
-    // Project velocity forward A FEW time units (minutes in our case?) and check for land
-    let veloProjection = (behaviors.add(ship.pos, behaviors.scalarMult(ship.velocity, 5)));
+  // LAND AVOIDANCE
+  
+  // Keep brand-new ships from doing this to avoid getting stuck on the slightly more "inland" spawn points
+  if (!(ship.type == "patrol" && ship.state == 1) && ship.stepsAlive > 9) { 
 
-    const latlng = cartesianToLatLng(veloProjection[0], veloProjection[1], {
-    originLat: region.center[0],
-    originLon: region.center[1],
-    metersPerUnit: 1,
-    headingDegrees: 0,
-    });
-    
+    // Using these to project velocity progressively farther to "smooth" the avoidance
+    const projectionTimes = [3, 5, 7];
+    let landTarget = null;
 
-    if (!isOcean(latlng.lat, latlng.lng)) {
-      // If we found land there, "hard" flee from it 
-      console.log("A ship is avoiding land");
-      behaviorList.push({ ...behaviors.newFlee(), target: { pos: veloProjection }, weight: 2.0 });
-    }
+    // Project velocity forward for each of those times, and check for land
+
+    for (const t of projectionTimes) {
+      const proj = behaviors.add(ship.pos, behaviors.scalarMult(ship.velocity, t));
+      const ll = cartesianToLatLng(proj[0], proj[1], {
+        originLat: region.center[0],
+        originLon: region.center[1],
+        metersPerUnit: 1,
+        headingDegrees: 0,
+      });
+      if (!isOcean(ll.lat, ll.lng)) {
+        landTarget = proj;
+        break; // use the closest land hit
+      }
   }
 
-
-
-
-
-
-
+    // if the above loop found a land target, add a flee from it to this ship's behaviors
+    if (landTarget) {
+      const hitTime = projectionTimes.find(t => {
+        const proj = behaviors.add(ship.pos, behaviors.scalarMult(ship.velocity, t));
+        const ll = cartesianToLatLng(proj[0], proj[1], { originLat: region.center[0], originLon: region.center[1], metersPerUnit: 1, headingDegrees: 0 });
+        return !isOcean(ll.lat, ll.lng);
+      });
+      // "how close am I to land?"
+      const urgency = hitTime === 3 ? 4.0 : hitTime === 5 ? 3.0 : 2.0;
+      behaviorList.push({ ...behaviors.newFlee(), target: { pos: landTarget }, weight: urgency });
+    }
+  }
 
   // get all other ships, collected into 3 lists based on their type
   const visiblePirates   = visibleShips.filter(s => s.type === 'pirate');
   const visibleMerchants = visibleShips.filter(s => s.type === 'merchant');
   const visiblePatrols   = visibleShips.filter(s => s.type === 'patrol');
 
-  // Always include persistent behavior (followPath)
+  // always include persistent behavior (A* followPath)
   if (ship.behavior) {
     behaviorList.push(Object.assign(ship.behavior, { weight: 1.0 }));
   }
@@ -127,7 +137,7 @@ function buildBehaviors(ship, visibleShips, region) {
     }
   }
 
-  // Fallback wander if nothing else applies
+  // fallback to wander (SHOULDNT happen)
   if (behaviorList.length === 0) {
     behaviorList.push({ ...behaviors.newWander(), weight: 1.0 });
   }
@@ -143,12 +153,68 @@ function nearestShip(ship, candidates) {
   });
 }
 
+// ============================= Destination choosing =============================
+// (For pirates and patrols)
+
+export function choosePirateDestination(ship, region) {
+  const biggestDim = Math.max(region.width, region.height) * 1000; // km to meters
+  const maxDist = biggestDim / 2;
+  const minDist = biggestDim / 8;
+  const targetDist = (minDist + maxDist) / 2; // aim for middle of the range
+  const n = 5;
+  const bounds = region.bounds;
+  const points = [];
+
+  let attempts = 0;
+  while (points.length < n && attempts < 100) {
+    attempts++;
+
+    const randLat = bounds.bottom + Math.random() * (bounds.top - bounds.bottom);
+    const randLon = bounds.left  + Math.random() * (bounds.right - bounds.left);
+
+    if (!isOcean(randLat, randLon)) continue;
+
+    const randCart = latLngToCartesian(randLat, randLon, {
+      originLat: region.center[0],
+      originLon: region.center[1],
+      metersPerUnit: 1,
+      headingDegrees: 0,
+    });
+
+    const dist = behaviors.getLength(behaviors.subtract(ship.pos, randCart));
+    if (dist < minDist || dist > maxDist) continue;
+
+    points.push([randLat, randLon]); // store lat/lon instead of cartesian; more compatible with ship building funcs in reducer
+  }
+
+  if (points.length === 0) return null;
+
+  // pick the point whose distance from ship is closest to targetDist
+  return points.reduce((best, p) => {
+    const bestCart = latLngToCartesian(best[0], best[1], {
+      originLat: region.center[0],
+      originLon: region.center[1],
+      metersPerUnit: 1,
+      headingDegrees: 0,
+    });
+    const pCart = latLngToCartesian(p[0], p[1], {
+      originLat: region.center[0],
+      originLon: region.center[1],
+      metersPerUnit: 1,
+      headingDegrees: 0,
+    });
+    const dBest = Math.abs(behaviors.getLength(behaviors.subtract(ship.pos, bestCart)) - targetDist);
+    const dP    = Math.abs(behaviors.getLength(behaviors.subtract(ship.pos, pCart))    - targetDist);
+    return dP < dBest ? p : best;
+  });
+}
+
 // ============================= A* repath =============================
-// For merchants only — recomputes path from current position to destination
+// Recomputes path from current position to destination
 // every REPATH_INTERVAL steps. Swaps in new path if found.
 
 function maybeRepath(ship, navgraph, pathIdRef) {
-  if (ship.type !== 'merchant' || !ship.destination || !navgraph) return ship;
+  if ( /* ship.type !== 'merchant' || */ !ship.destination || !navgraph) return ship;
 
   const steps = (ship.stepsSinceRepath ?? 0) + 1;
 
@@ -157,7 +223,7 @@ function maybeRepath(ship, navgraph, pathIdRef) {
   }
 
   // Time to repath
-  const newPath = aStar(navgraph, ship.pos, ship.destination, 'merchant', pathIdRef.value++);
+  const newPath = aStar(navgraph, ship.pos, ship.destination, ship.type, pathIdRef.value++);
 
   if (newPath) {
     return {
@@ -228,9 +294,7 @@ function getEncounterIncrements(ship, otherShip) {
 }
 
 function checkForCombatScenario(ship, shipId, shipsById) { // return updated shipsById + encounter increments if combat begins
-  if (ship.state === 10 || ship.state === 1) { // if this ship is in combat already or idle, ignore
-    return { shipsById, encounterIncrements: null };
-  }
+  if (ship.state === 10) return { shipsById, encounterIncrements: null }; // ignore ships already in combat
 
   const otherEntries = Object.entries(shipsById).filter(([id]) => id !== shipId);
 
@@ -274,7 +338,7 @@ function checkForCombatScenario(ship, shipId, shipsById) { // return updated shi
 
 // ============================= Dest arrival / path reversal =============================
 
-function checkForDestinationArrival(ship) {
+function checkForDestinationArrival(ship, region) {
   if (!ship.behavior?.path) return ship; // ignore ships who don't have a path
   if (ship.behavior.currentParam < 0.97) return ship; // ignore ships who aren't within 3% of completing their path
 
@@ -285,24 +349,24 @@ function checkForDestinationArrival(ship) {
     // TODO: track total succesful deliveries? would need to pass in run
   }
 
-  if ((ship.type === "pirate" )) {
-    if (ship.state === 4)
-    {
-      return {...ship,
-        fuel: 100, // refueled!
-        destination: getSomaliaHotspot() // go back to looking for merchants
-      }
-    }
-    else {
-      return {...ship,
-        destination: getSomaliaHotspot() // get new destination
-      }
+  if (ship.type === "pirate") {
+    const destLatLng = choosePirateDestination(ship, region);
+    const destCart = destLatLng ? latLngToCartesian(destLatLng[0], destLatLng[1], {
+      originLat: region.center[0],
+      originLon: region.center[1],
+      metersPerUnit: 1,
+      headingDegrees: 0,
+    }) : null;
+
+    if (ship.state === 4) { // state 4 means this pirate must be arriving to refuel
+      return { ...ship, fuel: 100, state: 1, destination: destCart };
+    } else {
+      return { ...ship, destination: destCart };
     }
   }
 
   if ((ship.type === "patrol" ) && ship.state === 1) {
     // Hit end of patrol path without a distress call or pirate encounter; reverse course + keep looking
-    console.log("\nREVERSING A PATROL PATH, IF THIS IS BEING SPAMMED SOMETHING IS WRONG\n")
     const reversedPoints = [...ship.behavior.path.points].reverse();
     const rebuiltPath = behaviors.assemblePath(behaviors.newPath(reversedPoints, ship.behavior.path.id));
 
@@ -393,7 +457,7 @@ function step(run, regions, timeStep = 1) {
     let updatedShip = shipsById[id];
 
     // If this ship is a merchant who has arrived at its port, despawn it
-    updatedShip = checkForDestinationArrival(updatedShip);
+    updatedShip = checkForDestinationArrival(updatedShip, region);
     if (updatedShip === null) {
       delete shipsById[id];
       continue;
@@ -429,7 +493,12 @@ function step(run, regions, timeStep = 1) {
 
     // Movement
     updatedShip = updateShipMovement(updatedShip, visibleShips, timeStep, region);
-    shipsById[id] = updatedShip;
+    shipsById[id] = { ...updatedShip, stepsAlive: (updatedShip.stepsAlive ?? 0) + 1 };
+    // For pirates: decrement fuel
+    if (updatedShip.type === 'pirate') {
+      updatedShip = { ...updatedShip, fuel: updatedShip.fuel - 0.00534 };
+      shipsById[id] = updatedShip;
+    }
   }
 
   return {

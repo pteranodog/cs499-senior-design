@@ -10,8 +10,7 @@ import { somaliaPiratePaths } from './somaliaPaths.js';
 import { somaliaPatrolPaths } from './somaliaPaths.js';
 
 import { getSomaliaMerchantDestination } from '../utils/pointChoosing.js';
-import { getSomaliaHotspot } from '../utils/pointChoosing.js';
-
+import { choosePirateDestination } from './stateFunctions.js';
 
 import { shouldSpawn, perDaytoProbability } from '../utils/spawnRates.js';
 
@@ -160,7 +159,6 @@ function buildNewRun() {
 function spawnShips(run, regions) {
   const region = regions[run.regionId];
 
-  console.log('spawnShips called, region:', region?.name, 'merchantsPerDay:', run.maxMerchants, 'piratesPerDay:', run.maxPirates);
 
   if (!region) return run;
 
@@ -196,7 +194,6 @@ function spawnShips(run, regions) {
     const pos = point.pos;
 
     if (point.type === 'port' && shouldSpawn(merchantsPerDay)) {            
-      console.log("merchant spawn roll succeeded");
       merchantsSpawned += 1;
       const id = crypto.randomUUID();
 
@@ -215,28 +212,24 @@ function spawnShips(run, regions) {
     if (point.type === 'patrolBase') {
       const currentPatrols = Object.values(ships).filter(s => s.type === 'patrol').length; // Convoluted way of checking if we've hit max patrol count yet
       if (currentPatrols < maxPatrols) {
-        console.log("patrol spawn roll succeeded");
         const id    = crypto.randomUUID();
         const paths = patrolPaths ? patrolPaths[pointId] : null;
         const path  = paths ? paths[Math.floor(Math.random() * paths.length)] : null;
-        console.log("here is the path the newly spawned patrol will be useing:\n\n", path)
         ships[id]   = buildShip('patrol', pos, 'medium', region, null, pathIdCounter++, path);
       }
     }
 
-    if ((point.type === 'pirateCove' ) && shouldSpawn(piratesPerDay)) {
-      console.log("pirate spawn roll succeeded"); 
+    if ((point.type === 'pirateCove') && shouldSpawn(piratesPerDay)) {
       piratesSpawned += 1;
-      const id    = crypto.randomUUID();
-      
-      // NEW: choose a random distance and rotation, and weight chances based on distance(if the
-      // point that it lands on isn't ocean, retry)
-      const destLatLn = getSomaliaHotspot();
-      ships[id] = buildShip(
-        'pirate', pos, 'medium', region, 
-        destLatLn ?? null,
-        pathIdCounter++,
-      );
+      const id = crypto.randomUUID();
+      const cartesianPos = latLngToCartesian(pos[0], pos[1], {
+        originLat: region.center[0],
+        originLon: region.center[1],
+        metersPerUnit: 1,
+        headingDegrees: 0,
+      });
+      const destLatLng = choosePirateDestination({ pos: cartesianPos }, region);
+      ships[id] = buildShip('pirate', pos, 'medium', region, destLatLng ?? null, pathIdCounter++);
     }
   }
 
@@ -256,7 +249,6 @@ function spawnShips(run, regions) {
 
 
 function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null) {
-  console.log('buildShip:', type, 'pos:', pos, 'center:', region.center);
   const stats = {
     merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 1000,  maxSpeed: 633.4, maxAcceleration: 1800, maxAngularAcc: 0.0002, maxRotation: 0.52 },
     pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 10000, maxSpeed: 766.67, maxAcceleration: 8500, maxAngularAcc: 15, maxRotation: 1.25 },
@@ -304,6 +296,7 @@ function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null
     velocity:    [0, 0],
     rotation:    0,
     size,
+    stepsAlive:  0, // NEW: need to track so certain spawn points' ships dont get stuck instantly 
     // Motion limits
     maxSpeed:        stats.maxSpeed,
     maxAcceleration: stats.maxAcceleration,
@@ -314,16 +307,16 @@ function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null
     crewSize:   stats.crewSize,
     armament:   stats.armament,
     durability: stats.durability,
-    fuel:       100,
     inCombat:   false,
     state: 1, // always start in default state
     // Persistent behavior
     behavior,
-    // Merchant-only: destination for repath
+    // destination for repath
     destination,
     stepsSinceRepath: 0,
     // Pirate-only
     homeCove: type === 'pirate' ? cartesianPos : null,
+    fuel:       100
   };
 }
 
@@ -364,8 +357,7 @@ function startRun(state, runIndex, startPaused) {
 
 // need another function to spawn ships at successive steps besides first
 function spawnMoreShips(run, regions) {
-  const maxShips = Math.ceil((run.maxMerchants + run.maxPirates + run.maxPatrols) * 0.40); // make max ships 40% of what we'd expect total ships per day to be
-  console.log('spawnMoreShips called, shipCount:', Object.keys(run.currentState.ships).length, 'maxShips:', maxShips);
+  const maxShips = Infinity; // NEW: no max lets go crazy
   const region = regions[run.regionId];
   if (!region) return run;
 
@@ -417,14 +409,16 @@ function spawnMoreShips(run, regions) {
     
     }
 
-    if ((point.type === 'pirateCove' ) && shouldSpawn(piratesPerDay)) {
-      const id         = crypto.randomUUID();
-      const destLatLng = getSomaliaHotspot();
-      newShips[id] = buildShip(
-        'pirate', pos, 'medium', region,
-        destLatLng ?? null,
-        pathIdCounter++
-      );
+    if ((point.type === 'pirateCove') && shouldSpawn(piratesPerDay)) {
+      const id = crypto.randomUUID();
+      const cartesianPos = latLngToCartesian(pos[0], pos[1], {
+        originLat: region.center[0],
+        originLon: region.center[1],
+        metersPerUnit: 1,
+        headingDegrees: 0,
+      });
+      const destLatLng = choosePirateDestination({ pos: cartesianPos }, region);
+      newShips[id] = buildShip('pirate', pos, 'medium', region, destLatLng ?? null, pathIdCounter++);
     }
   }
 
