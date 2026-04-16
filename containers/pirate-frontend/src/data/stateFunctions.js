@@ -22,6 +22,7 @@ function canSee(ship1, ship2) {
 // to said steering
 
 function buildBehaviors(ship, visibleShips, region) { 
+  if (!ship) return null;
   
   const behaviorList = [];
   /* ======== SHIP STATE INFORMATION ===========================================
@@ -47,8 +48,7 @@ function buildBehaviors(ship, visibleShips, region) {
   // LAND AVOIDANCE
   
   // Keep brand-new ships from doing this to avoid getting stuck on the slightly more "inland" spawn points
-  if (!(ship.type == "patrol" && ship.state == 1) && ship.stepsAlive > 9) { 
-
+  if (ship.stepsAlive > 9) { 
     // Using these to project velocity progressively farther to "smooth" the avoidance
     const projectionTimes = [3, 5, 7];
     let landTarget = null;
@@ -157,23 +157,28 @@ function nearestShip(ship, candidates) {
 // (For pirates and patrols)
 
 export function choosePirateDestination(ship, region) {
-  const biggestDim = Math.max(region.width, region.height) * 1000; // km to meters
-  const maxDist = biggestDim / 2;
-  const minDist = biggestDim / 8;
-  const targetDist = (minDist + maxDist) / 2; // aim for middle of the range
-  const n = 5;
+  const largestSide = Math.max(region.width, region.height) * 1000; // have to convert km to m
+  // min/max distances are fractions of the largest side of the region boundary:
+  const maxDist = largestSide / 2;
+  const minDist = largestSide / 8; 
+  const targetDist = (minDist + maxDist) / 2; // TEMPORARY?: prioritize the middle distance between the two
+  const n = 5; // # of possible points to choose from
   const bounds = region.bounds;
   const points = [];
 
   let attempts = 0;
-  while (points.length < n && attempts < 100) {
+  while (points.length < n && attempts < 100) { // limit to 100 tries
     attempts++;
 
+    // choose random latlon in the region bounds
     const randLat = bounds.bottom + Math.random() * (bounds.top - bounds.bottom);
     const randLon = bounds.left  + Math.random() * (bounds.right - bounds.left);
 
+    // disregard that point if it's on land
     if (!isOcean(randLat, randLon)) continue;
 
+    // convert that latlon to cartesian so we can check its distance from this ship
+    // and compare that distance against max, min and target dist
     const randCart = latLngToCartesian(randLat, randLon, {
       originLat: region.center[0],
       originLon: region.center[1],
@@ -182,11 +187,74 @@ export function choosePirateDestination(ship, region) {
     });
 
     const dist = behaviors.getLength(behaviors.subtract(ship.pos, randCart));
+
+    // discard this point if it's completely out of range
     if (dist < minDist || dist > maxDist) continue;
 
     points.push([randLat, randLon]); // store lat/lon instead of cartesian; more compatible with ship building funcs in reducer
   }
 
+  if (points.length === 0) return null;
+
+  // pick the point whose distance from ship is closest to targetDist
+  return points.reduce((best, p) => {
+    const bestCart = latLngToCartesian(best[0], best[1], {
+      originLat: region.center[0],
+      originLon: region.center[1],
+      metersPerUnit: 1,
+      headingDegrees: 0,
+    });
+    const pCart = latLngToCartesian(p[0], p[1], {
+      originLat: region.center[0],
+      originLon: region.center[1],
+      metersPerUnit: 1,
+      headingDegrees: 0,
+    });
+    const dBest = Math.abs(behaviors.getLength(behaviors.subtract(ship.pos, bestCart)) - targetDist);
+    const dP = Math.abs(behaviors.getLength(behaviors.subtract(ship.pos, pCart)) - targetDist);
+    return dP < dBest ? p : best;
+  });
+}
+
+// NOTE: right now, works very similarly to the above, just with more reach, could change more
+export function choosePatrolDestination(ship, region) {
+  const largestSide = Math.max(region.width, region.height) * 1000;
+  const maxDist = largestSide / 1.2;
+  const minDist = largestSide / 6; 
+  const targetDist = (minDist + maxDist) / 2; // TEMPORARY?: prioritize the middle distance between the two
+  const n = 5; // # of possible points to choose from
+  const bounds = region.bounds;
+  const points = [];
+
+  let attempts = 0;
+  while (points.length < n && attempts < 100) { // limit to 100 tries
+    attempts++;
+
+    // choose random latlon in the region bounds
+    const randLat = bounds.bottom + Math.random() * (bounds.top - bounds.bottom);
+    const randLon = bounds.left  + Math.random() * (bounds.right - bounds.left);
+
+    // disregard that point if it's on land
+    if (!isOcean(randLat, randLon)) continue;
+
+    // convert that latlon to cartesian so we can check its distance from this ship
+    // and compare that distance against max, min and target dist
+    const randCart = latLngToCartesian(randLat, randLon, {
+      originLat: region.center[0],
+      originLon: region.center[1],
+      metersPerUnit: 1,
+      headingDegrees: 0,
+    });
+
+    const dist = behaviors.getLength(behaviors.subtract(ship.pos, randCart));
+
+    // discard this point if it's completely out of range
+    if (dist < minDist || dist > maxDist) continue;
+
+    points.push([randLat, randLon]); // store lat/lon instead of cartesian; more compatible with ship building funcs in reducer
+  }
+
+  console.log('choosePatrolDestination: points found:', points.length, 'attempts:', attempts);
   if (points.length === 0) return null;
 
   // pick the point whose distance from ship is closest to targetDist
@@ -337,12 +405,12 @@ function checkForCombatScenario(ship, shipId, shipsById) { // return updated shi
 }
 
 // ============================= Dest arrival / path reversal =============================
-
+// Handle any and all Path destination arrivals.
 function checkForDestinationArrival(ship, region) {
   if (!ship.behavior?.path) return ship; // ignore ships who don't have a path
   if (ship.behavior.currentParam < 0.97) return ship; // ignore ships who aren't within 3% of completing their path
 
-  // If we reach this point, the ship in question is very near the end of its path; determine what to do based on type + state:
+  // IF WE REACH THIS POINT, the ship in question is *very* near the end of its path; determine what to do based on type + state:
 
   if ((ship.type === "merchant" ) && ship.state === 1) {
     return null; // merchant arrives at its destination port; succesful delivery
@@ -350,29 +418,30 @@ function checkForDestinationArrival(ship, region) {
   }
 
   if (ship.type === "pirate") {
+    // choose new destination; arrived at this one and didn't find anything to flee/chase on the way
     const destLatLng = choosePirateDestination(ship, region);
     const destCart = destLatLng ? latLngToCartesian(destLatLng[0], destLatLng[1], {
       originLat: region.center[0],
-      originLon: region.center[1],
-      metersPerUnit: 1,
-      headingDegrees: 0,
+      originLon: region.center[1]
     }) : null;
 
     if (ship.state === 4) { // state 4 means this pirate must be arriving to refuel
-      return { ...ship, fuel: 100, state: 1, destination: destCart };
+      return { ...ship, fuel: 100, state: 1, destination: destCart }; // so fuel it back up!
     } else {
       return { ...ship, destination: destCart };
     }
   }
 
-  if ((ship.type === "patrol" ) && ship.state === 1) {
-    // Hit end of patrol path without a distress call or pirate encounter; reverse course + keep looking
-    const reversedPoints = [...ship.behavior.path.points].reverse();
-    const rebuiltPath = behaviors.assemblePath(behaviors.newPath(reversedPoints, ship.behavior.path.id));
+  // only concerned w/ patrols who are in default "search" state
+  if ((ship.type === "patrol" ) && ship.state === 1) { 
+    const destLatLng = choosePatrolDestination(ship, region);
+    const destCart = destLatLng ? latLngToCartesian(destLatLng[0], destLatLng[1], {
+      originLat: region.center[0],
+      originLon: region.center[1]
+    }) : null;
+    return { ...ship, destination: destCart };
 
-    if (!rebuiltPath) {
-      return ship; // zero length path, keep going
-    }
+    // TODO: figure out why the heck ocean currents were only being applied here?
 
     // WEIRD MERGE ISSUE
     // I don't think the following block of code is supposed to be here
@@ -406,15 +475,6 @@ function checkForDestinationArrival(ship, region) {
 //     mover: moverWithCurrent
 //   };
 // }
-
-    return {
-      ...ship,
-      behavior: {
-        ...ship.behavior,
-        path: rebuiltPath, // only change path
-        currentParam: 0, // and "reset progress"
-      }
-    };
   }
   return ship; // no change to this ship needed if we hit this point
 }
@@ -422,7 +482,6 @@ function checkForDestinationArrival(ship, region) {
 // ============================= Movement =============================
 
 function updateShipMovement(ship, visibleShips, timeStep, region) {
-  if (ship.inCombat) return ship; // ships in combat do NOT move
 
   const behaviorList = buildBehaviors(ship, visibleShips, region); // determine what behaviors this ship
   // should currently exhibit based on what ships are visible to it
@@ -496,7 +555,7 @@ function step(run, regions, timeStep = 1) {
     shipsById[id] = { ...updatedShip, stepsAlive: (updatedShip.stepsAlive ?? 0) + 1 };
     // For pirates: decrement fuel
     if (updatedShip.type === 'pirate') {
-      updatedShip = { ...updatedShip, fuel: updatedShip.fuel - 0.00534 };
+      updatedShip = { ...updatedShip, fuel: updatedShip.fuel - 0.00868 };
       shipsById[id] = updatedShip;
     }
   }
