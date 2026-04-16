@@ -1,3 +1,4 @@
+import seedrandom from 'seedrandom';
 import * as behaviors from './behaviors.js';
 import { aStar } from './aStar.js';
 import { getOceanCurrent } from './oceanCurrents.js'
@@ -154,7 +155,8 @@ function nearestShip(ship, candidates) {
 // ============================= Destination choosing =============================
 // (For pirates and patrols)
 
-export function choosePirateDestination(ship, region) {
+export function choosePirateDestination(ship, region, seed, step, index) {
+  const rng = seedrandom(seed + '-' + step + '-' + index);
   const largestSide = Math.max(region.width, region.height) * 1000; // have to convert km to m
   // min/max distances are fractions of the largest side of the region boundary:
   const maxDist = largestSide / 2;
@@ -169,8 +171,8 @@ export function choosePirateDestination(ship, region) {
     attempts++;
 
     // choose random latlon in the region bounds
-    const randLat = bounds.bottom + Math.random() * (bounds.top - bounds.bottom);
-    const randLon = bounds.left  + Math.random() * (bounds.right - bounds.left);
+    const randLat = bounds.bottom + rng() * (bounds.top - bounds.bottom);
+    const randLon = bounds.left  + rng() * (bounds.right - bounds.left);
 
     // disregard that point if it's on land
     if (!isOcean(randLat, randLon)) continue;
@@ -215,7 +217,8 @@ export function choosePirateDestination(ship, region) {
 }
 
 // NOTE: right now, works very similarly to the above, just with more reach, could change more
-export function choosePatrolDestination(ship, region) {
+export function choosePatrolDestination(ship, region, seed, step, index) {
+  const rng = seedrandom(seed + '-' + step + '-' + index);
   const largestSide = Math.max(region.width, region.height) * 1000;
   const maxDist = largestSide / 1.2;
   const minDist = largestSide / 6; 
@@ -229,8 +232,8 @@ export function choosePatrolDestination(ship, region) {
     attempts++;
 
     // choose random latlon in the region bounds
-    const randLat = bounds.bottom + Math.random() * (bounds.top - bounds.bottom);
-    const randLon = bounds.left  + Math.random() * (bounds.right - bounds.left);
+    const randLat = bounds.bottom + rng() * (bounds.top - bounds.bottom);
+    const randLon = bounds.left  + rng() * (bounds.right - bounds.left);
 
     // disregard that point if it's on land
     if (!isOcean(randLat, randLon)) continue;
@@ -305,13 +308,14 @@ function maybeRepath(ship, navgraph, pathIdRef) {
 
 // ============================= Combat =============================
 // Make a ship engage with its enemy. Combat takes place over one step
-function advanceCombat(thisShip, shipId, shipsById) {
+function advanceCombat(thisShip, shipId, shipsById, seed, step, index) {
   if (thisShip.state !== 10 || !thisShip.currentEnemyId) return shipsById;
 
   const enemyId = thisShip.currentEnemyId;
   const enemy = shipsById[enemyId];
   if (!enemy) return shipsById;
 
+  const rng = seedrandom(seed + '-' + step + '-' + index);
   if (thisShip.type === 'pirate') {
     return shipsById; // outcome handled by patrol/merchant's advanceCombat call
   }
@@ -325,7 +329,7 @@ function advanceCombat(thisShip, shipId, shipsById) {
 
   if (thisShip.type === 'merchant') {
     const newShips = { ...shipsById };
-    if (Math.random() < 0.33) {
+    if (rng() < 0.33) {
       delete newShips[enemyId]; // pirate loses
     } else {
       delete newShips[shipId]; // merchant loses
@@ -408,7 +412,7 @@ function checkForCombatScenario(ship, shipId, shipsById) { // return updated shi
 
 // ============================= Dest arrival / path reversal =============================
 // Handle any and all Path destination arrivals.
-function checkForDestinationArrival(ship, region) {
+function checkForDestinationArrival(ship, region, seed, step, index) {
   if (!ship) return null; // bandaid fix for weird combat thing
   if (!ship.behavior?.path) return ship; // ignore ships who don't have a path
   if (ship.behavior.currentParam < 0.97) return ship; // ignore ships who aren't within 3% of completing their path
@@ -422,7 +426,7 @@ function checkForDestinationArrival(ship, region) {
 
   if (ship.type === "pirate") {
     // choose new destination; arrived at this one and didn't find anything to flee/chase on the way
-    const destLatLng = choosePirateDestination(ship, region);
+    const destLatLng = choosePirateDestination(ship, region, seed, step, index);
     const destCart = destLatLng ? latLngToCartesian(destLatLng[0], destLatLng[1], {
       originLat: region.center[0],
       originLon: region.center[1]
@@ -437,7 +441,7 @@ function checkForDestinationArrival(ship, region) {
 
   // only concerned w/ patrols who are in default "search" state
   if ((ship.type === "patrol" ) && ship.state === 1) { 
-    const destLatLng = choosePatrolDestination(ship, region);
+    const destLatLng = choosePatrolDestination(ship, region, seed, step, index);
     const destCart = destLatLng ? latLngToCartesian(destLatLng[0], destLatLng[1], {
       originLat: region.center[0],
       originLon: region.center[1]
@@ -520,7 +524,7 @@ function step(run, regions, timeStep = 1) {
     let updatedShip = shipsById[id];
 
     // If this ship is a merchant who has arrived at its port, despawn it
-    updatedShip = checkForDestinationArrival(updatedShip, region);
+    updatedShip = checkForDestinationArrival(updatedShip, region, run.seed, run.elapsedTime);
     if (updatedShip === null) {
       delete shipsById[id];
       continue;
@@ -551,7 +555,7 @@ function step(run, regions, timeStep = 1) {
     updatedShip = shipsById[id];
 
     // Performing combat
-    shipsById = advanceCombat(updatedShip, id, shipsById);
+    shipsById = advanceCombat(updatedShip, id, shipsById, run.seed, run.elapsedTime);
     updatedShip = shipsById[id];
     if (!updatedShip) continue; // If this ship lost (was deleted), skip it
 

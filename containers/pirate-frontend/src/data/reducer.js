@@ -1,3 +1,4 @@
+import seedrandom from 'seedrandom';
 import { newConfig, newRun } from './classes.js';
 import { defaultRegions } from './regions.js';
 import { step } from './stateFunctions.js';
@@ -222,6 +223,7 @@ function deselectAll(runs, exceptThese) {
 
 function buildNewRun() {
   const config = newConfig(
+    // ACTUALY RANDOM! This is the seed for the new run.
     Math.floor(Math.random() * 10000) + 1,
     0, 0, 72, 'clear', 0, 40, 0
   );
@@ -230,6 +232,7 @@ function buildNewRun() {
 }
 
 function spawnShips(run, regions) {
+  const rng = seedrandom(run.seed + '-' + run.elapsedTime + 'spawn');
   const region = regions[run.regionId];
 
   let merchantSpawnFunction = getSomaliaMerchantDestination;
@@ -284,8 +287,8 @@ function spawnShips(run, regions) {
   const piratesPerDay   = (run.maxPirates   ?? 0);
   const maxPatrols   = (run.maxPatrols   ?? 0);
 
-  const shouldSpawnMerchant = shouldSpawn(merchantsPerDay /*, ticksPerMinute ^ -1 */);
-  const shouldSpawnPirate = shouldSpawn(piratesPerDay /*, ticksPerMinute ^ -1 */);
+  const shouldSpawnMerchant = shouldSpawn(merchantsPerDay, run.seed, run.elapsedTime /*, ticksPerMinute ^ -1 */);
+  const shouldSpawnPirate = shouldSpawn(piratesPerDay, run.seed, run.elapsedTime/*, ticksPerMinute ^ -1 */);
 
   if(shouldSpawnMerchant) {
     const ports = Object.entries(region.points).filter(([, p]) => p.type === 'port');
@@ -293,7 +296,7 @@ function spawnShips(run, regions) {
       console.error("No ports detected when attempting to spawn merchant")
       return run;
     }
-    const [, chosenPoint] = ports[Math.floor(Math.random() * ports.length)]; // randomly choose a spawn port; should these be weighted too?..
+    const [, chosenPoint] = ports[Math.floor(rng() * ports.length)]; // randomly choose a spawn port; should these be weighted too?..
     const ID = crypto.randomUUID();
 
     const destLatLng = merchantSpawnFunction();
@@ -308,7 +311,7 @@ function spawnShips(run, regions) {
       console.error("No coves detected when attempting to spawn pirate")
       return run;
     }
-    const [, chosenPoint] = coves[Math.floor(Math.random() * coves.length)]; // randomly choose a spawn cove; should these be weighted too?..
+    const [, chosenPoint] = coves[Math.floor(rng() * coves.length)]; // randomly choose a spawn cove; should these be weighted too?..
     const ID = crypto.randomUUID();
 
     // need cartesian equivalent for point choosing
@@ -317,7 +320,7 @@ function spawnShips(run, regions) {
     });
 
     // passing in generic object w/ cartesianPos as single field since thats all the ship data this func needs
-    const destLatLng = choosePirateDestination({ pos: cartesianPos}, region); 
+    const destLatLng = choosePirateDestination({ pos: cartesianPos}, region, run.seed, run.elapsedTime, 0); 
 
     ships[ID] = buildShip("pirate", chosenPoint.pos, "medium", region, destLatLng, pathIdCounter++)
     piratesSpawned += 1;
@@ -329,12 +332,12 @@ function spawnShips(run, regions) {
       for (const [, point] of bases) {
         const currentPatrols = Object.values(ships).filter(s => s.type === 'patrol').length;
         if (currentPatrols >= maxPatrols) break;
-        if (!shouldSpawn(maxPatrols * 2)) continue;
+        if (!shouldSpawn(maxPatrols * 2, run.seed, run.elapsedTime)) continue;
         const id = crypto.randomUUID();
         const cartesianPos = latLngToCartesian(point.pos[0], point.pos[1], {
           originLat: region.center[0], originLon: region.center[1], metersPerUnit: 1, headingDegrees: 0,
         });
-        const destLatLng = choosePatrolDestination({ pos: cartesianPos }, region);
+        const destLatLng = choosePatrolDestination({ pos: cartesianPos }, region, run.seed, run.elapsedTime, point);
         ships[id] = buildShip('patrol', point.pos, 'medium', region, destLatLng ?? null, pathIdCounter++);
       }
     
@@ -513,6 +516,7 @@ function startRun(state, runIndex, startPaused) {
 
 // need another function to spawn ships at successive steps besides first
 function spawnMoreShips(run, regions) {
+  const rng = seedrandom(run.seed + '-' + run.elapsedTime + 'more');
   const maxShips = Infinity; // NEW: no max lets go crazy
   const region = regions[run.regionId];
   if (!region) return run;
@@ -530,10 +534,10 @@ function spawnMoreShips(run, regions) {
   let pathIdCounter = Date.now(); // avoid ID collisions with initial spawn
 
   // Merchants: one roll per tick, spawn @ random port if it fires
-  if (shouldSpawn(merchantsPerDay)) {
+  if (shouldSpawn(merchantsPerDay, run.seed, run.elapsedTime)) {
     const ports = Object.entries(region.points).filter(([, p]) => p.type === 'port');
     if (ports.length > 0) {
-      const [, chosenPoint] = ports[Math.floor(Math.random() * ports.length)];
+      const [, chosenPoint] = ports[Math.floor(rng() * ports.length)];
       const id = crypto.randomUUID();
       const destLatLng = getSomaliaMerchantDestination(); // TODO: generalize for other regions
       newShips[id] = buildShip('merchant', chosenPoint.pos, 'medium', region, destLatLng ?? null, pathIdCounter++);
@@ -541,16 +545,16 @@ function spawnMoreShips(run, regions) {
   }
 
   // Pirates: one roll per tick, spawn @ random cove if it fires
-  if (shouldSpawn(piratesPerDay)) {
+  if (shouldSpawn(piratesPerDay, run.seed, run.elapsedTime)) {
     const coves = Object.entries(region.points).filter(([, p]) => p.type === 'pirateCove');
     if (coves.length > 0) {
-      const [, chosenPoint] = coves[Math.floor(Math.random() * coves.length)];
+      const [, chosenPoint] = coves[Math.floor(rng() * coves.length)];
       const id = crypto.randomUUID();
       const cartesianPos = latLngToCartesian(chosenPoint.pos[0], chosenPoint.pos[1], {
         originLat: region.center[0], originLon: region.center[1], metersPerUnit: 1, headingDegrees: 0,
       });
       // passing in generic object w/ cartesianPos as single field since thats all the ship data this func needs
-      const destLatLng = choosePirateDestination({ pos: cartesianPos }, region);
+      const destLatLng = choosePirateDestination({ pos: cartesianPos }, region, run.seed, run.elapsedTime, 0);
       newShips[id] = buildShip('pirate', chosenPoint.pos, 'medium', region, destLatLng ?? null, pathIdCounter++);
     }
   }
@@ -560,12 +564,12 @@ function spawnMoreShips(run, regions) {
   for (const [, point] of bases) {
     const currentPatrols = Object.values(newShips).filter(s => s.type === 'patrol').length; // Convoluted way of checking if we've hit max patrol count yet
     if (currentPatrols >= maxPatrols) break;
-    if (!shouldSpawn(maxPatrols * 2)) continue; // spawn all patrols in ~1/2 a day
+    if (!shouldSpawn(maxPatrols * 2, run.seed, run.elapsedTime)) continue; // spawn all patrols in ~1/2 a day
     const id = crypto.randomUUID();
     const cartesianPos = latLngToCartesian(point.pos[0], point.pos[1], {
       originLat: region.center[0], originLon: region.center[1], metersPerUnit: 1, headingDegrees: 0,
     });
-    const destLatLng = choosePatrolDestination({ pos: cartesianPos }, region);
+    const destLatLng = choosePatrolDestination({ pos: cartesianPos }, region, run.seed, run.elapsedTime, point);
     newShips[id] = buildShip('patrol', point.pos, 'medium', region, destLatLng ?? null, pathIdCounter++);
   }
 

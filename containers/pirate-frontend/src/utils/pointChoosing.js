@@ -1,3 +1,4 @@
+import seedrandom from 'seedrandom';
 import { defaultRegions } from "../data/regions";
 
 
@@ -55,8 +56,9 @@ const somaliaPrioMerhcantPoints = [
 
 
 
-function choosePirateHotspot(hotspotArr) {
-  const p = Math.random(); // TODO: seed!
+function choosePirateHotspot(hotspotArr, seed) {
+  const rng = seedrandom(seed);
+  const p = rng();
   let probSum = 0;
   for (const hotspot of hotspotArr) {
     probSum += hotspot.prob;
@@ -69,8 +71,9 @@ function choosePirateHotspot(hotspotArr) {
   return hotspotArr[hotspotArr.length - 1].latLng;
 }
 
-function choosePort(portArr) {
-  const p = Math.random(); // TODO: seed!
+function choosePort(portArr, seed) {
+  const rng = seedrandom(seed);
+  const p = rng();
   let probSum = 0;
   for (const port of portArr) {
     probSum += port.prob;
@@ -84,11 +87,11 @@ function choosePort(portArr) {
 }
 
 // export somalia-specific destination getters
-export function getSomaliaHotspot() {
-    return choosePirateHotspot(somalianPirateHotspots);
+export function getSomaliaHotspot(seed) {
+    return choosePirateHotspot(somalianPirateHotspots, seed);
 }
 
-export  function getSomaliaMerchantDestination() {
-    return choosePort(somaliaPrioMerhcantPoints);
+export  function getSomaliaMerchantDestination(seed) {
+    return choosePort(somaliaPrioMerhcantPoints, seed);
 }
 
