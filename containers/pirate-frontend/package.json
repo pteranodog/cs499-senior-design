@@ -14,7 +14,8 @@
     "react-leaflet": "^5.0.0-rc.2",
     "react-leaflet-custom-control": "1.5.0",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "seedrandom": "3.0.5"
   },
   "scripts": {
     "start": "react-scripts start",
