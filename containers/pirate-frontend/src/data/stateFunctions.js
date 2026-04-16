@@ -1,11 +1,9 @@
 import seedrandom from 'seedrandom';
 import * as behaviors from './behaviors.js';
 import { aStar } from './aStar.js';
-import * as data from './classes.js'
 import { getOceanCurrent } from './oceanCurrents.js'
 import { isOcean } from '../utils/isOcean.js';
 import { cartesianToLatLng, latLngToCartesian } from '../utils/coords.js';
-import { regionBoundingBoxes } from './regions.js';
 
 const COMBAT_RANGE   = 500;
 const REPATH_INTERVAL = 20; // steps between A* recomputes for merchants
@@ -318,6 +316,9 @@ function advanceCombat(thisShip, shipId, shipsById, seed, step, index) {
   if (!enemy) return shipsById;
 
   const rng = seedrandom(seed + '-' + step + '-' + index);
+  if (thisShip.type === 'pirate') {
+    return shipsById; // outcome handled by patrol/merchant's advanceCombat call
+  }
 
   if (thisShip.type === 'patrol') {
     const newShips = { ...shipsById };
@@ -412,6 +413,7 @@ function checkForCombatScenario(ship, shipId, shipsById) { // return updated shi
 // ============================= Dest arrival / path reversal =============================
 // Handle any and all Path destination arrivals.
 function checkForDestinationArrival(ship, region, seed, step, index) {
+  if (!ship) return null; // bandaid fix for weird combat thing
   if (!ship.behavior?.path) return ship; // ignore ships who don't have a path
   if (ship.behavior.currentParam < 0.97) return ship; // ignore ships who aren't within 3% of completing their path
 
@@ -487,6 +489,7 @@ function checkForDestinationArrival(ship, region, seed, step, index) {
 // ============================= Movement =============================
 
 function updateShipMovement(ship, visibleShips, timeStep, region) {
+  if (ship.inCombat) return ship; // ships in combat don't move
 
   const behaviorList = buildBehaviors(ship, visibleShips, region); // determine what behaviors this ship
   // should currently exhibit based on what ships are visible to it
@@ -554,15 +557,14 @@ function step(run, regions, timeStep = 1) {
     // Performing combat
     shipsById = advanceCombat(updatedShip, id, shipsById, run.seed, run.elapsedTime);
     updatedShip = shipsById[id];
+    if (!updatedShip) continue; // If this ship lost (was deleted), skip it
 
     // Movement
     updatedShip = updateShipMovement(updatedShip, visibleShips, timeStep, region);
-    shipsById[id] = { ...updatedShip, stepsAlive: (updatedShip.stepsAlive ?? 0) + 1 };
-    // For pirates: decrement fuel
-    if (updatedShip.type === 'pirate') {
-      updatedShip = { ...updatedShip, fuel: updatedShip.fuel - 0.00868 };
-      shipsById[id] = updatedShip;
-    }
+    
+    const stepsAliveUpdate = { stepsAlive: (updatedShip.stepsAlive ?? 0) + 1 };
+    const fuelUpdate = updatedShip.type === 'pirate' ? { fuel: updatedShip.fuel - 0.00868 } : {};
+    shipsById[id] = { ...updatedShip, ...stepsAliveUpdate, ...fuelUpdate };
   }
 
   return {
