@@ -137,7 +137,7 @@ function defaultRegions() {
 
   for (const [regionId, region] of Object.entries(regions)) {
   region.bounds = regionBoundingBoxes[regionId];
-  region.navgraph = buildNavGraph(region, 30);
+  region.navgraph = buildNavGraph(region, 60);
   console.log('navgraph nodes:', Object.keys(region.navgraph).length);
   }
 
