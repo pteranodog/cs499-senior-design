@@ -28,7 +28,9 @@ const DAY_TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copy
 
 export default function RunDisplay({ simState, run }) {
   const map = useMap();
-  const region = simState.regions[run.regionId];
+  const region = simState?.regions?.[run?.regionId];
+
+  //if (!run || !simState || !region) return null;
 
   useEffect(() => {
     if (!region) return;
@@ -67,12 +69,13 @@ export default function RunDisplay({ simState, run }) {
       clearTimeout(flightTimeout);
       clearTimeout(lockTimeout);
     };
-  }, [region, map, run.uuid]);
+  }, [region, map, run?.uuid]);
 
-  if (!region) return null;
+  //if (!region) return null;
+  if (!run || !simState || !region) return null;
 
   const pointList = Object.values(region.points);
-  const shipList = Object.values(run.currentState.ships);
+  const shipList = Object.values(run?.currentState?.ships || {});
 
   return (
     <>

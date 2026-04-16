@@ -28,6 +28,7 @@ function simStateReducer(state, action) {
         ...state,
         runs: state.runs.map((run, i) => {
           if (i !== action.index) return run;
+          if (!['running', 'paused'].includes(run.status)) return run;
           const stepped = step(run, state.regions);
           return spawnMoreShips(stepped, state.regions);
         })
@@ -44,6 +45,8 @@ function simStateReducer(state, action) {
       return deleteRun(state, action.index);
     case 'duplicate-run':
       return duplicateRun(state, action.index);
+    case 'replay-run':
+      return replayRun(state, action.index);
     case 'select-run':
       return { ...state, runs: expandRun(state.runs, action.run) };
     case 'compare-runs':
@@ -59,13 +62,42 @@ function simStateReducer(state, action) {
       return {
         ...state,
         runs: state.runs.map((run, i) => i === action.index
-          ? { ...run, elapsedTime: run.elapsedTime + (action.ticks ?? 1) }
+          ? incrementRunTime(run, action.ticks ?? 1)
           : run),
       };
     default:
       console.warn('Action type "' + action.type + '" not found.');
       return state;
   }
+}
+
+function getRunDurationTicks(run) {
+  const durationHours = Number(run?.duration);
+  const ticksPerMinute = Math.max(Number(run?.ticksPerMinute) || 1, 1);
+
+  if (!Number.isFinite(durationHours) || durationHours <= 0) {
+    return Infinity;
+  }
+
+  return durationHours * 60 * ticksPerMinute;
+}
+
+function incrementRunTime(run, ticksToAdd = 1) {
+  const nextElapsedTime = (Number(run?.elapsedTime) || 0) + ticksToAdd;
+  const durationTicks = getRunDurationTicks(run);
+
+  if (nextElapsedTime >= durationTicks) {
+    return {
+      ...run,
+      elapsedTime: durationTicks,
+      status: 'completed',
+    };
+  }
+
+  return {
+    ...run,
+    elapsedTime: nextElapsedTime,
+  };
 }
 
 function appStartState() {
@@ -132,6 +164,47 @@ function duplicateRun(state, index) {
   )};
 }
 
+function replayRun(state, index) {
+  const source = state.runs[index];
+  if (!source) return state;
+
+  const duplicate = {
+    ...buildNewRun(),
+    name: appendReplaySuffix(source.name),
+    seed: source.seed,
+    startHour: source.startHour,
+    startMinute: source.startMinute,
+    duration: source.duration,
+    regionId: source.regionId,
+    weatherType: source.weatherType,
+    maxMerchants: source.maxMerchants,
+    maxPirates: source.maxPirates,
+    maxPatrols: source.maxPatrols,
+    speed: source.speed,
+    ticksPerMinute: source.ticksPerMinute,
+    status: 'running',
+    expanded: true,
+  };
+
+  const startedDuplicate = spawnShips(duplicate, state.regions);
+  const insertionIndex = index + 1;
+  const newRuns = [...state.runs.slice(0, insertionIndex), startedDuplicate, ...state.runs.slice(insertionIndex)];
+
+  return {
+    ...state,
+    runs: collapseAll(newRuns).map((run, i) => i === insertionIndex ? { ...run, expanded: true } : run),
+    display: { type: 'run', index: insertionIndex },
+    controls: { type: 'active-run', index: insertionIndex },
+  };
+}
+
+function appendReplaySuffix(name) {
+  const baseName = String(name || 'Untitled Run').trim();
+  return baseName.match(/\(Replay\)$/i)
+    ? baseName
+    : `${baseName} (Replay)`;
+}
+
 function collapseAll(runs) {
   return runs.map(({ expanded, ...rest }) => rest);
 }
@@ -150,7 +223,7 @@ function deselectAll(runs, exceptThese) {
 function buildNewRun() {
   const config = newConfig(
     Math.floor(Math.random() * 10000) + 1,
-    0, 0, 1500, 'clear', 0, 40, 0
+    0, 0, 72, 'clear', 0, 40, 0
   );
   const run = newRun('Untitled Run', config, 'r1');
   return { ...run, uuid: crypto.randomUUID() };

@@ -83,6 +83,10 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 				</ButtonGroup>
 			</div>
 
+      <Button variant="primary" onClick={() => modifySimState({ type: 'replay-run', index: runID })}>
+        Replay
+      </Button>
+
       {/* Since the user can't re-run an already-complete run, complete/terminated runs will probably
         * only be able to be viewed in the "end-run" screen. Can discuss later.
 			<Button variant="secondary" onClick={() => modifySimState({ type: 'view-run-controls', run: runID })}>

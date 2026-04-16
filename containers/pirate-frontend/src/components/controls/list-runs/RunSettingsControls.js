@@ -2,8 +2,7 @@ import FloatingLabel from 'react-bootstrap/FloatingLabel';
 import Form from 'react-bootstrap/Form';
 
 export default function RunSettingsControls({ runSettings, regions, modifyRun, modifyRatios, modifyRegion }) {
-  const minDuration = 30;
-  const maxDuration = 4800;
+  const minDuration = 24;
 
   return (
     <div className="d-flex flex-column gap-2">
@@ -31,20 +30,26 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
         </FloatingLabel>
       </div>
 
-      <FloatingLabel label="Duration (minutes)" className="floating-dark">
+      <FloatingLabel label="Duration (hours)" className="floating-dark">
         <Form.Control
           size="sm" type="number" placeholder="Duration"
-          min={minDuration} max={maxDuration}
+          min={minDuration} 
           className="bg-dark text-light border-secondary"
           value={runSettings.duration}
-          onChange={(e) => modifyRun('duration', e.target.value)}
+          onChange={(e) => {
+            const raw = e.target.value;
+
+            if (raw === '') {
+              modifyRun('duration', '');
+              return;
+            }
+
+            modifyRun('duration', Math.max(24, Number(raw)));
+          }}
         />
       </FloatingLabel>
       {runSettings.duration !== '' && Number(runSettings.duration) < minDuration && (
-        <div className="text-danger small">Min {minDuration} minutes</div>
-      )}
-      {runSettings.duration !== '' && Number(runSettings.duration) > maxDuration && (
-        <div className="text-danger small">Max {maxDuration} minutes</div>
+        <div className="text-danger small">Duration must be at least {minDuration} hours</div>
       )}
 
       <FloatingLabel label="Region" className="floating-dark">
