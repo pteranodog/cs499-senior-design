@@ -9,7 +9,7 @@ export default function TimeViewer({ elapsedTicks = 0, ticksPerMinute = 1 }) {
     const hrs = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
     const mins = String(totalMinutes % 60).padStart(2, '0');
     const secs = '00';
-    return `${hrs}:${mins}:${secs}`;
+    return `${hrs}:${mins}`;
   };
 
   return (
