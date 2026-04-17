@@ -83,7 +83,7 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 				</ButtonGroup>
 			</div>
 
-      <Button variant="primary" onClick={() => modifySimState({ type: 'replay-run', index: runID })}>
+      <Button variant="primary" onClick={() => modifySimState({ type: 'replay-run', index: runID, endTime: run.elapsedTimeEnd })}>
         Replay
       </Button>
 
