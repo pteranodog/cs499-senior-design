@@ -5,7 +5,7 @@ import { getOceanCurrent } from './oceanCurrents.js'
 import { isOcean } from '../utils/isOcean.js';
 import { cartesianToLatLng, latLngToCartesian } from '../utils/coords.js';
 
-const COMBAT_RANGE   = 500;
+const COMBAT_RANGE   = 2000;
 const REPATH_INTERVAL = 20; // steps between A* recomputes for merchants
 
 // ============================= Sight =============================
@@ -15,24 +15,27 @@ function canSee(ship1, ship2) {
   return dist <= ship1.sightRange;
 }
 
-// ============================= Behavior building =============================
-// Constructs a weighted behavior array for a ship each step based on what it
-// can currently see. Also handles state transitions since it is directly related 
-// to said steering
+function shouldForget(ship1, ship2) {
+  const dist = behaviors.getLength(behaviors.subtract(ship1.pos, ship2.pos));
+  return dist > ship1.forgetRange;
+}
 
-function buildBehaviors(ship, visibleShips, region) { 
-  if (!ship) return null;
-  
-  const behaviorList = [];
+function getBehaviorTargets(behaviorList, type) {
+  return behaviorList.filter(b => b.type === type).map(b => b.target);
+}
+
+// Return copy of ship w/updated (non-combat) state & flags
+function updateShipState(ship, visibleShips, region) {
   /* ======== SHIP STATE INFORMATION ===========================================
   Listing behaviors, in descending order of weight/priority of each ship state 
   (states listed in ascending order of prio):
   - Merchants:
-  --- State 1: Avoids land, follows A* path to its destination, and flees nearest pirate (iff visible)
+  --- State 1: Avoids land, follows A* path to its destination
+  --- State 2: Avoids land, follows A* path to its destination, AND flees nearest pirate 
   --- State 10: In combat; i.e. standing still
 
   - Patrols:
-  --- State 1: Follows strict patroling path
+  --- State 1: Follows A* path to its destination
   --- State 2: Avoids land, pursues a pirate (target achieved via distress call or pirate simply being within its range)
   --- State 10: In combat; i.e. standing still
 
@@ -44,16 +47,111 @@ function buildBehaviors(ship, visibleShips, region) {
   --- State 10: In combat; i.e. standing still
   */
 
+  if(ship.state === 10) return ship; // if this somehow checked a ship in combat ignore it;
+  // combat state is managed by different functions
+
+  let updatedShip =  {
+  ...ship
+  };
+
+  // get all other ships, collected into 3 lists based on their type
+  const visiblePirates   = visibleShips.filter(s => s.type === 'pirate');
+  const visibleMerchants = visibleShips.filter(s => s.type === 'merchant');
+  const visiblePatrols   = visibleShips.filter(s => s.type === 'patrol');
+  
+  if (ship.type === 'merchant') {
+    if (visiblePirates.length > 0) {
+      const nearest = nearestShip(ship, visiblePirates); // flee the nearest pirate
+      if ((ship.state === 1) && (canSee(ship, nearest))) { //...if I can see it and i'm idle
+        updatedShip.inDistress = true; // set distress flag so a patrol knows to answer the call
+        updatedShip.distressAnswered = false; // this will be set to true once a patrol answers the call
+        console.log("A merchant is fleeing a pirate");
+        updatedShip.state = 2;
+      } else if ((ship.state == 2 ) && (shouldForget(ship, nearest))) { // if i'm fleeing a pirate and it's outside my "care" range
+        updatedShip.state = 1; // then forget it and go back to strictly following trade route
+      }
+    }
+  }
+
+  else if (ship.type === 'pirate') {
+
+    if((visibleMerchants.length > 0) && (ship.state == 2)) { // if i'm chasing a merchant
+      const nearest = nearestShip(ship, visibleMerchants); 
+      if (shouldForget(ship, nearest)) { // and it's outside my "care" range
+        updatedShip.state = 1; // forget it and go back to idling
+        // POTENTIAL FLAW: assumes the merchant im chasing == the closest one
+      }
+    }
+
+    if((visiblePatrols.length > 0) && (ship.state == 3)) { // if i'm fleeing a patrol
+      const nearest = nearestShip(ship, visiblePatrols); 
+      if (shouldForget(ship, nearest)) { // and it's outside my "care" range
+        updatedShip.state = 1; // forget it and go back to idling
+        // POTENTIAL FLAW: assumes the patrol im fleeing == the closest one
+      }
+    }
+
+    if ((visibleMerchants.length > 0) && (ship.state == 1)) { 
+      const nearest = nearestShip(ship, visibleMerchants); // pursue the nearest merchant
+      if (canSee(ship, nearest)) { //...if I can see it
+        updatedShip.state = 2;
+        console.log("A pirate is pursuing a merchant");
+      }
+    }
+    if ((visiblePatrols.length > 0) && (ship.state <= 2)) { 
+      const nearest = nearestShip(ship, visiblePatrols); // flee the nearest patrol ship
+      if (canSee(ship, nearest)) { //...if I can see it
+        updatedShip.state = 3;
+        console.log("A pirate is fleeing a patrol");
+      }
+    }
+    if (ship.fuel <= 15) {
+      updatedShip.state = 4;
+    }
+  }
+
+  else if (ship.type === 'patrol') {
+
+    if((visiblePirates.length > 0) && (ship.state == 2)) { // if i'm chasing a pirate
+      const nearest = nearestShip(ship, visiblePirates); 
+      if (shouldForget(ship, nearest)) { // and it's outside my "care" range
+        updatedShip.state = 1; // forget it and go back to idling
+        // POTENTIAL FLAW: assumes the pirate im chasing == the closest one
+      }
+    }
+
+    else if ((visiblePirates.length > 0) && (ship.state == 1)) {
+      const nearest = nearestShip(ship, visiblePirates); // pursue the nearest pirate
+      if (canSee(ship, nearest)) { // if i can see it
+        updatedShip.state = 2;
+      }
+    }
+  }
+  return updatedShip;
+}
+
+
+// ============================= Behavior building =============================
+// Constructs a weighted behavior array for a ship each step based on what it
+// can currently see. Also handles state transitions since it is directly related 
+// to said steering
+
+function buildBehaviors(ship, visibleShips, region) { 
+  if (!ship) return null;
+  
+  // Start with the ship's persistent behavior list (A* followPath, wander, etc.)
+  // Situational behaviors (flee, pursue) are added on top each step based on what's visible
+  const behaviorList = [...(ship.behaviorList ?? [])];
+
   // LAND AVOIDANCE
   
   // Keep brand-new ships from doing this to avoid getting stuck on the slightly more "inland" spawn points
-  if (ship.stepsAlive > 9) { 
+  if (ship.stepsAlive > 12) { 
     // Using these to project velocity progressively farther to "smooth" the avoidance
     const projectionTimes = [3, 5, 7];
     let landTarget = null;
 
     // Project velocity forward for each of those times, and check for land
-
     for (const t of projectionTimes) {
       const proj = behaviors.add(ship.pos, behaviors.scalarMult(ship.velocity, t));
       const ll = cartesianToLatLng(proj[0], proj[1], {
@@ -66,7 +164,7 @@ function buildBehaviors(ship, visibleShips, region) {
         landTarget = proj;
         break; // use the closest land hit
       }
-  }
+    }
 
     // if the above loop found a land target, add a flee from it to this ship's behaviors
     if (landTarget) {
@@ -86,11 +184,6 @@ function buildBehaviors(ship, visibleShips, region) {
   const visibleMerchants = visibleShips.filter(s => s.type === 'merchant');
   const visiblePatrols   = visibleShips.filter(s => s.type === 'patrol');
 
-  // always include persistent behavior (A* followPath)
-  if (ship.behavior) {
-    behaviorList.push(Object.assign(ship.behavior, { weight: 1.0 }));
-  }
-
   if (ship.type === 'merchant') { // merchants should check for pirates to flee
     if (visiblePirates.length > 0) {
       const nearest = nearestShip(ship, visiblePirates); // flee the nearest pirate
@@ -107,6 +200,7 @@ function buildBehaviors(ship, visibleShips, region) {
     if ((visibleMerchants.length > 0) && (ship.state == 1)) { 
       const nearest = nearestShip(ship, visibleMerchants); // pursue the nearest merchant
       if (canSee(ship, nearest)) { //...if I can see it
+        // state transition
         ship.state = 2;
         console.log("A pirate is pursuing a merchant");
         behaviorList.push({ ...behaviors.newPursue(1), target: nearest, weight: 2.0 });
@@ -115,28 +209,26 @@ function buildBehaviors(ship, visibleShips, region) {
     if ((visiblePatrols.length > 0) && (ship.state <= 2)) { 
       const nearest = nearestShip(ship, visiblePatrols); // flee the nearest patrol ship
       if (canSee(ship, nearest)) { //...if I can see it
-        ship.state = 3;
         console.log("A pirate is fleeing a patrol");
         behaviorList.push({ ...behaviors.newFlee(), target: nearest, weight: 3.0 });
       }
     }
     if (ship.fuel <= 15) {
-      ship.state = 4;
-      ship.behavior = behaviors.newFollowPath(
+      ship.behaviorList = [behaviors.newFollowPath(
         aStar(region.navgraph, ship.pos, ship.homeCove, 'pirate', pathIdRef.value++),
         0.04
-      );
+      )];
     }
   }
 
   if (ship.type === 'patrol') {
     if (visiblePirates.length > 0) {
       const nearest = nearestShip(ship, visiblePirates);
-      behaviorList.push({ ...behaviors.newPursue(1), target: nearest, weight: 2.0 });
+      behaviorList.push({ ...behaviors.newPursue(3), target: nearest, weight: 2.0 });
     }
   }
 
-  // fallback to wander (SHOULDNT happen)
+  // fallback to wander (SHOULDN'T happen)
   if (behaviorList.length === 0) {
     behaviorList.push({ ...behaviors.newWander(), weight: 1.0 });
   }
@@ -297,7 +389,11 @@ function maybeRepath(ship, navgraph, pathIdRef) {
   if (newPath) {
     return {
       ...ship,
-      behavior: behaviors.newFollowPath(newPath, 0.04),
+      behaviorList: ship.behaviorList.map(b => // replace old path w/new
+        b.type === 'followPath' 
+          ? behaviors.newFollowPath(newPath, 0.04)
+          : b
+      ),
       stepsSinceRepath: 0,
     };
   }
@@ -330,7 +426,9 @@ function advanceCombat(thisShip, shipId, shipsById, seed, step, index) {
   if (thisShip.type === 'merchant') {
     const newShips = { ...shipsById };
     if (rng() < 0.33) {
+
       delete newShips[enemyId]; // pirate loses
+      newShips[shipId] = { ...enemy, inCombat: false, state: 1, currentEnemyId: null };
     } else {
       delete newShips[shipId]; // merchant loses
       newShips[enemyId] = { ...enemy, inCombat: false, state: 1, currentEnemyId: null };
@@ -414,8 +512,10 @@ function checkForCombatScenario(ship, shipId, shipsById) { // return updated shi
 // Handle any and all Path destination arrivals.
 function checkForDestinationArrival(ship, region, seed, step, index) {
   if (!ship) return null; // bandaid fix for weird combat thing
-  if (!ship.behavior?.path) return ship; // ignore ships who don't have a path
-  if (ship.behavior.currentParam < 0.97) return ship; // ignore ships who aren't within 3% of completing their path
+
+  const followPath = ship.behaviorList?.find(b => b.type === 'followPath');
+  if (!followPath?.path) return ship; // ignore ships who don't have a path
+  if (followPath.currentParam < 0.97) return ship; // ignore ships who aren't within 3% of completing their path
 
   // IF WE REACH THIS POINT, the ship in question is *very* near the end of its path; determine what to do based on type + state:
 
