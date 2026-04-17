@@ -481,11 +481,13 @@ function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null
 
 function viewRunList(state, runIndex, selectedRuns) {
   let runs = deselectAll(state.runs, selectedRuns);
-  let display = state.display;
-  if (runIndex !== undefined) {
-    display = { type: 'run', index: runIndex };
-  }
-  return { ...state, runs: runs, display: display, controls: { type: 'list-runs' }};
+
+  return {
+    ...state,
+    runs,
+    display: { type: 'region', index: 'r1' }, // ← force reset
+    controls: { type: 'list-runs' }
+  };
 }
 
 function viewRunControls(state, runIndex) {
