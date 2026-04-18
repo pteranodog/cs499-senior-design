@@ -412,9 +412,9 @@ function spawnShips(run, regions) {
 
 function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null) {
   const stats = {
-    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 3700,  maxSpeed: 633.4, maxAcceleration: 1800, maxAngularAcc: 0.0002, maxRotation: 0.52 },
-    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 9260, maxSpeed: 766.67, maxAcceleration: 8500, maxAngularAcc: 15, maxRotation: 1.25 },
-    patrol:   { crewSize: 80, durability: 100, armament: 60, sightRange: 27000,  maxSpeed: 771.67, maxAcceleration: 10000, maxAngularAcc: 0.1, maxRotation: 0.78 },
+    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 3700, forgetRange: 50000,  maxSpeed: 633.4, maxAcceleration: 1800, maxAngularAcc: 0.0002, maxRotation: 0.52 },
+    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 9260, forgetRange: 50000, maxSpeed: 766.67, maxAcceleration: 8500, maxAngularAcc: 15, maxRotation: 1.25 },
+    patrol:   { crewSize: 80, durability: 100, armament: 60, sightRange: 27000,  forgetRange: Infinity, maxSpeed: 771.67, maxAcceleration: 10000, maxAngularAcc: 0.1, maxRotation: 0.78 },
   }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1000, maxSpeed: 500, maxAcceleration: 500, maxAngularAcc: 0.1, maxRotation: 0.5 };
 
   const cartesianPos = latLngToCartesian(pos[0], pos[1], {
@@ -424,7 +424,7 @@ function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null
     headingDegrees: 0,
   });
 
-  let behavior;
+  let behaviorList;
   let destination = null; // stored on ship for repath
 
   if ((type === 'merchant' || type === 'pirate' ||  type === 'patrol') && destPos && region.navgraph) {
@@ -438,17 +438,17 @@ function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null
     const path = aStar(region.navgraph, cartesianPos, destCartesian, type, pathId);
 
     if (path) {
-      behavior    = behaviors.newFollowPath(path, 0.04);
+      behaviorList    = [behaviors.newFollowPath(path, 0.04)];
       destination = destCartesian;
     } else {
       // A* failed — fall back to wander
       console.warn('buildShip: A* returned null, falling back to wander');
-      behavior = behaviors.newWander();
+      behaviorList = [behaviors.newWander()];
     }
   } else if (fallbackPath) {
-    behavior = behaviors.newFollowPath(fallbackPath, 0.04);
+    behaviorList = [behaviors.newFollowPath(fallbackPath, 0.04)];
   } else {
-    behavior = behaviors.newWander();
+    behaviorList = [behaviors.newWander()];
   }
 
   return {
@@ -472,7 +472,7 @@ function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null
     inCombat:   false,
     state: 1, // always start in default state
     // Persistent behavior
-    behavior,
+    behaviorList,
     // destination for repath
     destination,
     stepsSinceRepath: 0,
