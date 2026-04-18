@@ -47,7 +47,7 @@ function simStateReducer(state, action) {
     case 'duplicate-run':
       return duplicateRun(state, action.index);
     case 'replay-run':
-      return replayRun(state, action.index);
+      return replayRun(state, action.index, action.endTime);
     case 'select-run':
       return { ...state, runs: expandRun(state.runs, action.run) };
     case 'compare-runs':
@@ -85,13 +85,14 @@ function getRunDurationTicks(run) {
 
 function incrementRunTime(run, ticksToAdd = 1) {
   const nextElapsedTime = (Number(run?.elapsedTime) || 0) + ticksToAdd;
-  const durationTicks = getRunDurationTicks(run);
+  const durationTicks = run.isImported && run.replayEndTime ? run.replayEndTime : getRunDurationTicks(run);
 
   if (nextElapsedTime >= durationTicks) {
     return {
       ...run,
       elapsedTime: durationTicks,
       status: 'completed',
+      elapsedTimeEnd: durationTicks
     };
   }
 
@@ -152,11 +153,13 @@ function duplicateRun(state, index) {
     startHour: source.startHour,
     startMinute: source.startMinute,
     duration: source.duration,
+    replayEndTime: source.elapsedTimeEnd ?? source.elapsedTime,
     regionId: source.regionId,
     weatherType: source.weatherType,
     maxMerchants: source.maxMerchants,
     maxPirates: source.maxPirates,
     maxPatrols: source.maxPatrols,
+    ticksPerMinute: source.ticksPerMinute,
     expanded: true,
   };
   const newRuns = [...state.runs.slice(0, index + 1), duplicate, ...state.runs.slice(index + 1)];
@@ -165,7 +168,7 @@ function duplicateRun(state, index) {
   )};
 }
 
-function replayRun(state, index) {
+function replayRun(state, index, endTime) {
   const source = state.runs[index];
   if (!source) return state;
 
@@ -176,6 +179,7 @@ function replayRun(state, index) {
     startHour: source.startHour,
     startMinute: source.startMinute,
     duration: source.duration,
+    replayEndTime: endTime ?? source.elapsedTimeEnd ?? source.elapsedTime,
     regionId: source.regionId,
     weatherType: source.weatherType,
     maxMerchants: source.maxMerchants,
@@ -183,7 +187,6 @@ function replayRun(state, index) {
     maxPatrols: source.maxPatrols,
     speed: source.speed,
     ticksPerMinute: source.ticksPerMinute,
-    status: 'running',
     expanded: true,
   };
 
@@ -409,9 +412,9 @@ function spawnShips(run, regions) {
 
 function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null) {
   const stats = {
-    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 10000,  forgetRange: 50000, maxSpeed: 633.4, maxAcceleration: 1800, maxAngularAcc: 0.0002, maxRotation: 0.52 },
-    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 15000, forgetRange: 50000, maxSpeed: 766.67, maxAcceleration: 8500, maxAngularAcc: 15, maxRotation: 1.25 },
-    patrol:   { crewSize: 80, durability: 100, armament: 60, sightRange: 50000, forgetRange: Infinity,  maxSpeed: 771.67, maxAcceleration: 10000, maxAngularAcc: 0.1, maxRotation: 0.78 },
+    merchant: { crewSize: 21, durability: 70, armament: 25, sightRange: 3700, forgetRange: 50000,  maxSpeed: 633.4, maxAcceleration: 1800, maxAngularAcc: 0.0002, maxRotation: 0.52 },
+    pirate:   { crewSize: 7,  durability: 15, armament: 45, sightRange: 9260, forgetRange: 50000, maxSpeed: 766.67, maxAcceleration: 8500, maxAngularAcc: 15, maxRotation: 1.25 },
+    patrol:   { crewSize: 80, durability: 100, armament: 60, sightRange: 27000,  forgetRange: Infinity, maxSpeed: 771.67, maxAcceleration: 10000, maxAngularAcc: 0.1, maxRotation: 0.78 },
   }[type] ?? { crewSize: 5, durability: 10, armament: 10, sightRange: 1000, maxSpeed: 500, maxAcceleration: 500, maxAngularAcc: 0.1, maxRotation: 0.5 };
 
   const cartesianPos = latLngToCartesian(pos[0], pos[1], {
@@ -481,11 +484,13 @@ function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null
 
 function viewRunList(state, runIndex, selectedRuns) {
   let runs = deselectAll(state.runs, selectedRuns);
-  let display = state.display;
-  if (runIndex !== undefined) {
-    display = { type: 'run', index: runIndex };
-  }
-  return { ...state, runs: runs, display: display, controls: { type: 'list-runs' }};
+
+  return {
+    ...state,
+    runs,
+    display: { type: 'region', index: 'r1' }, // ← force reset
+    controls: { type: 'list-runs' }
+  };
 }
 
 function viewRunControls(state, runIndex) {

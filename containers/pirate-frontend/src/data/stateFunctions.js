@@ -484,22 +484,29 @@ function maybeRepath(ship, navgraph, pathIdRef) {
 // ============================= Combat =============================
 // Make a ship engage with its enemy. Combat takes place over one step
 function advanceCombat(thisShip, shipId, shipsById, seed, step, index) {
-  if (thisShip.state !== 10 || !thisShip.currentEnemyId) return shipsById;
+  if (thisShip.state !== 10 || !thisShip.currentEnemyId) {
+    return { shipsById, liveCountIncrements: null};
+  }
 
   const enemyId = thisShip.currentEnemyId;
   const enemy = shipsById[enemyId];
-  if (!enemy) return shipsById;
+  if (!enemy) {
+    return { shipsById, liveCountIncrements: null };
+  }
 
   const rng = seedrandom(seed + '-' + step + '-' + index);
   if (thisShip.type === 'pirate') {
-    return shipsById; // outcome handled by patrol/merchant's advanceCombat call
+    return { shipsById, liveCountIncrements: null }; // outcome handled by patrol/merchant's advanceCombat call
   }
 
   if (thisShip.type === 'patrol') {
     const newShips = { ...shipsById };
     delete newShips[enemyId];
-    newShips[shipId] = { ...thisShip, inCombat: false, state: 1, currentEnemyId: null, maxSpeed: 771.67};
-    return newShips;
+    newShips[shipId] = { ...thisShip, inCombat: false, state: 1, currentEnemyId: null, maxSpeed: 771.67 };
+    return { shipsById: newShips, 
+      liveCountIncrements: {
+      sinks: 1,   // patrol sinks pirate
+    } };
   }
 
   if (thisShip.type === 'merchant') {
@@ -507,15 +514,27 @@ function advanceCombat(thisShip, shipId, shipsById, seed, step, index) {
     if (rng() < 0.33) {
 
       delete newShips[enemyId]; // pirate loses
-      newShips[shipId] = { ...thisShip, inCombat: false, state: 1, currentEnemyId: null,  maxSpeed: 633.4};
+      newShips[shipId] = { ...thisShip, inCombat: false, state: 1, currentEnemyId: null,  maxSpeed: 633.4}; // remove combat state from victor
+      return { 
+        shipsById: newShips, 
+        liveCountIncrements: {
+            evasions: 1, // merchant evades capture
+            sinks: 1,   // pirate sinks
+        } };
+      
     } else {
       delete newShips[shipId]; // merchant loses
       newShips[enemyId] = { ...enemy, inCombat: false, state: 1, currentEnemyId: null, maxSpeed: 766.67 };
+      return {
+        shipsById: newShips,
+        liveCountIncrements: {
+          captures: 1,  //merchant is captured
+        },
+      };
     }
-    return newShips;
   }
 
-  return shipsById;
+  return { shipsById, liveCountIncrements: null };
 }
 
 function getEncounterIncrements(ship, otherShip) {
@@ -692,6 +711,11 @@ function step(run, regions, timeStep = 1) {
     patrolPirateEncounters: 0,
     totalPirateEncounters: 0,
   };
+  let liveCountTotals = {
+    captures: 0,
+    evasions: 0,
+    sinks: 0,
+  };
 
   
 
@@ -750,7 +774,15 @@ function step(run, regions, timeStep = 1) {
     updatedShip = shipsById[id];
 
     // Performing combat
-    shipsById = advanceCombat(updatedShip, id, shipsById, run.seed, run.elapsedTime, id);
+    const combatOutcome = advanceCombat(updatedShip, id, shipsById, run.seed, run.elapsedTime);
+    shipsById = combatOutcome.shipsById;
+    if (combatOutcome.liveCountIncrements) {
+      liveCountTotals = {
+        captures: liveCountTotals.captures + (combatOutcome.liveCountIncrements.captures ?? 0),
+        evasions: liveCountTotals.evasions + (combatOutcome.liveCountIncrements.evasions ?? 0),
+        sinks: liveCountTotals.sinks + (combatOutcome.liveCountIncrements.sinks ?? 0),
+      };
+    }
     updatedShip = shipsById[id];
     if (!updatedShip) continue; // If this ship lost (was deleted) in combat, skip it
 
@@ -768,6 +800,9 @@ function step(run, regions, timeStep = 1) {
       ...run.currentState,
       stats: {
         ...run.currentState?.stats,
+        captures: (run.currentState?.stats?.captures ?? 0) + liveCountTotals.captures,
+        sinks: (run.currentState?.stats?.sinks ?? 0) + liveCountTotals.sinks,
+        evasions: (run.currentState?.stats?.evasions ?? 0) + liveCountTotals.evasions,
         merchantPirateEncounters:
           (run.currentState?.stats?.merchantPirateEncounters ?? 0) + encounterTotals.merchantPirateEncounters,
         patrolPirateEncounters:
