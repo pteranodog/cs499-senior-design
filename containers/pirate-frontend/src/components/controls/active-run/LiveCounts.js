@@ -36,7 +36,7 @@ export default function LiveCounts({ simState, runID }) {
                 <Dropdown.Item disabled>Captures: {captures}</Dropdown.Item>
                 <Dropdown.Item disabled>Rescues: {rescues}</Dropdown.Item>
                 <Dropdown.Item disabled>Sinks: {sinks}</Dropdown.Item>
-                <Dropdown.Item disabled>Evasions: {evasions}</Dropdown.Item>
+                <Dropdown.Item disabled>Merchant-Evasions: {evasions}</Dropdown.Item>
                 <Dropdown.Item disabled>Active Ships: {ships.length}</Dropdown.Item>
                 <Dropdown.Item disabled>Merchant-Pirate Encounters: {merchantPirateEncounters}</Dropdown.Item>
                 <Dropdown.Item disabled>Patrol-Pirate Encounters: {patrolPirateEncounters}</Dropdown.Item>

@@ -310,7 +310,7 @@ function maybeRepath(ship, navgraph, pathIdRef) {
 // Make a ship engage with its enemy. Combat takes place over one step
 function advanceCombat(thisShip, shipId, shipsById, seed, step, index) {
   if (thisShip.state !== 10 || !thisShip.currentEnemyId) {
-    return { shipsById, liveCountIncrements: null };
+    return { shipsById, liveCountIncrements: null};
   }
 
   const enemyId = thisShip.currentEnemyId;
@@ -328,7 +328,10 @@ function advanceCombat(thisShip, shipId, shipsById, seed, step, index) {
     const newShips = { ...shipsById };
     delete newShips[enemyId];
     newShips[shipId] = { ...thisShip, inCombat: false, state: 1, currentEnemyId: null };
-    return { shipsById: newShips, liveCountIncrements: null };
+    return { shipsById: newShips, 
+      liveCountIncrements: {
+      sinks: 1,   // patrol sinks pirate
+    } };
   }
 
   if (thisShip.type === 'merchant') {
@@ -530,6 +533,8 @@ function step(run, regions, timeStep = 1) {
   };
   let liveCountTotals = {
     captures: 0,
+    evasions: 0,
+    sinks: 0,
   };
 
   
@@ -600,6 +605,8 @@ function step(run, regions, timeStep = 1) {
       stats: {
         ...run.currentState?.stats,
         captures: (run.currentState?.stats?.captures ?? 0) + liveCountTotals.captures,
+        sinks: (run.currentState?.stats?.sinks ?? 0) + liveCountTotals.sinks,
+        evasions: (run.currentState?.stats?.evasions ?? 0) + liveCountTotals.evasions,
         merchantPirateEncounters:
           (run.currentState?.stats?.merchantPirateEncounters ?? 0) + encounterTotals.merchantPirateEncounters,
         patrolPirateEncounters:
