@@ -335,14 +335,19 @@ function advanceCombat(thisShip, shipId, shipsById, seed, step, index) {
     const newShips = { ...shipsById };
     if (rng() < 0.33) {
       delete newShips[enemyId]; // pirate loses
-      return { shipsById: newShips, liveCountIncrements: null };
+      return { 
+        shipsById: newShips, 
+        liveCountIncrements: {
+            evasions: 1, // merchant evades capture
+            sinks: 1,   // pirate sinks
+        } };
     } else {
       delete newShips[shipId]; // merchant loses
       newShips[enemyId] = { ...enemy, inCombat: false, state: 1, currentEnemyId: null };
       return {
         shipsById: newShips,
         liveCountIncrements: {
-          captures: 1,
+          captures: 1,  //merchant is captured
         },
       };
     }
@@ -573,6 +578,8 @@ function step(run, regions, timeStep = 1) {
     if (combatOutcome.liveCountIncrements) {
       liveCountTotals = {
         captures: liveCountTotals.captures + (combatOutcome.liveCountIncrements.captures ?? 0),
+        evasions: liveCountTotals.evasions + (combatOutcome.liveCountIncrements.evasions ?? 0),
+        sinks: liveCountTotals.sinks + (combatOutcome.liveCountIncrements.sinks ?? 0),
       };
     }
     updatedShip = shipsById[id];

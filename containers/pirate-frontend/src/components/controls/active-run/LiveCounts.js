@@ -10,6 +10,7 @@ export default function LiveCounts({ simState, runID }) {
     const stats = run?.currentState?.stats ?? {};
     const ships = Object.values(run?.currentState?.ships ?? {});
     const captures = Number(stats.captures ?? 0);
+    const evasions = Number(stats.evasions ?? 0);
     const rescues = Number(stats.rescues ?? 0);
     const sinks = Number(stats.sinks ?? 0);
     const merchantPirateEncounters = Number(stats.merchantPirateEncounters ?? 0);
@@ -35,6 +36,7 @@ export default function LiveCounts({ simState, runID }) {
                 <Dropdown.Item disabled>Captures: {captures}</Dropdown.Item>
                 <Dropdown.Item disabled>Rescues: {rescues}</Dropdown.Item>
                 <Dropdown.Item disabled>Sinks: {sinks}</Dropdown.Item>
+                <Dropdown.Item disabled>Evasions: {evasions}</Dropdown.Item>
                 <Dropdown.Item disabled>Active Ships: {ships.length}</Dropdown.Item>
                 <Dropdown.Item disabled>Merchant-Pirate Encounters: {merchantPirateEncounters}</Dropdown.Item>
                 <Dropdown.Item disabled>Patrol-Pirate Encounters: {patrolPirateEncounters}</Dropdown.Item>
