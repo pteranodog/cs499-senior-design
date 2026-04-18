@@ -310,7 +310,7 @@ function maybeRepath(ship, navgraph, pathIdRef) {
 // Make a ship engage with its enemy. Combat takes place over one step
 function advanceCombat(thisShip, shipId, shipsById, seed, step, index) {
   if (thisShip.state !== 10 || !thisShip.currentEnemyId) {
-    return { shipsById, liveCountIncrements: null };
+    return { shipsById, liveCountIncrements: null};
   }
 
   const enemyId = thisShip.currentEnemyId;
@@ -328,21 +328,29 @@ function advanceCombat(thisShip, shipId, shipsById, seed, step, index) {
     const newShips = { ...shipsById };
     delete newShips[enemyId];
     newShips[shipId] = { ...thisShip, inCombat: false, state: 1, currentEnemyId: null };
-    return { shipsById: newShips, liveCountIncrements: null };
+    return { shipsById: newShips, 
+      liveCountIncrements: {
+      sinks: 1,   // patrol sinks pirate
+    } };
   }
 
   if (thisShip.type === 'merchant') {
     const newShips = { ...shipsById };
     if (rng() < 0.33) {
       delete newShips[enemyId]; // pirate loses
-      return { shipsById: newShips, liveCountIncrements: null };
+      return { 
+        shipsById: newShips, 
+        liveCountIncrements: {
+            evasions: 1, // merchant evades capture
+            sinks: 1,   // pirate sinks
+        } };
     } else {
       delete newShips[shipId]; // merchant loses
       newShips[enemyId] = { ...enemy, inCombat: false, state: 1, currentEnemyId: null };
       return {
         shipsById: newShips,
         liveCountIncrements: {
-          captures: 1,
+          captures: 1,  //merchant is captured
         },
       };
     }
@@ -525,6 +533,8 @@ function step(run, regions, timeStep = 1) {
   };
   let liveCountTotals = {
     captures: 0,
+    evasions: 0,
+    sinks: 0,
   };
 
   
@@ -573,6 +583,8 @@ function step(run, regions, timeStep = 1) {
     if (combatOutcome.liveCountIncrements) {
       liveCountTotals = {
         captures: liveCountTotals.captures + (combatOutcome.liveCountIncrements.captures ?? 0),
+        evasions: liveCountTotals.evasions + (combatOutcome.liveCountIncrements.evasions ?? 0),
+        sinks: liveCountTotals.sinks + (combatOutcome.liveCountIncrements.sinks ?? 0),
       };
     }
     updatedShip = shipsById[id];
@@ -593,6 +605,8 @@ function step(run, regions, timeStep = 1) {
       stats: {
         ...run.currentState?.stats,
         captures: (run.currentState?.stats?.captures ?? 0) + liveCountTotals.captures,
+        sinks: (run.currentState?.stats?.sinks ?? 0) + liveCountTotals.sinks,
+        evasions: (run.currentState?.stats?.evasions ?? 0) + liveCountTotals.evasions,
         merchantPirateEncounters:
           (run.currentState?.stats?.merchantPirateEncounters ?? 0) + encounterTotals.merchantPirateEncounters,
         patrolPirateEncounters:
