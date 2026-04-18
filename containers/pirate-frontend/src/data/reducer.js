@@ -160,7 +160,6 @@ function duplicateRun(state, index) {
     maxPirates: source.maxPirates,
     maxPatrols: source.maxPatrols,
     ticksPerMinute: source.ticksPerMinute,
-    status: 'running',
     expanded: true,
   };
   const newRuns = [...state.runs.slice(0, index + 1), duplicate, ...state.runs.slice(index + 1)];
