@@ -28,9 +28,9 @@ export default function StatusDisplay({ simState, runID }) {
 
   const region = simState?.regions?.[run.regionId];
   const timeOfDay = getTimeOfDay(run.startHour);
-  const backgroundColor = timeOfDay === 'Day' ? 'rgba(33, 37, 41, 0.92)' : 'rgba(255, 255, 255, 0.92)';
-  const textColor = timeOfDay === 'Day' ? '#f8f9fa' : '#212529';
-  const secondaryColor = timeOfDay === 'Day' ? 'rgba(248, 249, 250, 0.75)' : '#6c757d';
+  const backgroundColor = timeOfDay === 'Day' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(33, 37, 41, 0.92)';
+  const textColor = timeOfDay === 'Day' ? '#212529' : '#f8f9fa';
+  const secondaryColor = timeOfDay === 'Day' ? '#6c757d' : 'rgba(248, 249, 250, 0.75)';
 
   return (
     <div
