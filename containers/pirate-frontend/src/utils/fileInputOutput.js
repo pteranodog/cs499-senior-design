@@ -180,11 +180,20 @@ function resolveRegionId(run, region, regions) {
 }
 
 export function importRun(payload, regions) {
-  requireObject(payload, 'Imported file does not contain a valid run payload.');
+	requireObject(payload, 'Imported file does not contain a valid run payload.');
 
-  const { region, outcomes, uuid, expanded, selected, ...run } = payload;
-  const regionId = resolveRegionId(run, region, regions);
-  return { ...buildNewRun(), ...run, regionId, uuid: crypto.randomUUID() };
+  	const { region, outcomes, uuid, expanded, selected, ...run } = payload;
+  	const regionId = resolveRegionId(run, region, regions);
+  	return { 
+		...buildNewRun(), 
+		...run, regionId, 
+		status: 'new',
+		isImported: true, 
+		replayEndTime: run.elapsedTimeEnd ?? run.elapsedTime, 
+		elapsedTime: 0,
+		elapsedTimeEnd: 0,
+		uuid: crypto.randomUUID()
+	};
 }
 
 export async function readRunFile(file, regions) {

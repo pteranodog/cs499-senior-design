@@ -85,7 +85,7 @@ function getRunDurationTicks(run) {
 
 function incrementRunTime(run, ticksToAdd = 1) {
   const nextElapsedTime = (Number(run?.elapsedTime) || 0) + ticksToAdd;
-  const durationTicks = run.replayEndTime ?? getRunDurationTicks(run);
+  const durationTicks = run.isImported && run.replayEndTime ? run.replayEndTime : getRunDurationTicks(run);
 
   if (nextElapsedTime >= durationTicks) {
     return {
@@ -187,7 +187,6 @@ function replayRun(state, index, endTime) {
     maxPatrols: source.maxPatrols,
     speed: source.speed,
     ticksPerMinute: source.ticksPerMinute,
-    status: 'running',
     expanded: true,
   };
 
