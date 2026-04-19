@@ -54,6 +54,7 @@ export default function RunSettingsSummary({ runSettings, regions, warning }) {
       </div>
 
       {/* Totals Over Run */}
+      {/*}
       <div className="d-flex gap-2">
         <div className="border border-secondary rounded px-2 py-1 small flex-fill text-center">
           <div className="fw-bold text-light">
@@ -69,6 +70,7 @@ export default function RunSettingsSummary({ runSettings, regions, warning }) {
           <div className="text-secondary">Total Pirates</div>
         </div>
       </div>
+      */}
 
       {/* Simulation Results (NEW) */}
       <div className="d-flex gap-2">
