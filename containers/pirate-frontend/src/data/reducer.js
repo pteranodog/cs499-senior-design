@@ -300,9 +300,9 @@ function spawnShips(run, regions) {
       return run;
     }
     const [, chosenPoint] = ports[Math.floor(rng() * ports.length)]; // randomly choose a spawn port; should these be weighted too?..
-    const ID = crypto.randomUUID();
+    const ID = Math.floor(rng() * 2147483647);
 
-    const destLatLng = merchantSpawnFunction();
+    const destLatLng = merchantSpawnFunction(run.seed, ID);
 
     ships[ID] = buildShip("merchant", chosenPoint.pos, "medium", region, destLatLng, pathIdCounter++)
     merchantsSpawned += 1;
@@ -315,7 +315,7 @@ function spawnShips(run, regions) {
       return run;
     }
     const [, chosenPoint] = coves[Math.floor(rng() * coves.length)]; // randomly choose a spawn cove; should these be weighted too?..
-    const ID = crypto.randomUUID();
+    const ID = Math.floor(rng() * 2147483647);
 
     // need cartesian equivalent for point choosing
     const cartesianPos = latLngToCartesian(chosenPoint.pos[0], chosenPoint.pos[1], {
@@ -336,7 +336,7 @@ function spawnShips(run, regions) {
         const currentPatrols = Object.values(ships).filter(s => s.type === 'patrol').length;
         if (currentPatrols >= maxPatrols) break;
         if (!shouldSpawn(maxPatrols * 2, run.seed, run.elapsedTime)) continue;
-        const id = crypto.randomUUID();
+        const id = Math.floor(rng() * 2147483647);
         const cartesianPos = latLngToCartesian(point.pos[0], point.pos[1], {
           originLat: region.center[0], originLon: region.center[1], metersPerUnit: 1, headingDegrees: 0,
         });
@@ -543,8 +543,8 @@ function spawnMoreShips(run, regions) {
     const ports = Object.entries(region.points).filter(([, p]) => p.type === 'port');
     if (ports.length > 0) {
       const [, chosenPoint] = ports[Math.floor(rng() * ports.length)];
-      const id = crypto.randomUUID();
-      const destLatLng = getSomaliaMerchantDestination(); // TODO: generalize for other regions
+      const id = Math.floor(rng() * 2147483647);
+      const destLatLng = getSomaliaMerchantDestination(run.seed, id); // TODO: generalize for other regions
       newShips[id] = buildShip('merchant', chosenPoint.pos, 'medium', region, destLatLng ?? null, pathIdCounter++);
     }
   }
@@ -554,7 +554,7 @@ function spawnMoreShips(run, regions) {
     const coves = Object.entries(region.points).filter(([, p]) => p.type === 'pirateCove');
     if (coves.length > 0) {
       const [, chosenPoint] = coves[Math.floor(rng() * coves.length)];
-      const id = crypto.randomUUID();
+      const id = Math.floor(rng() * 2147483647);
       const cartesianPos = latLngToCartesian(chosenPoint.pos[0], chosenPoint.pos[1], {
         originLat: region.center[0], originLon: region.center[1], metersPerUnit: 1, headingDegrees: 0,
       });
@@ -570,7 +570,7 @@ function spawnMoreShips(run, regions) {
     const currentPatrols = Object.values(newShips).filter(s => s.type === 'patrol').length; // Convoluted way of checking if we've hit max patrol count yet
     if (currentPatrols >= maxPatrols) break;
     if (!shouldSpawn(maxPatrols * 2, run.seed, run.elapsedTime)) continue; // spawn all patrols in ~1/2 a day
-    const id = crypto.randomUUID();
+    const id = Math.floor(rng() * 2147483647);
     const cartesianPos = latLngToCartesian(point.pos[0], point.pos[1], {
       originLat: region.center[0], originLon: region.center[1], metersPerUnit: 1, headingDegrees: 0,
     });
