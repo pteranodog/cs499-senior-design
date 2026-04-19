@@ -185,7 +185,7 @@ export function importRun(payload, regions) {
   	const { region, outcomes, uuid, expanded, selected, ...run } = payload;
   	const regionId = resolveRegionId(run, region, regions);
 
-	const baseTitle = run.title ?? 'Untitled Run';
+	const baseTitle = run.name ?? 'Untitled Run';
   	const name = appendImportSuffix(baseTitle);
 
   	return { 
