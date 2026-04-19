@@ -9,7 +9,54 @@ import { buildNavGraph } from './graphBuilder.js';
 // - right: max longitude
 // - bottom: min latitude
 
+// ============ SPAWN/DESTINATION HELP FUNCTIONS =============
+// Given a region, return the Port object chosen as the spawn candidate.
+// Choice is randomized but weighted; see use of spawnWeight property
+export function chooseWeightedSpawnPort(region, rng) {
 
+  // Collect list of all ports in the given region
+  const ports = Object.entries(region.points)
+    .filter(([, p]) => p.type === 'port' && p.spawnWeight > 0);
+  if (ports.length === 0) return null;
+
+  const totalWeight = ports.reduce((sum, [, p]) => sum + p.spawnWeight, 0);
+  const roll = rng() * totalWeight;
+
+  let cumulative = 0;
+
+  // This is where the random choice happens
+  for (const [, p] of ports) {
+    cumulative += p.spawnWeight;
+    if (roll < cumulative) return p;
+  }
+
+  // Just in case, fall back to first port
+  return ports[ports.length - 1][1];
+}
+
+// Same as above, but returns the *location* of a 
+// *destination* port. 
+export function chooseWeightedDestPort(region, rng) {
+
+  // Collect list of all ports in the given region
+  const ports = Object.values(region.points)
+    .filter(p => p.type === 'port' && p.destWeight > 0);
+  if (ports.length === 0) return null;
+
+  const totalWeight = ports.reduce((sum, p) => sum + p.destWeight, 0);
+  const roll = rng() * totalWeight;
+
+  let cumulative = 0;
+
+  // This is where the random choice happens
+  for (const port of ports) {
+    cumulative += port.destWeight;
+    if (roll < cumulative) return port.pos;
+  }
+
+  // Just in case, fall back to first port
+  return ports[ports.length - 1].pos;
+}
 
 
 
@@ -35,10 +82,37 @@ function boundsCenter(bounds) {
 
 function defaultRegions() {
   let somaliaPoints = {};
-  somaliaPoints["p2"] = newPort("Mombasa (Port)", [-4.0717, 39.6730], 0.01, [], []);
-  somaliaPoints["p3"] = newPort("Dar es Salaam (Tanzania)", [-6.7640, 39.2747], 0.01, [], []); 
-  somaliaPoints["p4"] = newPort("Djibouti (Port)", [11.6048, 43.1497], 0.01, [], []);
+  somaliaPoints["p2"] = newPort("Mombasa (Port)", [-4.0717, 39.6730], 0.08, [], [], 0.04, true);
+  somaliaPoints["p3"] = newPort("Dar es Salaam (Tanzania)", [-6.7640, 39.2747], 0.04, [], [], 0.02, true); 
+  somaliaPoints["p4"] = newPort("Djibouti (Port)", [11.6048, 43.1497], 0.08, [], [], 0.04, true);
+  somaliaPoints["p5"] = newPort("upperLeftSomalia", [14.0, 42.6], 0.4, [], [], 0.3, false);
+  somaliaPoints["p6"] = newPort("upperRightSomalia", [12.9, 57.0], 0.3, [], [], 0.2, false);
+  somaliaPoints["p7"] = newPort("lowerSomalia", [-8.0, 42.6], 0.1, [], [], 0.05, false);
   
+  const somaliaPrioMerchantPoints = [
+    { // Upper left part of our Somalia region in the red sea
+        latLng: [14.0, 42.6],
+        prob: 0.5, // loads of ships coming and going through here
+    },
+
+    {
+        latLng: [12.9, 57.0],
+        prob: 0.2 
+    },
+
+    {
+        latLng: [14.0, 48.9],
+        prob: 0.2 
+    },
+
+
+    {
+        latLng: [-8.0, 42.6],
+        prob: 0.1
+    }
+]
+
+
   somaliaPoints["p7"] = newPirateCove("Cove One", [11.1705, 47.4048], 0.01);
   somaliaPoints["p8"] = newPirateCove("Cove Two", [5.0659, 48.2978], 0.01);
   somaliaPoints["p12"] = newPirateCove("Eyl Anchorage", [7.98, 49.82], 0.01);
@@ -131,14 +205,20 @@ function defaultRegions() {
   regions["r8"] = newRegion(boundsCenter(regionBoundingBoxes["r8"]), suluCelebesPoints, "Sulu-Celebes Seas", 1000, 1000, 7);
 
   // Expose bounds on each region so clipping/auto-zoom can consume these later.
-  for (const [regionId, region] of Object.entries(regions)) {
-    region.bounds = regionBoundingBoxes[regionId];
-  }
 
   for (const [regionId, region] of Object.entries(regions)) {
   region.bounds = regionBoundingBoxes[regionId];
   region.navgraph = buildNavGraph(region, 60);
   console.log('navgraph nodes:', Object.keys(region.navgraph).length);
+
+   // Compute cartesian bounds of this region from its navgraph node positions:
+  const cartesians = Object.values(region.navgraph).map(n => n.cartesian);
+  region.cartesianBounds = {
+    minX: Math.min(...cartesians.map(c => c[0])),
+    maxX: Math.max(...cartesians.map(c => c[0])),
+    minY: Math.min(...cartesians.map(c => c[1])),
+    maxY: Math.max(...cartesians.map(c => c[1])),
+    };
   }
 
   return regions;

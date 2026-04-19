@@ -169,19 +169,24 @@ function newPoint(name, pointType, pointPos) {
  * ships either pick up or drop off goods. These points also "spawn"
  * new merchant ships.
  */
-function newPort(name, portPos, merchantSpawnChance, toPorts, fromPorts)
+function newPort(name, portPos, spawnWeight, toPorts, fromPorts, destWeight, visible)
 {
   let point = newPoint(name, "port", portPos)
 
-  // Probability at each step that this Port spawns a brand new Merchant
-  // (NOTE: merchant count should not exceed a certain maximum)
-  point.merchantSpawnChance = merchantSpawnChance
+  /// probability for this port to be chosen as the location when a merchant spawns (0-1)
+  point.spawnWeight = spawnWeight;
 
   // Merchants export goods from this port *to* where?
   point.toPorts = toPorts // array of Ports 
 
   // Merchants import goods to this port *from* where?
   point.fromPorts = fromPorts // array of Ports 
+
+  // probability for this port to be chosen as the destination when a merchant spawns (0-1)
+  point.destWeight = destWeight;
+
+  // render this in leaflet map? t/f
+  point.visible = visible;
 
   return point;
 }

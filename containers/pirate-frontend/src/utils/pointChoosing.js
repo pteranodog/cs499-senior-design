@@ -30,7 +30,7 @@ const somalianPirateHotspots = [
   }
 ]
 
-const somaliaPrioMerhcantPoints = [
+const somaliaPrioMerchantPoints = [
     { // Upper left part of our Somalia region in the red sea
         latLng: [14.0, 42.6],
         prob: 0.5, // loads of ships coming and going through here
@@ -91,7 +91,5 @@ export function getSomaliaHotspot(seed) {
     return choosePirateHotspot(somalianPirateHotspots, seed);
 }
 
-export  function getSomaliaMerchantDestination(seed) {
-    return choosePort(somaliaPrioMerhcantPoints, seed);
-}
+
 
