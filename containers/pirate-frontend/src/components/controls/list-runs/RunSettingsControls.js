@@ -4,6 +4,29 @@ import Form from 'react-bootstrap/Form';
 export default function RunSettingsControls({ runSettings, regions, modifyRun, modifyRatios, modifyRegion }) {
   const minDuration = 24;
 
+  const handleDurationChange = (e) => {
+
+    modifyRun('duration', e.target.value);
+  };
+
+  const handleDurationBlur = (e) => {
+    const value = runSettings.duration;
+
+    if (value === '' || value === null || value === undefined) {
+      modifyRun('duration', String(minDuration));
+      return;
+    }
+
+    const num = Number(value);
+
+    if (Number.isNaN(num) || num < minDuration) {
+      modifyRun('duration', String(minDuration));
+    }
+    else {
+      modifyRun('duration', String(num));
+    }
+  };
+
   return (
     <div className="d-flex flex-column gap-2">
       {/*
@@ -32,22 +55,18 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
 
       <FloatingLabel label="Duration (hours)" className="floating-dark">
         <Form.Control
-          size="sm" type="number" placeholder="Duration"
+          size="sm" 
+          type="number" 
+          placeholder="Duration"
           min={minDuration} 
           className="bg-dark text-light border-secondary"
           value={runSettings.duration}
-          onChange={(e) => {
-            const raw = e.target.value;
+          onChange={handleDurationChange}
+          onBlur={handleDurationBlur}
 
-            if (raw === '') {
-              modifyRun('duration', '');
-              return;
-            }
-
-            modifyRun('duration', Math.max(24, Number(raw)));
-          }}
         />
       </FloatingLabel>
+      
       {runSettings.duration !== '' && Number(runSettings.duration) < minDuration && (
         <div className="text-danger small">Duration must be at least {minDuration} hours</div>
       )}
