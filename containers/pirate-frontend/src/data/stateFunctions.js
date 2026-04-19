@@ -35,6 +35,13 @@ function getTrackedTarget(ship, shipsByID) {
   return shipsByID.find(([id]) => id === ship.currentTargetId)?.[1] ?? null;
 }
 
+// Does the passed ship reside within the boundaries of its region?
+// Note the cartesian-based checking; might be slightly inaccurate in some
+// areas/points
+function isOutOfRegionBounds(ship, region) {
+
+}
+
 // Return copy of ship w/updated (non-combat) state & flags
 function updateShipState(ship, shipsByID, region) {
   /* ======== SHIP STATE INFORMATION ===========================================
@@ -108,7 +115,7 @@ function updateShipState(ship, shipsByID, region) {
           // then sideEffects will contain an object with two fields: the ID of the "savior" patrol ship,
           // and a sub-object of the fields of that patrol ship that will change (its pursue target and state).
           // If modification to ships besides the passed one are not needed, the array remains empty:
-          sideEffects: nearestPatrolID ? [{ targetId: nearestPatrolID, changes: { currentTargetId: nearestId, state: 2 } }] : []
+          sideEffects: nearestPatrolID ? [{ targetId: nearestPatrolID, changes: { currentTargetId: nearestId, state: 2, respondingToDistress: true } }] : []
         };
       } 
     }
@@ -181,7 +188,14 @@ function updateShipState(ship, shipsByID, region) {
     if((ship.state == 2)) { // if i'm chasing a pirate
       const trackedTarget = getTrackedTarget(ship, shipsByID);
       if (!trackedTarget || shouldForget(ship, trackedTarget)) { // and it's outside my "care" range
-        updatedShip.maxSpeed /= 1.4; // speed way up; especially important if distress call!
+        if (ship.respondingToDistress) {
+          updatedShip.maxSpeed /= 2.0; 
+        }
+        else { 
+          updatedShip.maxSpeed /= 1.4; 
+        }
+
+        ship.respondingToDistress = false;
         updatedShip.state = 1; // forget it and go back to idling
         updatedShip.currentTargetId = null;
 
@@ -194,7 +208,12 @@ function updateShipState(ship, shipsByID, region) {
       const [nearestId, nearest] = nearestShip(ship, allPirates); // pursue the nearest pirate
       if (canSee(ship, nearest)) { // if i can see it
         updatedShip.currentTargetId = nearestId; // save ID of this patrol for flee init
-        updatedShip.maxSpeed *= 1.4;
+        if (ship.respondingToDistress) {
+          updatedShip.maxSpeed *= 2.0; 
+        }
+        else { 
+          updatedShip.maxSpeed *= 1.4; 
+        }
         updatedShip.state = 2;
 
         return { updatedShip, sideEffects: [] }
@@ -205,6 +224,21 @@ function updateShipState(ship, shipsByID, region) {
 
   // "what is sideEffects??" see giant blurb ~ 80 lines up about it
   return { updatedShip, sideEffects: [] }
+}
+
+// Return the land node (an object) in the passed navgraph that is closest to a given position
+function findNearestLandNode(pos, navgraph) {
+  let nearest = null;
+  let bestDist = Infinity;
+  for (const node of Object.values(navgraph)) {
+    if (node.passable) continue; // only care about land nodes
+    const d = behaviors.getLength(behaviors.subtract(pos, node.cartesian));
+    if (d < bestDist) {
+      bestDist = d;
+      nearest = node;
+    }
+  }
+  return nearest;
 }
 
 
@@ -219,41 +253,29 @@ function buildBehaviors(ship, shipsById, region) {
   const behaviorList = [];
 
   // LAND AVOIDANCE
-  // Active for all non-combat except brand new ones
-  const skipLandAvoidance = (ship.state === 10 || ship.stepsAlive <= 9);
+  // Active ONLY FOR SHIPS WHO ARE PURSUING/SEEKING; rely on nagraph
+  // to avoid land if the ship is strictly following a path in it
+  const useLandAvoidance = (ship.state === 2 || ship.state === 3 || ship.stepsAlive <= 9);
 
-  if (!skipLandAvoidance) {
-    // Using these to project velocity progressively farther to "smooth" the avoidance
-    const projectionTimes = [3, 5, 7];
-    let landTarget = null;
-
-    // Project velocity forward for each of those times, and check for land
-    for (const t of projectionTimes) {
-      const proj = behaviors.add(ship.pos, behaviors.scalarMult(ship.velocity, t));
-      const ll = cartesianToLatLng(proj[0], proj[1], {
-        originLat: region.center[0],
-        originLon: region.center[1],
-        metersPerUnit: 1,
-        headingDegrees: 0,
-      });
-      if (!isOcean(ll.lat, ll.lng)) {
-        landTarget = proj;
-        break; // use the closest land hit
+  if (useLandAvoidance) {
+    const nearestLandNode = findNearestLandNode(ship.pos, region.navgraph);
+    if (nearestLandNode) {
+      const distToLand = behaviors.getLength(behaviors.subtract(ship.pos, nearestLandNode.cartesian));
+      let danger_dist;
+      if (ship.type === 'patrol') {
+        danger_dist = 10000; // ~150km — tune this
+      } 
+      else {
+        danger_dist = 150000; // ~150km — tune this
       }
-    }
-
-    // if the above loop found a land target, add a flee from it to this ship's behaviors
-    if (landTarget) {
-      const hitTime = projectionTimes.find(t => {
-        const proj = behaviors.add(ship.pos, behaviors.scalarMult(ship.velocity, t));
-        const ll = cartesianToLatLng(proj[0], proj[1], {
-          originLat: region.center[0], originLon: region.center[1], metersPerUnit: 1, headingDegrees: 0
+      if (distToLand < danger_dist) {
+        const urgency = 1 - (distToLand / danger_dist); // 0 at edge, 1 at land
+        behaviorList.push({ 
+          ...behaviors.newFlee(), 
+          target: { pos: nearestLandNode.cartesian }, 
+          weight: urgency * 4.0 
         });
-        return !isOcean(ll.lat, ll.lng);
-      });
-      // "how close am I to land?"
-      const urgency = hitTime === 3 ? 4.0 : hitTime === 5 ? 3.0 : 2.0;
-      behaviorList.push({ ...behaviors.newFlee(), target: { pos: landTarget }, weight: urgency });
+      }
     }
   }
 
@@ -287,7 +309,7 @@ function buildBehaviors(ship, shipsById, region) {
     }
     if (ship.state === 3 && target) {
       // flee the patrol
-      behaviorList.push({ ...behaviors.newFlee(), target, weight: 3.0 });
+      behaviorList.push({ ...behaviors.newFlee(), target, weight: 2.0 });
     }
   }
 
@@ -329,12 +351,12 @@ function buildBehaviors(ship, shipsById, region) {
 
 export function choosePirateDestination(ship, region, seed, step, index) {
   const rng = seedrandom(seed + '-' + step + '-' + index);
-  const largestSide = Math.max(region.width, region.height) * 1000; // have to convert km to m
+  const largestSide = Math.max(region.width, region.length) * 1000; // have to convert km to m
   // min/max distances are fractions of the largest side of the region boundary:
-  const maxDist = largestSide / 2;
+  const maxDist = largestSide / 1.8;
   const minDist = largestSide / 8; 
   const targetDist = (minDist + maxDist) / 2; // TEMPORARY?: prioritize the middle distance between the two
-  const n = 5; // # of possible points to choose from
+  const n = 3; // # of possible points to choose from CHANGED TO 3 BECAUSE 5 WAS CAUSING PERFORMANCE PROBLEMS
   const bounds = region.bounds;
   const points = [];
 
@@ -388,19 +410,22 @@ export function choosePirateDestination(ship, region, seed, step, index) {
   });
 }
 
-// NOTE: right now, works very similarly to the above, just with more reach, could change more
-export function choosePatrolDestination(ship, region, seed, step, index) {
+// provide a point for an idle patrol to path towards, prioritized based on distance from its home base
+export function choosePatrolDestination(homeBase, ship, region, seed, step, index) {
   const rng = seedrandom(seed + '-' + step + '-' + index);
-  const largestSide = Math.max(region.width, region.height) * 1000;
-  const maxDist = largestSide / 1.2;
-  const minDist = largestSide / 6; 
+  const largestSide = Math.max(region.width, region.length) * 1000;
+  console.log("largest side: "+largestSide);
+
+  const maxDist = largestSide / 1.5; 
+
+  const minDist = largestSide / 4; 
   const targetDist = (minDist + maxDist) / 2; // TEMPORARY?: prioritize the middle distance between the two
-  const n = 5; // # of possible points to choose from
+  const n = 3; // # of possible points to choose from CHANGED TO 3 BECAUSE 5 WAS CAUSING PERFORMANCE PROBLEMS
   const bounds = region.bounds;
   const points = [];
 
   let attempts = 0;
-  while (points.length < n && attempts < 100) { // limit to 100 tries
+  while (points.length < n && attempts < 100) { // limit to 60 tries
     attempts++;
 
     // choose random latlon in the region bounds
@@ -419,14 +444,16 @@ export function choosePatrolDestination(ship, region, seed, step, index) {
       headingDegrees: 0,
     });
 
-    const dist = behaviors.getLength(behaviors.subtract(ship.pos, randCart));
+    const dist = behaviors.getLength(behaviors.subtract(homeBase.pos, randCart));
 
     // discard this point if it's completely out of range
     if (dist < minDist || dist > maxDist) continue;
 
+    console.log('patrol point dist from homeBase:', dist, 'homeBase:', homeBase.pos);
     points.push([randLat, randLon]); // store lat/lon instead of cartesian; more compatible with ship building funcs in reducer
   }
 
+  console.log('choosePatrolDestination: points found:', points.length, 'attempts:', attempts, 'homeBase:', homeBase, 'maxDist:', maxDist, 'minDist:', minDist);
   if (points.length === 0) return null;
 
   // pick the point whose distance from ship is closest to targetDist
@@ -443,8 +470,8 @@ export function choosePatrolDestination(ship, region, seed, step, index) {
       metersPerUnit: 1,
       headingDegrees: 0,
     });
-    const dBest = Math.abs(behaviors.getLength(behaviors.subtract(ship.pos, bestCart)) - targetDist);
-    const dP    = Math.abs(behaviors.getLength(behaviors.subtract(ship.pos, pCart))    - targetDist);
+    const dBest = Math.abs(behaviors.getLength(behaviors.subtract(homeBase.pos, bestCart)) - targetDist);
+    const dP    = Math.abs(behaviors.getLength(behaviors.subtract(homeBase.pos, pCart))    - targetDist);
     return dP < dBest ? p : best;
   });
 }
@@ -503,10 +530,17 @@ function advanceCombat(thisShip, shipId, shipsById, seed, step, index) {
     const newShips = { ...shipsById };
     delete newShips[enemyId];
     newShips[shipId] = { ...thisShip, inCombat: false, state: 1, currentEnemyId: null, maxSpeed: 771.67 };
-    return { shipsById: newShips, 
-      liveCountIncrements: {
-      sinks: 1,   // patrol sinks pirate
-    } };
+    if (!thisShip.respondingToDistress) {
+      return { shipsById: newShips, 
+        liveCountIncrements: {
+        sinks: 1,   // patrol sinks pirate
+      } };
+    } else {
+      return { shipsById: newShips, 
+        liveCountIncrements: {
+        rescues: 1,   // patrol rescued a distressed merchant
+      } };
+    }
   }
 
   if (thisShip.type === 'merchant') {
@@ -639,7 +673,7 @@ function checkForDestinationArrival(ship, region, seed, step, index) {
 
   // only concerned w/ patrols who are in default "search" state
   if ((ship.type === "patrol" ) && ship.state === 1) { 
-    const destLatLng = choosePatrolDestination(ship, region, seed, step, index);
+    const destLatLng = choosePatrolDestination(ship.homeBase, ship, region, seed, step, index);
     const destCart = destLatLng ? latLngToCartesian(destLatLng[0], destLatLng[1], {
       originLat: region.center[0],
       originLon: region.center[1]
@@ -715,6 +749,7 @@ function step(run, regions, timeStep = 1) {
     captures: 0,
     evasions: 0,
     sinks: 0,
+    rescues: 0
   };
 
   
@@ -729,6 +764,13 @@ function step(run, regions, timeStep = 1) {
     // If this ship is a merchant who has arrived at its port, despawn it
     updatedShip = checkForDestinationArrival(updatedShip, region, run.seed, run.elapsedTime, id);
     if (updatedShip === null) {
+      delete shipsById[id];
+      continue;
+    }
+
+    // im so sick of every solution for land avoidance not workign so this is the last straw for this
+    // ONE INCREDIBLY SPECIFIC INSTANCE OF THE ISSUE so im just deleting tany ships it happens to
+    if ((updatedShip.type === 'merchant' || updatedShip.type === 'patrol' ) && !updatedShip.behaviorList?.find(b => b.type === 'followPath')) {
       delete shipsById[id];
       continue;
     }
@@ -781,6 +823,7 @@ function step(run, regions, timeStep = 1) {
         captures: liveCountTotals.captures + (combatOutcome.liveCountIncrements.captures ?? 0),
         evasions: liveCountTotals.evasions + (combatOutcome.liveCountIncrements.evasions ?? 0),
         sinks: liveCountTotals.sinks + (combatOutcome.liveCountIncrements.sinks ?? 0),
+        rescues: liveCountTotals.rescues + (combatOutcome.liveCountIncrements.rescues ?? 0)
       };
     }
     updatedShip = shipsById[id];
@@ -791,8 +834,25 @@ function step(run, regions, timeStep = 1) {
     
     const stepsAliveUpdate = { stepsAlive: (updatedShip.stepsAlive ?? 0) + 1 };
     const fuelUpdate = updatedShip.type === 'pirate' ? { fuel: updatedShip.fuel - 0.00868 } : {};
+
+
+    // Delete this ship if it ventured outside the bounds of the region
+    if (region && (
+      updatedShip.pos[0] < region.cartesianBounds.minX ||
+      updatedShip.pos[0] > region.cartesianBounds.maxX ||
+      updatedShip.pos[1] < region.cartesianBounds.minY ||
+      updatedShip.pos[1] > region.cartesianBounds.maxY
+    )) {
+      delete shipsById[id];
+      continue;
+    }
+
+    
+
     shipsById[id] = { ...updatedShip, ...stepsAliveUpdate, ...fuelUpdate };
   }
+
+  
 
   return {
     ...run,
@@ -803,6 +863,7 @@ function step(run, regions, timeStep = 1) {
         captures: (run.currentState?.stats?.captures ?? 0) + liveCountTotals.captures,
         sinks: (run.currentState?.stats?.sinks ?? 0) + liveCountTotals.sinks,
         evasions: (run.currentState?.stats?.evasions ?? 0) + liveCountTotals.evasions,
+        rescues: (run.currentState?.stats?.rescues ?? 0) + liveCountTotals.rescues,
         merchantPirateEncounters:
           (run.currentState?.stats?.merchantPirateEncounters ?? 0) + encounterTotals.merchantPirateEncounters,
         patrolPirateEncounters:
