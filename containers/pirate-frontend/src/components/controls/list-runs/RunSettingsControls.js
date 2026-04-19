@@ -83,20 +83,6 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
         </Form.Select>
       </FloatingLabel>
 
-      {/* TODO: Weather temporarily removed
-      <FloatingLabel label="Weather Condition" className="floating-dark">
-        <Form.Select size="sm" className="bg-dark text-light border-secondary"
-          value={runSettings.weatherType}
-          onChange={(e) => modifyRun('weatherType', e.target.value)}
-          data-testid="weather"
-        >
-          <option value="clear">Clear</option>
-          <option value="storm">Storm</option>
-          <option value="fog">Fog</option>
-        </Form.Select>
-      </FloatingLabel>
-      */}
-
       {[
         { id: 'maxMerchants', label: 'Merchants/Day', max: 100},
         { id: 'maxPirates',   label: 'Pirates/Day', max: 45},
