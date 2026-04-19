@@ -184,9 +184,15 @@ export function importRun(payload, regions) {
 
   	const { region, outcomes, uuid, expanded, selected, ...run } = payload;
   	const regionId = resolveRegionId(run, region, regions);
+
+	const baseTitle = run.title ?? 'Untitled Run';
+  	const name = appendImportSuffix(baseTitle);
+
   	return { 
 		...buildNewRun(), 
-		...run, regionId, 
+		...run,
+		regionId, 
+		name,
 		status: 'new',
 		isImported: true, 
 		replayEndTime: run.elapsedTimeEnd ?? run.elapsedTime, 
@@ -194,6 +200,13 @@ export function importRun(payload, regions) {
 		elapsedTimeEnd: 0,
 		uuid: crypto.randomUUID()
 	};
+}
+
+function appendImportSuffix(name) {
+  const baseName = String(name || 'Untitled Run').trim();
+  return baseName.match(/\(Import\)$/i)
+    ? baseName
+    : `${baseName} (Import)`;
 }
 
 export async function readRunFile(file, regions) {
