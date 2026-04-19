@@ -86,50 +86,32 @@ function defaultRegions() {
   somaliaPoints["p3"] = newPort("Dar es Salaam (Tanzania)", [-6.7640, 39.2747], 0.04, [], [], 0.02, true); 
   somaliaPoints["p4"] = newPort("Djibouti (Port)", [11.6048, 43.1497], 0.08, [], [], 0.04, true);
   somaliaPoints["p5"] = newPort("upperLeftSomalia", [14.0, 42.6], 0.4, [], [], 0.3, false);
-  somaliaPoints["p6"] = newPort("upperRightSomalia", [12.9, 57.0], 0.3, [], [], 0.2, false);
-  somaliaPoints["p7"] = newPort("lowerSomalia", [-8.0, 42.6], 0.1, [], [], 0.05, false);
+  somaliaPoints["p6"] = newPort("upperRightSomalia", [12.9, 57.0], 0.36, [], [], 0.2, false);
+  somaliaPoints["p7"] = newPort("lowerSomalia", [-8.0, 42.6], 0.04, [], [], 0.05, false);
   
-  const somaliaPrioMerchantPoints = [
-    { // Upper left part of our Somalia region in the red sea
-        latLng: [14.0, 42.6],
-        prob: 0.5, // loads of ships coming and going through here
-    },
-
-    {
-        latLng: [12.9, 57.0],
-        prob: 0.2 
-    },
-
-    {
-        latLng: [14.0, 48.9],
-        prob: 0.2 
-    },
 
 
-    {
-        latLng: [-8.0, 42.6],
-        prob: 0.1
-    }
-]
 
-
-  somaliaPoints["p7"] = newPirateCove("Cove One", [11.1705, 47.4048], 0.01);
-  somaliaPoints["p8"] = newPirateCove("Cove Two", [5.0659, 48.2978], 0.01);
-  somaliaPoints["p12"] = newPirateCove("Eyl Anchorage", [7.98, 49.82], 0.01);
-  somaliaPoints["p13"] = newPirateCove("Hafun Peninsula", [10.44, 51.39], 0.01);
-  somaliaPoints["p9"] = newBase("Camp Lemonnier (U.S.A.)", [11.5434, 43.1790], 0);
-  somaliaPoints["p10"] = newBase("Kenya Navy", [-4.3, 39.6], 0);
-  somaliaPoints["p11"] = newBase("Mahe (Naval Base)", [-4.7, 55.5], 0);
+  somaliaPoints["p8"] = newPirateCove("Cove One", [11.1705, 47.4048], 0.01);
+  somaliaPoints["p9"] = newPirateCove("Cove Two", [5.0659, 48.2978], 0.01);
+  somaliaPoints["p13"] = newPirateCove("Eyl Anchorage", [7.98, 49.82], 0.01);
+  somaliaPoints["p14"] = newPirateCove("Hafun Peninsula", [10.44, 51.39], 0.01);
+  somaliaPoints["p10"] = newBase("Camp Lemonnier (U.S.A.)", [11.5434, 43.1790], 0);
+  somaliaPoints["p11"] = newBase("Kenya Navy", [-4.3, 39.6], 0);
+  somaliaPoints["p12"] = newBase("Mahe (Naval Base)", [-4.7, 55.5], 0);
 
   let guineaPoints = {};
-  guineaPoints["g1"] = newPort("Lagos", [6.45, 3.39], 0.01, [], []);
-  guineaPoints["g2"] = newPort("Takoradi", [4.89, -1.75], 0.01, [], []);
-  guineaPoints["g3"] = newPort("Douala", [4.05, 9.70], 0.01, [], []);
-  guineaPoints["g4"] = newPirateCove("Niger Delta Coves", [4.90, 6.95], 0.01);
-  guineaPoints["g5"] = newPirateCove("Brass Approaches", [4.32, 6.24], 0.01);
-  guineaPoints["g8"] = newPirateCove("Bakassi Peninsula", [4.58, 8.77], 0.01);
-  guineaPoints["g6"] = newBase("Tema Naval Base", [5.63, -0.02], 0);
-  guineaPoints["g7"] = newBase("Nigerian Navy Forward Base", [6.42, 5.62], 0);
+  guineaPoints["g1"] = newPort("Lagos", [6.45, 3.39], 0.15, [], [], 0.15, true);
+  guineaPoints["g2"] = newPort("Takoradi", [4.89, -1.75], 0.2, [], [], 0.2, true);
+  guineaPoints["g3"] = newPort("Douala", [4.05, 9.70], 0.05, [], [], 0.05, true);
+  guineaPoints["g4"] = newPort("Port Harcourt", [4.5, 7.0], 0.2, [], [], 0.2, false);
+  guineaPoints["g5"] = newPort("leftGuinea", [4.4, -4.0], 0.4, [], [], 0.4, false);
+
+  guineaPoints["g6"] = newPirateCove("Niger Delta Coves", [4.90, 6.95], 0.01);
+  guineaPoints["g7"] = newPirateCove("Brass Approaches", [4.32, 6.24], 0.01);
+  guineaPoints["g10"] = newPirateCove("Bakassi Peninsula", [4.58, 8.77], 0.01);
+  guineaPoints["g8"] = newBase("Tema Naval Base", [5.63, -0.02], 0);
+  guineaPoints["g9"] = newBase("Nigerian Navy Forward Base", [6.42, 5.62], 0);
 
   let malaccaPoints = {};
   malaccaPoints["m1"] = newPort("Singapore", [1.26, 103.84], 0.01, [], []);

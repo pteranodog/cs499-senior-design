@@ -8,7 +8,7 @@ import { latLngToCartesian } from '../utils/coords.js';
 
 const DANGER_ZONES = {
   "Somalian Coast": [
-    { lat: 11.1705, lon: 47.4048, radius: 300000, intensity: 1.0 }, // Cove One
+    { lat: 11.1705, lon: 47.4048, radius: 300000, intensity: 3.0 }, // Cove One
     { lat: 5.0659,  lon: 48.2978, radius: 300000, intensity: 1.0 }, // Cove Two
     { lat: 10.0,    lon: 50.5,    radius: 500000, intensity: 0.6 },
     { lat: 12.0,    lon: 44.5,    radius: 250000, intensity: 0.5 }, // Gulf of Aden
