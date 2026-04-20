@@ -61,17 +61,20 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 			<div className="border border-secondary rounded p-3">
 				<h6 className="mb-2">Sim Stats</h6>
 				<div className="small d-flex flex-column gap-1">
+					<div><strong>Merchants:</strong> {shipCounts.merchants}</div>
+					<div><strong>Pirates:</strong> {shipCounts.pirates}</div>
+					<div><strong>Security:</strong> {shipCounts.patrols}</div>
+					<div><strong>Active Ships:</strong> {ships.length}</div>
+
 					<div><strong>Captures:</strong> {captures}</div>
 					<div><strong>Rescues:</strong> {rescues}</div>
 					<div><strong>Sinks:</strong> {sinks}</div>
+
 					<div><strong>Merchant Evasions:</strong> {evasions}</div>
 					<div><strong>Merchant-Pirate Encounters:</strong> {merchantPirateEncounters}</div>
 					<div><strong>Patrol-Pirate Encounters:</strong> {patrolPirateEncounters}</div>
 					<div><strong>Total Pirate Encounters:</strong> {totalPirateEncounters}</div>
-					<div><strong>Active Ships:</strong> {ships.length}</div>
-					<div><strong>Merchants:</strong> {shipCounts.merchants}</div>
-					<div><strong>Pirates:</strong> {shipCounts.pirates}</div>
-					<div><strong>Security:</strong> {shipCounts.patrols}</div>
+
 					<div><strong>% Chance of Merchants Encountering Pirates:</strong> {merchantEncounterChance}%</div>
 				</div>
 			</div>
@@ -115,9 +118,9 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 			</Button>
       */}
 
-			<Button variant="primary" onClick={() => modifySimState({ type: 'view-run-list', run: runID })}>
-        View All Runs
-			</Button>
+		<Button variant="primary" onClick={() => modifySimState({ type: 'view-run-list', run: runID })}>
+        	View All Runs
+		</Button>
 
       {/* Commented out because it's moving to the main screen when two runs are selected already */}
       {/* <FileInputDisplay buttonLabel="Compare Simulations" buttonClassName="btn btn-outline-light" /> */}

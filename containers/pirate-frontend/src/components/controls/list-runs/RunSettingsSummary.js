@@ -8,18 +8,27 @@ export default function RunSettingsSummary({ runSettings, regions, warning }) {
   // Compute risk level
   const computeRisk = () => {
     const risk = runSettings.maxPirates - runSettings.maxPatrols;
-    if (risk > 5) return 'High';
-    if (risk > 0) return 'Medium';
+    if (risk > 6) return 'High';
+    if (risk >= 3) return 'Medium';
     return 'Low';
   };
 
   // Pull stats safely (for completed runs)
   const stats = runSettings?.currentState?.stats ?? {};
 
+  const shipCounts = stats.shipCounts ?? {};
+  const ships = stats.ships ?? [];
+
   const captures = Number(stats.captures ?? 0);
   const rescues = Number(stats.rescues ?? 0);
   const sinks = Number(stats.sinks ?? 0);
+
   const totalPirateEncounters = Number(stats.totalPirateEncounters ?? 0);
+  const merchantPirateEncounters = Number(stats.merchantPirateEncounters ?? 0);
+  const patrolPirateEncounters = Number(stats.patrolPirateEncounters ?? 0);
+  const evasions = Number(stats.evasions ?? 0);
+
+  const merchantEncounterChance = Number(stats.merchantEncounterChance ?? 0);
 
   return (
     <div className="d-flex flex-column gap-2">
@@ -30,6 +39,10 @@ export default function RunSettingsSummary({ runSettings, regions, warning }) {
           { label: 'Start', value: `${startHour}:${startMinute}` },
           { label: 'Duration', value: `${runSettings.duration} Hrs` },
           { label: 'Region', value: region?.name ?? runSettings.regionId },
+          { label: 'Merchants / Day', value: runSettings.maxMerchants },
+          { label: 'Pirates / Day', value: runSettings.maxPirates },
+          { label: 'Patrols', value: runSettings.maxPatrols },
+          { label: 'Risk Level', value: computeRisk() },
         ].map(({ label, value }) => (
           <div key={label} className="border border-secondary rounded px-2 py-1 small">
             <span className="text-secondary me-1">{label}:</span>
@@ -38,50 +51,31 @@ export default function RunSettingsSummary({ runSettings, regions, warning }) {
         ))}
       </div>
 
-      {/* Daily Stats */}
-      <div className="d-flex gap-2">
-        {[
-          { label: 'Merchants / Day', value: runSettings.maxMerchants, color: 'text-info' },
-          { label: 'Pirates / Day',   value: runSettings.maxPirates,   color: 'text-danger' },
-          { label: 'Patrols',         value: runSettings.maxPatrols,   color: 'text-success' },
-          { label: 'Risk Level',      value: computeRisk(),            color: 'text-warning' },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="border border-secondary rounded px-2 py-1 small flex-fill text-center">
-            <div className={`${color} fw-bold`}>{value}</div>
-            <div className="text-secondary">{label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Totals Over Run */}
-      {/*}
-      <div className="d-flex gap-2">
-        <div className="border border-secondary rounded px-2 py-1 small flex-fill text-center">
-          <div className="fw-bold text-light">
-            {runSettings.duration * runSettings.maxMerchants}
-          </div>
-          <div className="text-secondary">Total Merchants</div>
-        </div>
-
-        <div className="border border-secondary rounded px-2 py-1 small flex-fill text-center">
-          <div className="fw-bold text-light">
-            {runSettings.duration * runSettings.maxPirates}
-          </div>
-          <div className="text-secondary">Total Pirates</div>
-        </div>
-      </div>
-      */}
-
-      {/* Simulation Results (NEW) */}
-      <div className="d-flex gap-2">
-        {[
+      {/* Simulation Summary */}
+      <div className="d-flex gap-2 flex-wrap">
+        {[          
+          // Outcomes
           { label: 'Captures', value: captures, color: 'text-danger' },
           { label: 'Rescues', value: rescues, color: 'text-success' },
           { label: 'Sinks', value: sinks, color: 'text-warning' },
+
+          // Interactions
           { label: 'Encounters', value: totalPirateEncounters, color: 'text-info' },
+          { label: 'M-P Enc', value: merchantPirateEncounters },
+          { label: 'P-P Enc', value: patrolPirateEncounters },
+          { label: 'Evasions', value: evasions },
+
+          // Rate
+          { label: 'Encounter %', value: `${merchantEncounterChance}%`, color: 'text-warning' },
         ].map(({ label, value, color }) => (
-          <div key={label} className="border border-secondary rounded px-2 py-1 small flex-fill text-center">
-            <div className={`${color} fw-bold`}>{value}</div>
+          <div
+            key={label}
+            className="border border-secondary rounded px-2 py-1 small text-center"
+            style={{ minWidth: '90px' }}
+          >
+            <div className={`fw-bold ${color ?? 'text-light'}`}>
+              {value}
+            </div>
             <div className="text-secondary">{label}</div>
           </div>
         ))}
