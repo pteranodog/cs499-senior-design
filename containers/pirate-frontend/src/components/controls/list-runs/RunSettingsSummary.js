@@ -51,26 +51,9 @@ export default function RunSettingsSummary({ runSettings, regions, warning }) {
         ))}
       </div>
 
-      {/* Daily Stats */}
-      <div className="d-flex gap-2">
-        {[
-          {/*}
-          { label: 'Merchants / Day', value: runSettings.maxMerchants, color: 'text-info' },
-          { label: 'Pirates / Day',   value: runSettings.maxPirates,   color: 'text-danger' },
-          { label: 'Patrols',         value: runSettings.maxPatrols,   color: 'text-success' },
-          { label: 'Risk Level',      value: computeRisk(),            color: 'text-warning' },
-           */}
-        ].map(({ label, value, color }) => (
-          <div key={label} className="border border-secondary rounded px-2 py-1 small flex-fill text-center">
-            <div className={`${color} fw-bold`}>{value}</div>
-            <div className="text-secondary">{label}</div>
-          </div>
-        ))}
-      </div>
-
       {/* Simulation Summary */}
       <div className="d-flex gap-2 flex-wrap">
-        {[
+        {[          
           // Outcomes
           { label: 'Captures', value: captures, color: 'text-danger' },
           { label: 'Rescues', value: rescues, color: 'text-success' },
