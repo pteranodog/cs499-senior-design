@@ -71,7 +71,11 @@ export function aStar(graph, startPos, endPos, shipType, pathId) {
       // Edge cost: euclidean distance between nodes + scaled danger score
       const edgeDist   = euclidean(currentNode.cartesian, neighbor.cartesian);
       const edgeDanger = dangerWeight * neighbor.dangerScore * edgeDist; // scale danger by distance
-      const edgeCost   = edgeDist + edgeDanger + (shoreWeight * neighbor.shoreScore * edgeDist);
+      // const edgeCost   = edgeDist + edgeDanger + (shoreWeight * neighbor.shoreScore * edgeDist);
+      const edgeCost = edgeDist 
+      + (dangerWeight * neighbor.dangerScore * edgeDist)
+      + (shoreWeight * neighbor.shoreScore * edgeDist)
+      + (shoreWeight * neighbor.edgeScore * edgeDist); // NOTE: resuing shoreweight for now, might need to make different to break ties
 
       const tentativeG = gCost[current.id] + edgeCost;
 

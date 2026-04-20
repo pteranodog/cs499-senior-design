@@ -103,23 +103,29 @@ function defaultRegions() {
   let guineaPoints = {};
   guineaPoints["g1"] = newPort("Lagos", [6.45, 3.39], 0.15, [], [], 0.15, true);
   guineaPoints["g2"] = newPort("Takoradi", [4.89, -1.75], 0.2, [], [], 0.2, true);
-  guineaPoints["g3"] = newPort("Douala", [4.05, 9.70], 0.05, [], [], 0.05, true);
-  guineaPoints["g4"] = newPort("Port Harcourt", [4.5, 7.0], 0.2, [], [], 0.2, false);
+  guineaPoints["g3"] = newPort("Douala", [3.8, 9.5], 0.05, [], [], 0.05, true);
+  guineaPoints["g4"] = newPort("Port Harcourt", [4.4, 7.1], 0.2, [], [], 0.2, true);
   guineaPoints["g5"] = newPort("leftGuinea", [4.4, -4.0], 0.4, [], [], 0.4, false);
 
-  guineaPoints["g6"] = newPirateCove("Niger Delta Coves", [4.90, 6.95], 0.01);
-  guineaPoints["g7"] = newPirateCove("Brass Approaches", [4.32, 6.24], 0.01);
-  guineaPoints["g10"] = newPirateCove("Bakassi Peninsula", [4.58, 8.77], 0.01);
+  guineaPoints["g6"] = newPirateCove("Niger Delta Coves", [4.6, 8.1], 0.01);
+  guineaPoints["g7"] = newPirateCove("Brass Approaches", [4.3, 6.2], 0.01);
+  guineaPoints["g10"] = newPirateCove("Bakassi Peninsula", [4.4, 8.8], 0.01);
   guineaPoints["g8"] = newBase("Tema Naval Base", [5.63, -0.02], 0);
-  guineaPoints["g9"] = newBase("Nigerian Navy Forward Base", [6.42, 5.62], 0);
+  guineaPoints["g9"] = newBase("Nigerian Navy Forward Base", [5.9, 4.9], 0);
 
   let malaccaPoints = {};
-  malaccaPoints["m1"] = newPort("Singapore", [1.26, 103.84], 0.01, [], []);
-  malaccaPoints["m2"] = newPort("Port Klang", [3.00, 101.40], 0.01, [], []);
-  malaccaPoints["m3"] = newPort("Belawan", [3.78, 98.69], 0.01, [], []);
-  malaccaPoints["m4"] = newPirateCove("Riau Archipelago", [1.01, 104.46], 0.01);
-  malaccaPoints["m5"] = newPirateCove("Northern Strait Inlets", [5.67, 100.95], 0.01);
-  malaccaPoints["m8"] = newPirateCove("Anambas Islands", [3.22, 106.25], 0.01);
+  malaccaPoints["m1"] = newPort("Singapore", [1.26, 103.84], 0.1, [], [], 0.1);
+  malaccaPoints["m2"] = newPort("Port Klang", [3.06, 101.29], 0.05, [], [], 0.05);
+  malaccaPoints["m3"] = newPort("Belawan", [3.80, 98.70], 0.05, [], [], 0.05);
+  
+  malaccaPoints["m9"] = newPort("leftMalaccaStrait", [5.53, 97.02], 0.3, [], [], 0.35);
+  malaccaPoints["m10"] = newPort("topMalaccaStrait", [6.87, 103.38], 0.1, [], [], 0.0);
+  malaccaPoints["m11"] = newPort("rightMalaccaStrait", [5.0, 105.94], 0.3, [], [], 0.35);
+  malaccaPoints["m12"] = newPort("lowerRightMalaccaStrait", [0.31, 106.06], 0.1, [], [], 0.1);
+
+  malaccaPoints["m4"] = newPirateCove("Riau Archipelago", [1.0, 104.41], 0.01);
+  malaccaPoints["m5"] = newPirateCove("Northern Strait Inlets", [5.65, 100.30], 0.01);
+  malaccaPoints["m8"] = newPirateCove("Anambas Islands", [3.13, 105.89], 0.01);
   malaccaPoints["m6"] = newBase("Changi Naval Base", [1.31, 104.03], 0);
   malaccaPoints["m7"] = newBase("Lumut Naval Base", [4.23, 100.57], 0);
 
@@ -177,9 +183,9 @@ function defaultRegions() {
   suluCelebesPoints["s7"] = newBase("Indonesian North Sulawesi", [1.47, 124.83], 0);
 
   let regions = {};
-  regions["r1"] = newRegion(boundsCenter(regionBoundingBoxes["r1"]), somaliaPoints, "Somalian Coast", 1200, 1200, 6);
-  regions["r2"] = newRegion(boundsCenter(regionBoundingBoxes["r2"]), guineaPoints, "Gulf of Guinea", 1200, 1200, 6);
-  regions["r3"] = newRegion(boundsCenter(regionBoundingBoxes["r3"]), malaccaPoints, "Malacca Strait", 1100, 1100, 7);
+  regions["r1"] = newRegion(boundsCenter(regionBoundingBoxes["r1"]), somaliaPoints, "Somalian Coast", 1200, 1200, 6, 2, 60, 100, 100);
+  regions["r2"] = newRegion(boundsCenter(regionBoundingBoxes["r2"]), guineaPoints, "Gulf of Guinea", 1200, 1200, 6, 2, 70, 130, 130);
+  regions["r3"] = newRegion(boundsCenter(regionBoundingBoxes["r3"]), malaccaPoints, "Malacca Strait", 1100, 1100, 7, 1, 90, 150, 150);
   regions["r4"] = newRegion(boundsCenter(regionBoundingBoxes["r4"]), caribbeanPoints, "Caribbean Sea", 1300, 1300, 6);
   regions["r5"] = newRegion(boundsCenter(regionBoundingBoxes["r5"]), redSeaPoints, "Red Sea", 1100, 1100, 6);
   regions["r6"] = newRegion(boundsCenter(regionBoundingBoxes["r6"]), mozambiquePoints, "Mozambique Channel", 1200, 1200, 6);

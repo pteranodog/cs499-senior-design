@@ -195,7 +195,7 @@ function updateShipState(ship, shipsByID, region) {
           updatedShip.maxSpeed /= 1.4; 
         }
 
-        ship.respondingToDistress = false;
+        updatedShip.respondingToDistress = false;
         updatedShip.state = 1; // forget it and go back to idling
         updatedShip.currentTargetId = null;
 
@@ -361,7 +361,7 @@ export function choosePirateDestination(ship, region, seed, step, index) {
   const points = [];
 
   let attempts = 0;
-  while (points.length < n && attempts < 100) { // limit to 100 tries
+  while (points.length < n && attempts < region.piratePointAttempts) { 
     attempts++;
 
     // choose random latlon in the region bounds
@@ -425,7 +425,7 @@ export function choosePatrolDestination(homeBase, ship, region, seed, step, inde
   const points = [];
 
   let attempts = 0;
-  while (points.length < n && attempts < 100) { // limit to 60 tries
+  while (points.length < n && attempts < region.piratePointAttempts) { 
     attempts++;
 
     // choose random latlon in the region bounds
