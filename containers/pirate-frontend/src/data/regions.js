@@ -65,7 +65,7 @@ const regionBoundingBoxes = {
   r1: { name: "Somalian Coast", top: 14.0, left: 38.0, right: 57.0, bottom: -8.0 },
   r2: { name: "Gulf of Guinea", top: 8.0, left: -4.0, right: 12.0, bottom: 2.0 },
   r3: { name: "Malacca Strait", top: 7.0, left: 97.0, right: 106.0, bottom: 0.0 },
-  r4: { name: "Caribbean Sea", top: 22.0, left: -82.0, right: -66.0, bottom: 8.0 },
+  r4: { name: "Caribbean Sea", top: 22.0, left: -83.5, right: -66.0, bottom: 8.0 },
   r5: { name: "Red Sea", top: 23.0, left: 35.0, right: 47.0, bottom: 10.0 },
   r6: { name: "Mozambique Channel", top: -10.0, left: 31.0, right: 51.0, bottom: -28.0 },
   r7: { name: "South China Sea", top: 24.0, left: 105.0, right: 122.0, bottom: 8.0 },
@@ -130,13 +130,21 @@ function defaultRegions() {
   malaccaPoints["m7"] = newBase("Lumut Naval Base", [4.23, 100.57], 0);
 
   let caribbeanPoints = {};
-  caribbeanPoints["c1"] = newPort("Kingston", [17.96, -76.79], 0.01, [], []);
-  caribbeanPoints["c2"] = newPort("Santo Domingo", [18.47, -69.88], 0.01, [], []);
-  caribbeanPoints["c3"] = newPort("Colon", [9.36, -79.90], 0.01, [], []);
+  caribbeanPoints["c1"] = newPort("Kingston", [17.96, -76.79], 0.05, [], [], 0.025);
+  caribbeanPoints["c2"] = newPort("Santo Domingo", [18.47, -69.88], 0.05, [], [], 0.025);
+  caribbeanPoints["c3"] = newPort("Colon", [9.36, -79.90], 0.30, [], [], 0.10);
+
+  caribbeanPoints["c10"] = newPort("upperMidCaribbean", [21.74, -74.44], 0.2, [], [], 0.35);
+  caribbeanPoints["c11"] = newPort("leftCaribbean", [20.45, -83.37], 0.2, [], [], 0.25);
+  caribbeanPoints["c12"] = newPort("Puerto De Mayagüez", [18.22, -67.18], 0.3, [], [], 0.25);
+  
+
+
   caribbeanPoints["c4"] = newPirateCove("Windward Passage", [19.90, -74.85], 0.01);
   caribbeanPoints["c5"] = newPirateCove("Mona Passage", [18.35, -67.85], 0.01);
   caribbeanPoints["c8"] = newPirateCove("Mosquito Coast", [14.99, -83.37], 0.01);
   caribbeanPoints["c9"] = newPirateCove("Los Roques", [11.85, -66.76], 0.01);
+
   caribbeanPoints["c6"] = newBase("Guantanamo Bay", [19.91, -75.16], 0);
   caribbeanPoints["c7"] = newBase("Aruba Coast Guard", [12.52, -70.03], 0);
 
@@ -186,7 +194,7 @@ function defaultRegions() {
   regions["r1"] = newRegion(boundsCenter(regionBoundingBoxes["r1"]), somaliaPoints, "Somalian Coast", 1200, 1200, 6, 2, 60, 100, 100);
   regions["r2"] = newRegion(boundsCenter(regionBoundingBoxes["r2"]), guineaPoints, "Gulf of Guinea", 1200, 1200, 6, 2, 70, 130, 130);
   regions["r3"] = newRegion(boundsCenter(regionBoundingBoxes["r3"]), malaccaPoints, "Malacca Strait", 1100, 1100, 7, 1, 90, 150, 150);
-  regions["r4"] = newRegion(boundsCenter(regionBoundingBoxes["r4"]), caribbeanPoints, "Caribbean Sea", 1300, 1300, 6);
+  regions["r4"] = newRegion(boundsCenter(regionBoundingBoxes["r4"]), caribbeanPoints, "Caribbean Sea", 1300, 1300, 6, 2, 70, 110, 110);
   regions["r5"] = newRegion(boundsCenter(regionBoundingBoxes["r5"]), redSeaPoints, "Red Sea", 1100, 1100, 6);
   regions["r6"] = newRegion(boundsCenter(regionBoundingBoxes["r6"]), mozambiquePoints, "Mozambique Channel", 1200, 1200, 6);
   regions["r7"] = newRegion(boundsCenter(regionBoundingBoxes["r7"]), southChinaSeaPoints, "South China Sea", 1500, 1500, 5);
