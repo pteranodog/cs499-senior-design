@@ -1,4 +1,5 @@
 import { Marker, Tooltip } from 'react-leaflet';
+import L from 'leaflet';
 import { cartesianToLatLng } from '../../utils/coords.js';
 
 const EVENT_COLORS = {
