@@ -2,6 +2,7 @@ import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import FileInputDisplay from '../../../utils/fileInputDisplay';
 import { exportRunAsJson, exportRunAsCsv, formatClock, formatStatus } from '../../../utils/fileInputOutput';
+import EncounterList from './EncounterList';
 
 export default function SimEndControls({ simState, modifySimState, runID }) {
 	const run = typeof runID === 'number'
@@ -86,6 +87,11 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 					<Button variant="success" onClick={() => exportRunAsJson(run, region)}>Export JSON</Button>
 					<Button variant="success" onClick={() => exportRunAsCsv(run, region)}>Export CSV</Button>
 				</ButtonGroup>
+			</div>
+
+			<div className="border border-secondary rounded p-3">
+				<h6 className="mb-2">Encounter Events</h6>
+				<EncounterList events={run?.currentState?.encounterEvents} />
 			</div>
 
       {/*<Button variant="primary" onClick={() => modifySimState({ type: 'replay-run', index: runID, endTime: run.elapsedTimeEnd })}>
