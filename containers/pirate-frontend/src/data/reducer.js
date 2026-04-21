@@ -16,6 +16,8 @@ import { choosePirateDestination, choosePatrolDestination } from './stateFunctio
 
 import { shouldSpawn, perDaytoProbability } from '../utils/spawnRates.js';
 
+const MINUTES_PER_DAY = 24 * 60;
+
 function simStateReducer(state, action) {
   switch (action.type) {
     case 'initialize':
@@ -42,7 +44,13 @@ function simStateReducer(state, action) {
     case 'start-run':
       return startRun(state, action.index, action.startPaused);
     case 'modify-run':
-      return { ...state, runs: state.runs.map((run, i) => i === action.index ? { ...run, [action.setting]: action.value } : run) };
+      return {
+        ...state,
+        runs: state.runs.map((run, i) => {
+          if (i !== action.index) return run;
+          return updateRunSetting(run, action.setting, action.value);
+        })
+      };
     case 'delete-run':
       return deleteRun(state, action.index);
     case 'duplicate-run':
@@ -71,6 +79,49 @@ function simStateReducer(state, action) {
       console.warn('Action type "' + action.type + '" not found.');
       return state;
   }
+}
+
+function normalizeStartTime(hourValue, minuteValue) {
+  const hour = Number(hourValue);
+  const minute = Number(minuteValue);
+
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) {
+    return {
+      startHour: hourValue,
+      startMinute: minuteValue,
+    };
+  }
+
+  const totalMinutes = ((hour * 60 + minute) % MINUTES_PER_DAY + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+
+  return {
+    startHour: Math.floor(totalMinutes / 60),
+    startMinute: totalMinutes % 60,
+  };
+}
+
+function updateRunSetting(run, setting, value) {
+  if (setting !== 'startHour' && setting !== 'startMinute') {
+    return { ...run, [setting]: actionValueToStoredValue(value) };
+  }
+
+  if (value === '') {
+    return { ...run, [setting]: value };
+  }
+
+  const nextHour = setting === 'startHour' ? value : run.startHour;
+  const nextMinute = setting === 'startMinute' ? value : run.startMinute;
+  const normalized = normalizeStartTime(nextHour, nextMinute);
+
+  return {
+    ...run,
+    startHour: normalized.startHour,
+    startMinute: normalized.startMinute,
+  };
+}
+
+function actionValueToStoredValue(value) {
+  return value;
 }
 
 function getRunDurationTicks(run) {
