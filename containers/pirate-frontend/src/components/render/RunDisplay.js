@@ -6,8 +6,8 @@ import OceanCurrentArrows from './OceanCurrentArrows.js';
 import EncounterIcons from './EncounterIcons.js';
 import DisplayBadge from './DisplayBadge'
 import { useEffect } from 'react';
-
-
+import { getTimeOfDayInfo } from '../controls/Controls.js';
+import { getMapTheme } from './mapTheme.js';
 
 function getRegionBounds(region) {
   if (region?.bounds) {
@@ -24,12 +24,17 @@ function getRegionBounds(region) {
   ];
 }
 
-const DAY_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const DAY_TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-
 export default function RunDisplay({ simState, run }) {
   const map = useMap();
   const region = simState?.regions?.[run?.regionId];
+  const timeOfDay = getTimeOfDayInfo({
+    regionName: region?.name,
+    startHour: run?.startHour,
+    startMinute: run?.startMinute,
+    elapsedTicks: run?.elapsedTime || 0,
+    ticksPerMinute: run?.ticksPerMinute || 1,
+  }).label;
+  const mapTheme = getMapTheme(timeOfDay);
 
   //if (!run || !simState || !region) return null;
 
@@ -72,6 +77,20 @@ export default function RunDisplay({ simState, run }) {
     };
   }, [region, map, run?.uuid]);
 
+  useEffect(() => {
+    const container = map.getContainer();
+    const previousFilter = container.style.filter;
+    const previousBackground = container.style.backgroundColor;
+
+    container.style.filter = mapTheme.mapFilter;
+    container.style.backgroundColor = mapTheme.isNight ? '#081120' : '#dbeeff';
+
+    return () => {
+      container.style.filter = previousFilter;
+      container.style.backgroundColor = previousBackground;
+    };
+  }, [map, mapTheme.isNight, mapTheme.mapFilter]);
+
   //if (!region) return null;
   if (!run || !simState || !region) return null;
 
@@ -81,7 +100,7 @@ export default function RunDisplay({ simState, run }) {
 
   return (
     <>
-      <TileLayer attribution={DAY_TILE_ATTRIBUTION} url={DAY_TILE_URL} />
+      <TileLayer attribution={mapTheme.attribution} url={mapTheme.tileUrl} />
       <PointIcons pointList={pointList} />
       <ShipIcons shipList={shipList} regionCenter={region.center} />
       <EncounterIcons events={encounterEvents} regionCenter={region.center} />
