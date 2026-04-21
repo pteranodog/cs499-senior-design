@@ -260,7 +260,9 @@ function newRun(name, runConfig, regionId) {
         piratesSpawned: 0
       },
       // Ships is an ID-indexed object of all active Ship objects.
-      ships: {}
+      ships: {},
+      // New: List of encounter events (combat, evasion, sink, etc.)
+      encounterEvents: []
     }
   }
   return {...runConfig, ...run};

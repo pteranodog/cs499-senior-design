@@ -3,6 +3,7 @@ import { cartesianToLatLng } from '../../utils/coords.js'; // temporary
 import PointIcons from './PointIcons.js';
 import ShipIcons from './ShipIcons.js';
 import OceanCurrentArrows from './OceanCurrentArrows.js';
+import EncounterIcons from './EncounterIcons.js';
 import DisplayBadge from './DisplayBadge'
 import { useEffect } from 'react';
 
@@ -76,12 +77,14 @@ export default function RunDisplay({ simState, run }) {
 
   const pointList = Object.values(region.points);
   const shipList = Object.values(run?.currentState?.ships || {});
+  const encounterEvents = run?.currentState?.encounterEvents || [];
 
   return (
     <>
       <TileLayer attribution={DAY_TILE_ATTRIBUTION} url={DAY_TILE_URL} />
       <PointIcons pointList={pointList} />
       <ShipIcons shipList={shipList} regionCenter={region.center} />
+      <EncounterIcons events={encounterEvents} regionCenter={region.center} />
       <OceanCurrentArrows regionBounds={region.bounds} />
 
       {/* TEMPORARY: render patrol paths */}
@@ -99,7 +102,7 @@ export default function RunDisplay({ simState, run }) {
           });
           return <Polyline key={i} positions={positions} pathOptions={{ color: 'cyan', weight: 1, opacity: 0.5 }} />;
         })
-}
+      }
 
       <DisplayBadge simState={simState} />
 

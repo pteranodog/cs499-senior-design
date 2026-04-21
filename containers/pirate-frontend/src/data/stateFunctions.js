@@ -739,6 +739,7 @@ function updateShipMovement(ship, shipsById, timeStep, region) {
 const pathIdRef = { value: 10000 };
 
 function step(run, regions, timeStep = 1) {
+
   let shipsById = { ...run.currentState.ships };
   let encounterTotals = {
     merchantPirateEncounters: 0,
@@ -751,8 +752,8 @@ function step(run, regions, timeStep = 1) {
     sinks: 0,
     rescues: 0
   };
-
-  
+  // New: List of encounter events (copied from previous state)
+  let encounterEvents = Array.isArray(run.currentState.encounterEvents) ? [...run.currentState.encounterEvents] : [];
 
   // Get navgraph for this run's region (may be undefined for non-Somalia regions)
   const region   = regions?.[run.regionId];
@@ -800,6 +801,7 @@ function step(run, regions, timeStep = 1) {
     updatedShip = maybeRepath(updatedShip, navgraph, pathIdRef);
     shipsById[id] = updatedShip;
 
+
     // Check if this ship should enter combat with anyone
     const combatResult = checkForCombatScenario(updatedShip, id, shipsById);
     shipsById = combatResult.shipsById;
@@ -812,6 +814,18 @@ function step(run, regions, timeStep = 1) {
         totalPirateEncounters:
           encounterTotals.totalPirateEncounters + combatResult.encounterIncrements.totalPirateEncounters,
       };
+      // New: Save encounter event (combat start)
+      const shipA = updatedShip;
+      const shipB = shipsById[combatResult.shipsById[id]?.currentEnemyId];
+      if (shipA && shipB) {
+        encounterEvents.push({
+          type: 'combat',
+          time: run.elapsedTime,
+          pos: [...shipA.pos],
+          shipAType: shipA.type,
+          shipBType: shipB.type,
+        });
+      }
     }
     updatedShip = shipsById[id];
 
@@ -819,6 +833,18 @@ function step(run, regions, timeStep = 1) {
     const combatOutcome = advanceCombat(updatedShip, id, shipsById, run.seed, run.elapsedTime);
     shipsById = combatOutcome.shipsById;
     if (combatOutcome.liveCountIncrements) {
+      // New: Save outcome event(s)
+      const eventTypes = Object.keys(combatOutcome.liveCountIncrements);
+      eventTypes.forEach(type => {
+        if (combatOutcome.liveCountIncrements[type] > 0) {
+          encounterEvents.push({
+            type,
+            time: run.elapsedTime,
+            pos: [...updatedShip.pos],
+            shipType: updatedShip.type,
+          });
+        }
+      });
       liveCountTotals = {
         captures: liveCountTotals.captures + (combatOutcome.liveCountIncrements.captures ?? 0),
         evasions: liveCountTotals.evasions + (combatOutcome.liveCountIncrements.evasions ?? 0),
@@ -871,7 +897,8 @@ function step(run, regions, timeStep = 1) {
         totalPirateEncounters:
           (run.currentState?.stats?.totalPirateEncounters ?? 0) + encounterTotals.totalPirateEncounters,
       },
-      ships: shipsById
+      ships: shipsById,
+      encounterEvents
     }
   };
 }
