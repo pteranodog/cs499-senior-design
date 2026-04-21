@@ -28,8 +28,6 @@ export default function RunSettingsSummary({ runSettings, regions, warning }) {
   const patrolPirateEncounters = Number(stats.patrolPirateEncounters ?? 0);
   const evasions = Number(stats.evasions ?? 0);
 
-  const merchantEncounterChance = Number(stats.merchantEncounterChance ?? 0);
-
   return (
     <div className="d-flex flex-column gap-2">
 
@@ -64,9 +62,6 @@ export default function RunSettingsSummary({ runSettings, regions, warning }) {
           { label: 'M-P Enc', value: merchantPirateEncounters },
           { label: 'P-P Enc', value: patrolPirateEncounters },
           { label: 'Evasions', value: evasions },
-
-          // Rate
-          { label: 'Encounter %', value: `${merchantEncounterChance}%`, color: 'text-warning' },
         ].map(({ label, value, color }) => (
           <div
             key={label}

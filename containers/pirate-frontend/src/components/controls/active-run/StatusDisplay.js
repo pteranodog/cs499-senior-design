@@ -1,4 +1,4 @@
-import { formatHourMinute, getTimeOfDayInfo } from '../Controls';
+import { formatHourMinute, getTimeOfDayInfo } from '../../../utils/timeOfDay.js';
 
 export default function StatusDisplay({ simState, runID, elapsedTicks = 0, ticksPerMinute = 1 }) {
   const run = typeof runID === 'number'

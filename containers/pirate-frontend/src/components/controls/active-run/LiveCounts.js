@@ -33,14 +33,14 @@ export default function LiveCounts({ simState, runID }) {
                 View Live Counts
             </Dropdown.Toggle>
             <Dropdown.Menu>
-                <Dropdown.Item disabled>Captures: {captures}</Dropdown.Item>
-                <Dropdown.Item disabled>Rescues: {rescues}</Dropdown.Item>
-                <Dropdown.Item disabled>Sinks: {sinks}</Dropdown.Item>
-                <Dropdown.Item disabled>Merchant-Evasions: {evasions}</Dropdown.Item>
-                <Dropdown.Item disabled>Active Ships: {ships.length}</Dropdown.Item>
-                <Dropdown.Item disabled>Merchant-Pirate Encounters: {merchantPirateEncounters}</Dropdown.Item>
-                <Dropdown.Item disabled>Patrol-Pirate Encounters: {patrolPirateEncounters}</Dropdown.Item>
-                <Dropdown.Item disabled>Total Pirate Encounters: {totalPirateEncounters}</Dropdown.Item>
+                <Dropdown.ItemText className="text-black">Captures: {captures}</Dropdown.ItemText>
+                <Dropdown.ItemText className="text-black">Rescues: {rescues}</Dropdown.ItemText>
+                <Dropdown.ItemText className="text-black">Pirates Sunk: {sinks}</Dropdown.ItemText>
+                <Dropdown.ItemText className="text-black">Merchant-Evasions: {evasions}</Dropdown.ItemText>
+                <Dropdown.ItemText className="text-black">Active Ships: {ships.length}</Dropdown.ItemText>
+                <Dropdown.ItemText className="text-black">Merchant-Pirate Encounters: {merchantPirateEncounters}</Dropdown.ItemText>
+                <Dropdown.ItemText className="text-black">Patrol-Pirate Encounters: {patrolPirateEncounters}</Dropdown.ItemText>
+                <Dropdown.ItemText className="text-black">Total Pirate Encounters: {totalPirateEncounters}</Dropdown.ItemText>
             </Dropdown.Menu>
         </Dropdown>
     );
