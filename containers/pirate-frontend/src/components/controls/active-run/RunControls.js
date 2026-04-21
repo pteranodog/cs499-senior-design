@@ -41,7 +41,12 @@ export default function RunControls({ simState, modifySimState, runID }) {
 
     return (
         <>
-            <StatusDisplay simState={simState} runID={runID} />
+            <StatusDisplay
+                simState={simState}
+                runID={runID}
+                elapsedTicks={run.elapsedTime || 0}
+                ticksPerMinute={ticksPerMinute}
+            />
             <BottomRightButtons simState={simState} modifySimState={modifySimState} runID={runID} />
             <Legend />
             <TimeViewer elapsedTicks={run.elapsedTime || 0} ticksPerMinute={ticksPerMinute} />

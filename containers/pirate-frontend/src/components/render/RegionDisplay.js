@@ -2,6 +2,7 @@ import { TileLayer, useMap, Rectangle } from 'react-leaflet';
 import PointIcons from './PointIcons.js';
 import DisplayBadge from './DisplayBadge';
 import { useEffect } from 'react';
+import { getMapTheme } from './mapTheme.js';
 
 function getRegionBounds(region) {
   if (region?.bounds) {
@@ -19,9 +20,8 @@ function getRegionBounds(region) {
 }
 
 export default function RegionDisplay({ simState, region }) {
-  const DAY_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-  const DAY_TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
   const map = useMap();
+  const mapTheme = getMapTheme('Day');
 
   useEffect(() => {
     if (!region) return;
@@ -62,9 +62,23 @@ export default function RegionDisplay({ simState, region }) {
     };
   }, [region, map]);
 
+  useEffect(() => {
+    const container = map.getContainer();
+    const previousFilter = container.style.filter;
+    const previousBackground = container.style.backgroundColor;
+
+    container.style.filter = mapTheme.mapFilter;
+    container.style.backgroundColor = '#dbeeff';
+
+    return () => {
+      container.style.filter = previousFilter;
+      container.style.backgroundColor = previousBackground;
+    };
+  }, [map, mapTheme.mapFilter]);
+
   return (
     <>
-      <TileLayer attribution={DAY_TILE_ATTRIBUTION} url={DAY_TILE_URL} />
+      <TileLayer attribution={mapTheme.attribution} url={mapTheme.tileUrl} />
       <PointIcons pointList={Object.values(region.points)} />
       <Rectangle
         bounds={[

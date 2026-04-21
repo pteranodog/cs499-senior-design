@@ -1,23 +1,6 @@
-function formatSimulatedClock(startHour, startMinute) {
-  const hour = Number(startHour);
-  const minute = Number(startMinute);
+import { formatHourMinute, getTimeOfDayInfo } from '../Controls';
 
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) {
-    return '00:00';
-  }
-
-  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-}
-
-function getTimeOfDay(startHour) {
-  const hour = Number(startHour);
-  if (!Number.isFinite(hour)) {
-    return 'Day';
-  }
-  return hour >= 6 && hour < 18 ? 'Day' : 'Night';
-}
-
-export default function StatusDisplay({ simState, runID }) {
+export default function StatusDisplay({ simState, runID, elapsedTicks = 0, ticksPerMinute = 1 }) {
   const run = typeof runID === 'number'
     ? simState?.runs?.[runID]
     : simState?.runs?.find((candidate) => candidate?.uuid === runID);
@@ -27,10 +10,18 @@ export default function StatusDisplay({ simState, runID }) {
   }
 
   const region = simState?.regions?.[run.regionId];
-  const timeOfDay = getTimeOfDay(run.startHour);
-  const backgroundColor = timeOfDay === 'Day' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(33, 37, 41, 0.92)';
-  const textColor = timeOfDay === 'Day' ? '#212529' : '#f8f9fa';
-  const secondaryColor = timeOfDay === 'Day' ? '#6c757d' : 'rgba(248, 249, 250, 0.75)';
+  const startTime = formatHourMinute(run.startHour, run.startMinute);
+  const currentTimeInfo = getTimeOfDayInfo({
+    regionName: region?.name,
+    startHour: run.startHour,
+    startMinute: run.startMinute,
+    elapsedTicks,
+    ticksPerMinute,
+  });
+  const timeOfDay = currentTimeInfo.label;
+  const backgroundColor = 'rgba(255, 255, 255, 0.92)';
+  const textColor = '#212529';
+  const secondaryColor = '#6c757d';
 
   return (
     <div
@@ -62,7 +53,8 @@ export default function StatusDisplay({ simState, runID }) {
 
       <div style={{ marginTop: '0.35rem' }}>
         <div><strong>Sim Name:</strong> {run.name || 'n/a'}</div>
-        <div><strong>Sim Clock:</strong> {formatSimulatedClock(run.startHour, run.startMinute)}</div>
+        <div><strong>Start Time:</strong> {startTime}</div>
+        <div><strong>Sim Clock:</strong> {currentTimeInfo.clockLabel}</div>
         <div><strong>Mode:</strong> {timeOfDay}</div>
         <div><strong>Duration:</strong> {run.duration || 0} hours</div>
         <div><strong>Region:</strong> {region?.name || 'n/a'}</div>
