@@ -1,4 +1,4 @@
-import { getTimeOfDayInfo } from '../controls/Controls.js';
+import { getTimeOfDayInfo } from '../../utils/timeOfDay.js';
 
 export default function DisplayBadge({ simState }) {
   const { type, index } = simState.display;

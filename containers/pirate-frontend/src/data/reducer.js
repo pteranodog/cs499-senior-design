@@ -427,6 +427,7 @@ function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null
     maxAngularAcc:   stats.maxAngularAcc,
     maxRotation:     stats.maxRotation,
     // Combat/sim stats
+    baseSightRange: stats.sightRange,
     sightRange: stats.sightRange,
     crewSize:   stats.crewSize,
     armament:   stats.armament,

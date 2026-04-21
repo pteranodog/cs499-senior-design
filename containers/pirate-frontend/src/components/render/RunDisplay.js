@@ -6,7 +6,7 @@ import OceanCurrentArrows from './OceanCurrentArrows.js';
 import EncounterIcons from './EncounterIcons.js';
 import DisplayBadge from './DisplayBadge'
 import { useEffect } from 'react';
-import { getTimeOfDayInfo } from '../controls/Controls.js';
+import { getTimeOfDayInfo } from '../../utils/timeOfDay.js';
 import { getMapTheme } from './mapTheme.js';
 
 function getRegionBounds(region) {
