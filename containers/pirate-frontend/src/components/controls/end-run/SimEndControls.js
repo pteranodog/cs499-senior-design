@@ -81,7 +81,7 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 
 					<div><strong>Captures:</strong> {captures}</div>
 					<div><strong>Rescues:</strong> {rescues}</div>
-					<div><strong>Sinks:</strong> {sinks}</div>
+					<div><strong>Pirates Sunk:</strong> {sinks}</div>
 
 					<div><strong>Merchant Evasions:</strong> {evasions}</div>
 					<div><strong>Merchant-Pirate Encounters:</strong> {merchantPirateEncounters}</div>
@@ -95,7 +95,7 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 				<div className="small d-flex flex-column gap-1">
 					<div><strong>Pirate Success Rate:</strong> {pirateSuccessRate}</div>
 					<div><strong>Merchant Survival Rate:</strong> {merchantSurvivalRate}</div>
-					<div><strong>Patrol Intervention Rate:</strong> {patrolInterventionRate}</div>
+					<div><strong>Security Intervention Rate:</strong> {patrolInterventionRate}</div>
 					<div><strong>Capture-to-Rescue Ratio:</strong> {captureToRescueRatio}</div>
 				</div>
 			</div>
