@@ -21,6 +21,16 @@ const getViewportMetrics = () => {
 function App() {
   const [viewportSize, setViewportSize] = useState(getViewportMetrics);
 
+  useEffect(() => {
+    const updateViewportSize = () => setViewportSize(getViewportMetrics());
+    window.addEventListener('resize', updateViewportSize);
+    window.visualViewport?.addEventListener('resize', updateViewportSize);
+    return () => {
+      window.removeEventListener('resize', updateViewportSize);
+      window.visualViewport?.removeEventListener('resize', updateViewportSize);
+    };
+  }, []);
+
 
 
   const isTooSmall =
