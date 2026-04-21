@@ -19,9 +19,9 @@ export default function StatusDisplay({ simState, runID, elapsedTicks = 0, ticks
     ticksPerMinute,
   });
   const timeOfDay = currentTimeInfo.label;
-  const backgroundColor = timeOfDay === 'Day' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(33, 37, 41, 0.92)';
-  const textColor = timeOfDay === 'Day' ? '#212529' : '#f8f9fa';
-  const secondaryColor = timeOfDay === 'Day' ? '#6c757d' : 'rgba(248, 249, 250, 0.75)';
+  const backgroundColor = 'rgba(255, 255, 255, 0.92)';
+  const textColor = '#212529';
+  const secondaryColor = '#6c757d';
 
   return (
     <div

@@ -5,18 +5,6 @@ import Dropdown from 'react-bootstrap/Dropdown';
 import ConfigDisplay from './ConfigDisplay';
 import EndScreen from './EndScreen';
 
-export const REGION_TIMEZONE_OFFSETS = {
-  'Gulf of Guinea': 0,
-  'Somalian Coast': 3,
-  'Gulf of Aden/Somalian Coast': 3,
-  'Malacca Strait': 7,
-  'Caribbean Sea': -5,
-  'Red Sea': 3,
-  'Mozambique Channel': 3,
-  'South China Sea': 8,
-  'Sulu-Celebes Seas': 8,
-};
-
 export const REGION_DAYLIGHT_WINDOWS = {
   'Somalian Coast': { sunriseHour: 5, sunriseMinute: 45, sunsetHour: 18, sunsetMinute: 15 },
   'Gulf of Aden/Somalian Coast': { sunriseHour: 5, sunriseMinute: 45, sunsetHour: 18, sunsetMinute: 15 },
@@ -52,10 +40,6 @@ export function formatHourMinute(hourValue, minuteValue) {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
-export function getRegionTimeOffset(regionName) {
-  return REGION_TIMEZONE_OFFSETS[regionName] ?? 0;
-}
-
 export function getTimeOfDayFromHour(hourValue) {
   const hour = Number(hourValue);
 
@@ -87,7 +71,6 @@ function toMinuteOfDay(hourValue, minuteValue = 0) {
 }
 
 export function getRunLocalClock({
-  regionName,
   startHour,
   startMinute,
   elapsedTicks = 0,
@@ -103,18 +86,16 @@ export function getRunLocalClock({
       hour: 0,
       minute: 0,
       totalMinutes: 0,
-      timeOffsetHours: getRegionTimeOffset(regionName),
     };
   }
 
   const baseMinutes = hour * 60 + minute + elapsedMinutes;
-  const totalMinutes = normalizeMinuteOfDay(baseMinutes + (getRegionTimeOffset(regionName) * 60));
+  const totalMinutes = normalizeMinuteOfDay(baseMinutes);
 
   return {
     hour: Math.floor(totalMinutes / 60),
     minute: totalMinutes % 60,
     totalMinutes,
-    timeOffsetHours: getRegionTimeOffset(regionName),
   };
 }
 
