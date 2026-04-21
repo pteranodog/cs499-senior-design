@@ -1,4 +1,4 @@
-import { TileLayer, useMap } from 'react-leaflet';
+import { TileLayer, useMap, Rectangle } from 'react-leaflet';
 import PointIcons from './PointIcons.js';
 import DisplayBadge from './DisplayBadge';
 import { useEffect } from 'react';
@@ -66,6 +66,13 @@ export default function RegionDisplay({ simState, region }) {
     <>
       <TileLayer attribution={DAY_TILE_ATTRIBUTION} url={DAY_TILE_URL} />
       <PointIcons pointList={Object.values(region.points)} />
+      <Rectangle
+        bounds={[
+          [region.bounds.bottom, region.bounds.left],
+          [region.bounds.top, region.bounds.right]
+        ]}
+        pathOptions={{ color: 'red', weight: 2, fill: false }}
+      />
       <DisplayBadge simState={simState} />
     </>
   );
