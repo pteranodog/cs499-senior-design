@@ -21,29 +21,7 @@ const getViewportMetrics = () => {
 function App() {
   const [viewportSize, setViewportSize] = useState(getViewportMetrics);
 
-  useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
-
-  useEffect(() => {
-    const updateViewportSize = () => {
-      setViewportSize(getViewportMetrics());
-    };
-
-    window.addEventListener('resize', updateViewportSize);
-    window.visualViewport?.addEventListener('resize', updateViewportSize);
-
-    return () => {
-      window.removeEventListener('resize', updateViewportSize);
-      window.visualViewport?.removeEventListener('resize', updateViewportSize);
-    };
-  }, []);
 
   const isTooSmall =
     viewportSize.effectiveWidth < MIN_SUPPORTED_WIDTH ||
@@ -53,6 +31,42 @@ function App() {
     return (
       <div style={{ textAlign: 'center', marginTop: '50px' }}>
         <div className="marquee">
+      {isTooSmall && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(30,30,30,0.97)',
+            zIndex: 2000,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+          }}
+        >
+          <div className="marquee">
+            <div className="marquee-content">
+              <img src="/patrol-icon.png" alt="Patrol" style={{ height: '50px', marginRight: '40px' }} />
+              <img src="/pirate-icon.png" alt="Pirate" style={{ height: '50px', marginRight: '40px' }} />
+              <img src="/merchant-icon.png" alt="Merchant" style={{ height: '50px' }} />
+            </div>
+          </div>
+          <h1 style={{ color: '#fff', marginTop: 24 }}>Your Window is too small!</h1>
+          <p style={{ color: '#ccc' }}>
+            Please resize your browser window to at least {MIN_SUPPORTED_WIDTH}x{MIN_SUPPORTED_HEIGHT}.
+          </p>
+          <p style={{ color: '#aaa' }}>
+            Current viewport: {viewportSize.width}x{viewportSize.height} (CSS px)
+          </p>
+          <p style={{ color: '#aaa' }}>
+            Effective size: {viewportSize.effectiveWidth}x{viewportSize.effectiveHeight} (screen px)
+          </p>
+        </div>
+      )}
           <div className="marquee-content">
             <img src="/patrol-icon.png" alt="Patrol" style={{ height: '50px', marginRight: '40px' }} />
             <img src="/pirate-icon.png" alt="Pirate" style={{ height: '50px', marginRight: '40px' }} />
