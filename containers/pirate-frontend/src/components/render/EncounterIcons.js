@@ -24,7 +24,8 @@ function EncounterIcons({ events, regionCenter }) {
         const color = EVENT_COLORS[event.type] || 'purple';
         return (
           <Marker
-            key={`encounter-${i}`}
+            //key={`encounter-${i}`}
+            key={event.id}
             position={[lat, lng]}
             icon={L.divIcon({
               className: '',

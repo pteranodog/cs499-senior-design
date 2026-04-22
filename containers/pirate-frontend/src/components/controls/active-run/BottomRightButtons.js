@@ -41,7 +41,13 @@ export default function BottomRightButtons({ simState, modifySimState, runID }) 
     modifyRun('status', 'terminated-before-natural-completion');
     modifySimState({ type: 'view-run-end', run: runID });
     setShowTerminateModal(false);
-  }
+  };
+
+  const skipToEnd = () => {
+    modifySimState({ type: 'skip-run-to-end' , index: runID });
+    modifySimState({ type: 'view-run-end' , run: runID});
+    setShowTerminateModal(false);
+  };
 
   const onPauseToggle = () => {
     // Only block if the name is actually empty
@@ -120,6 +126,9 @@ const onStep = () => {
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowTerminateModal(false)}>
             Cancel
+          </Button>
+          <Button variant="warning" onClick={skipToEnd}>
+            Skip To End
           </Button>
           <Button variant="danger" onClick={confirmTerminate}>
             Terminate

@@ -13,7 +13,6 @@ import { aStar } from './aStar.js';
 import { chooseWeightedDestPort, chooseWeightedSpawnPort } from './regions.js';
 import { choosePirateDestination, choosePatrolDestination } from './stateFunctions.js';
 
-
 import { shouldSpawn, perDaytoProbability } from '../utils/spawnRates.js';
 
 const MINUTES_PER_DAY = 24 * 60;
@@ -74,6 +73,37 @@ function simStateReducer(state, action) {
         runs: state.runs.map((run, i) => i === action.index
           ? incrementRunTime(run, action.ticks ?? 1)
           : run),
+      };
+    case 'skip-run-to-end':
+      return {
+        ...state,
+        runs: state.runs.map((run, i) => {
+          if (i !== action.index) return run;
+          if (!['running', 'paused'].includes(run.status)) return run;
+
+          let updatedRun = { ...run };
+
+          const durationTicks =
+            updatedRun.isImported && updatedRun.replayEndTime
+              ? updatedRun.replayEndTime
+              : getRunDurationTicks(updatedRun);
+
+          while (
+            updatedRun.elapsedTime < durationTicks &&
+            updatedRun.status !== 'completed'
+          ) {
+            // Match actual Step button behavior
+            updatedRun = incrementRunTime(updatedRun, 1);
+
+            if (updatedRun.status === 'completed') {
+              break;
+            }
+
+            updatedRun = step(updatedRun, state.regions);
+            updatedRun = spawnMoreShips(updatedRun, state.regions);
+          }
+          return updatedRun;
+        })
       };
     default:
       console.warn('Action type "' + action.type + '" not found.');
