@@ -179,6 +179,7 @@ function resolveRegionId(run, region, regions) {
   return match[0];
 }
 
+/*
 export function importRun(payload, regions) {
 	requireObject(payload, 'Imported file does not contain a valid run payload.');
 
@@ -196,6 +197,44 @@ export function importRun(payload, regions) {
 		status: 'new',
 		isImported: true, 
 		replayEndTime: run.elapsedTimeEnd ?? run.elapsedTime, 
+		elapsedTime: 0,
+		elapsedTimeEnd: 0,
+		uuid: crypto.randomUUID()
+	};
+}
+*/
+
+export function importRun(payload, regions) {
+	requireObject(payload, 'Imported file does not contain a valid run payload.');
+
+	const { region, outcomes, uuid, expanded, selected, ...run } = payload;
+	const regionId = resolveRegionId(run, region, regions);
+
+	const baseTitle = run.name ?? 'Untitled Run';
+	const name = appendImportSuffix(baseTitle);
+
+	return {
+		...buildNewRun(),
+		...run,
+
+		currentState: {
+			...buildNewRun().currentState,
+			...run.currentState,
+
+			// clear encounter markers
+			encounterEvents: [],
+
+			// reset stats
+			stats: {
+				...buildNewRun().currentState.stats
+			}
+		},
+
+		regionId,
+		name,
+		status: 'new',
+		isImported: true,
+		replayEndTime: run.elapsedTimeEnd ?? run.elapsedTime,
 		elapsedTime: 0,
 		elapsedTimeEnd: 0,
 		uuid: crypto.randomUUID()
