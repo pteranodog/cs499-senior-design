@@ -127,7 +127,7 @@ function updateShipState(ship, shipsByID, region) {
           // then sideEffects will contain an object with two fields: the ID of the "savior" patrol ship,
           // and a sub-object of the fields of that patrol ship that will change (its pursue target and state).
           // If modification to ships besides the passed one are not needed, the array remains empty:
-          sideEffects: nearestPatrolID ? [{ targetId: nearestPatrolID, changes: { currentTargetId: nearestId, state: 2, respondingToDistress: true } }] : []
+          sideEffects: nearestPatrolID ? [{ targetId: nearestPatrolID, changes: { currentTargetId: nearestId, state: 2, respondingToDistress: true, maxSpeed: updatedShip.maxSpeed * 1.6 } }] : []
         };
       } 
     }
@@ -201,10 +201,10 @@ function updateShipState(ship, shipsByID, region) {
       const trackedTarget = getTrackedTarget(ship, shipsByID);
       if (!trackedTarget || shouldForget(ship, trackedTarget)) { // and it's outside my "care" range
         if (ship.respondingToDistress) {
-          updatedShip.maxSpeed /= 2.0; 
+          updatedShip.maxSpeed /= 1.6; 
         }
         else { 
-          updatedShip.maxSpeed /= 1.4; 
+          updatedShip.maxSpeed /= 1.3; 
         }
 
         ship.respondingToDistress = false;
@@ -220,12 +220,6 @@ function updateShipState(ship, shipsByID, region) {
       const [nearestId, nearest] = nearestShip(ship, allPirates); // pursue the nearest pirate
       if (canSee(ship, nearest)) { // if i can see it
         updatedShip.currentTargetId = nearestId; // save ID of this patrol for flee init
-        if (ship.respondingToDistress) {
-          updatedShip.maxSpeed *= 2.0; 
-        }
-        else { 
-          updatedShip.maxSpeed *= 1.4; 
-        }
         updatedShip.state = 2;
 
         return { updatedShip, sideEffects: [] }
@@ -426,7 +420,6 @@ export function choosePirateDestination(ship, region, seed, step, index) {
 export function choosePatrolDestination(homeBase, ship, region, seed, step, index) {
   const rng = seedrandom(seed + '-' + step + '-' + index);
   const largestSide = Math.max(region.width, region.length) * 1000;
-  console.log("largest side: "+largestSide);
 
   const maxDist = largestSide / 1.5; 
 
@@ -461,11 +454,9 @@ export function choosePatrolDestination(homeBase, ship, region, seed, step, inde
     // discard this point if it's completely out of range
     if (dist < minDist || dist > maxDist) continue;
 
-    console.log('patrol point dist from homeBase:', dist, 'homeBase:', homeBase.pos);
     points.push([randLat, randLon]); // store lat/lon instead of cartesian; more compatible with ship building funcs in reducer
   }
 
-  console.log('choosePatrolDestination: points found:', points.length, 'attempts:', attempts, 'homeBase:', homeBase, 'maxDist:', maxDist, 'minDist:', minDist);
   if (points.length === 0) return null;
 
   // pick the point whose distance from ship is closest to targetDist
@@ -741,7 +732,21 @@ function updateShipMovement(ship, shipsById, timeStep, region) {
   // to get ONE steering output
 
   // return updated version of the passed in ship, whose movement stats now reflect the updated steering
-  return behaviors.updateShip(ship, steering, timeStep);
+  const updatedShip = behaviors.updateShip(ship, steering, timeStep);
+
+  // NEW: apply ocean current 
+
+  const [currentX, currentY] = getOceanCurrent(updatedShip.pos[0], updatedShip.pos[1],
+    {
+      originLat: region.center[0],
+      originLon: region.center[1]
+    }
+  )
+
+  return {
+    ...updatedShip,
+    pos: [updatedShip.pos[0] + currentX * 60, updatedShip.pos[1] + currentY * 60]
+  }
 }
 
 // ============================= Step =============================

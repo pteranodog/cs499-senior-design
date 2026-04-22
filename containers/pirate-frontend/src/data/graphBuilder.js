@@ -27,8 +27,12 @@ const DANGER_ZONES = {
  * 
  * Inputs are a region object (from regions.js) and a grid size in meters; i.e.
  * how far apart two nodes "next to each other" are.
+ * 
+ * NEW: gridsize is now supplied by region; some regions are smaller than others,
+ * and can afford to have a more dense graph!
  */
-export function buildNavGraph(region, gridSize = 60) {
+export function buildNavGraph(region) {
+  const gridSize = region.navGraphDensity;
 const { center, name } = region;
   const [originLat, originLon] = center;
   const { top, bottom, left, right } = region.bounds;
@@ -165,8 +169,7 @@ function computeShoreScore(graph, nodeId, gridSize) {
   // radius of 1 = 1 node "from shore"
   const rings = [
     { radius: 1, score: 1.3 },
-    { radius: 2, score: 0.9 },
-    { radius: 3, score: 0.7 },
+    { radius: 2, score: 0.9 }
   ];
 
   let maxScore = 0;
