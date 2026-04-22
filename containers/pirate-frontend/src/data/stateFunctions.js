@@ -420,7 +420,6 @@ export function choosePirateDestination(ship, region, seed, step, index) {
 export function choosePatrolDestination(homeBase, ship, region, seed, step, index) {
   const rng = seedrandom(seed + '-' + step + '-' + index);
   const largestSide = Math.max(region.width, region.length) * 1000;
-  console.log("largest side: "+largestSide);
 
   const maxDist = largestSide / 1.5; 
 
@@ -455,11 +454,9 @@ export function choosePatrolDestination(homeBase, ship, region, seed, step, inde
     // discard this point if it's completely out of range
     if (dist < minDist || dist > maxDist) continue;
 
-    console.log('patrol point dist from homeBase:', dist, 'homeBase:', homeBase.pos);
     points.push([randLat, randLon]); // store lat/lon instead of cartesian; more compatible with ship building funcs in reducer
   }
 
-  console.log('choosePatrolDestination: points found:', points.length, 'attempts:', attempts, 'homeBase:', homeBase, 'maxDist:', maxDist, 'minDist:', minDist);
   if (points.length === 0) return null;
 
   // pick the point whose distance from ship is closest to targetDist
