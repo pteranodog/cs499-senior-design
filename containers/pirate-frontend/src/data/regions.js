@@ -130,13 +130,13 @@ function defaultRegions() {
   malaccaPoints["m7"] = newBase("Lumut Naval Base", [4.23, 100.57], 0);
 
   let caribbeanPoints = {};
-  caribbeanPoints["c1"] = newPort("Kingston", [17.96, -76.79], 0.05, [], [], 0.025);
-  caribbeanPoints["c2"] = newPort("Santo Domingo", [18.47, -69.88], 0.05, [], [], 0.025);
-  caribbeanPoints["c3"] = newPort("Colon", [9.36, -79.90], 0.30, [], [], 0.10);
+  caribbeanPoints["c1"] = newPort("Kingston", [17.96, -76.79], 0.05, [], [], 0.025, true);
+  caribbeanPoints["c2"] = newPort("Santo Domingo", [18.47, -69.88], 0.05, [], [], 0.025, true);
+  caribbeanPoints["c3"] = newPort("Colon", [9.36, -79.90], 0.30, [], [], 0.10, true);
 
-  caribbeanPoints["c10"] = newPort("upperMidCaribbean", [21.74, -74.44], 0.2, [], [], 0.35);
-  caribbeanPoints["c11"] = newPort("leftCaribbean", [20.45, -83.37], 0.2, [], [], 0.25);
-  caribbeanPoints["c12"] = newPort("Puerto De Mayagüez", [18.22, -67.18], 0.3, [], [], 0.25);
+  caribbeanPoints["c10"] = newPort("upperMidCaribbean", [21.74, -74.44], 0.2, [], [], 0.35, false);
+  caribbeanPoints["c11"] = newPort("leftCaribbean", [20.45, -83.37], 0.2, [], [], 0.25, false);
+  caribbeanPoints["c12"] = newPort("Puerto De Mayagüez", [18.22, -67.18], 0.3, [], [], 0.25, true);
   
 
 
@@ -149,62 +149,94 @@ function defaultRegions() {
   caribbeanPoints["c7"] = newBase("Aruba Coast Guard", [12.52, -70.03], 0);
 
   let redSeaPoints = {};
-  redSeaPoints["rs1"] = newPort("Port Sudan", [19.62, 37.21], 0.01, [], []);
-  redSeaPoints["rs2"] = newPort("Jeddah", [21.49, 39.17], 0.01, [], []);
-  redSeaPoints["rs3"] = newPort("Aden", [12.77, 45.03], 0.01, [], []);
+  redSeaPoints["rs1"] = newPort("Port Sudan", [19.62, 37.28], 0.1, [], [], 0.05, true);
+  redSeaPoints["rs2"] = newPort("Jeddah", [21.49, 39.17], 0.1, [], [], 0.05, true);
+  redSeaPoints["rs3"] = newPort("Aden", [12.77, 45.03], 0.1, [], [], 0.2, true);
+  redSeaPoints["rs10"] = newPort("upperRedSea", [22.9, 37.32], 0.4, [], [], 0.4, false);
+  redSeaPoints["rs11"] = newPort("lowerRedSea", [12.28, 46.88], 0.3, [], [], 0.3, false);
+
+
   redSeaPoints["rs4"] = newPirateCove("Bab el Mandeb East", [12.61, 43.33], 0.01);
   redSeaPoints["rs5"] = newPirateCove("Eritrean Islands", [15.28, 39.77], 0.01);
   redSeaPoints["rs8"] = newPirateCove("Hanish Islands", [13.72, 42.73], 0.01);
   redSeaPoints["rs9"] = newPirateCove("Dahlak Archipelago", [15.69, 40.19], 0.01);
+
+
   redSeaPoints["rs6"] = newBase("Djibouti Naval Command", [11.58, 43.15], 0);
   redSeaPoints["rs7"] = newBase("Saudi Western Fleet", [21.43, 39.08], 0);
 
   let mozambiquePoints = {};
-  mozambiquePoints["mz1"] = newPort("Maputo", [-25.97, 32.58], 0.01, [], []);
-  mozambiquePoints["mz2"] = newPort("Beira", [-19.83, 34.84], 0.01, [], []);
-  mozambiquePoints["mz3"] = newPort("Toamasina", [-18.15, 49.40], 0.01, [], []);
+  // deleted n5
+  mozambiquePoints["mz1"] = newPort("Maputo", [-25.97, 32.58], 0.1, [], [], 0.15, true);
+  mozambiquePoints["mz2"] = newPort("Beira", [-19.83, 34.84], 0.1, [], [], 0.15, true);
+  mozambiquePoints["mz3"] = newPort("Toamasina", [-18.15, 49.40], 0.1, [], [], 0.0, true);
+  mozambiquePoints["mz5"] = newPort("rightMozambique", [-23.45, 50.83], 0.0, [], [], 0.4, false);
+  mozambiquePoints["mz10"] = newPort("topMozambique", [-10.2, 43.05], 0.1, [], [], 0.2, false);
+  mozambiquePoints["mz11"] = newPort("bottomMozambique", [-27.8, 37.610], 0.5, [], [], 0.3, false);
+
+  
+
+
   mozambiquePoints["mz4"] = newPirateCove("Comoros Passages", [-12.41, 43.65], 0.01);
-  mozambiquePoints["mz5"] = newPirateCove("Northern Mozambique Channel", [-14.88, 43.75], 0.01);
   mozambiquePoints["mz8"] = newPirateCove("Ibo Island", [-12.35, 40.59], 0.01);
   mozambiquePoints["mz9"] = newPirateCove("Nosy Be Approaches", [-13.32, 48.26], 0.01);
+
+
   mozambiquePoints["mz6"] = newBase("Maputo Naval Base", [-25.96, 32.61], 0);
   mozambiquePoints["mz7"] = newBase("Antsiranana Naval Station", [-12.28, 49.29], 0);
 
   let southChinaSeaPoints = {};
-  southChinaSeaPoints["sc1"] = newPort("Manila", [14.60, 120.98], 0.01, [], []);
-  southChinaSeaPoints["sc2"] = newPort("Ho Chi Minh City", [10.75, 106.70], 0.01, [], []);
-  southChinaSeaPoints["sc3"] = newPort("Hong Kong", [22.30, 114.17], 0.01, [], []);
+  southChinaSeaPoints["sc1"] = newPort("Manila", [14.60, 120.98], 0.05, [], [], 0.05, true);
+  southChinaSeaPoints["sc3"] = newPort("Hong Kong", [22.30, 114.17], 0.5, [], [], 0.2, true);
+
+  southChinaSeaPoints["sc8"] = newPort("upperSouthChina", [23.8, 118.66], 0.0, [], [], 0.1, false);
+  southChinaSeaPoints["sc9"] = newPort("upperRightSouthChina1", [21.94, 121.73], 0.05, [], [], 0.1, false);
+  southChinaSeaPoints["sc10"] = newPort("upperRightSouthChina2", [23.8, 121.73], 0.05, [], [], 0.1, false);
+  southChinaSeaPoints["sc11"] = newPort("lowerSouthChina1", [8.1, 115.63], 0.1, [], [], 0.1, false);
+  southChinaSeaPoints["sc2"] = newPort("lowerSouthChina2", [8.1, 108.64], 0.2, [], [], 0.4, false);
+ 
+  
+
   southChinaSeaPoints["sc4"] = newPirateCove("Spratly Fringe", [9.80, 114.20], 0.01);
   southChinaSeaPoints["sc5"] = newPirateCove("Palawan Approaches", [11.16, 117.42], 0.01);
-  southChinaSeaPoints["sc8"] = newPirateCove("Natuna Islands", [3.81, 108.39], 0.01);
+
   southChinaSeaPoints["sc6"] = newBase("Subic Bay Naval Base", [14.82, 120.28], 0);
-  southChinaSeaPoints["sc7"] = newBase("Cam Ranh Naval Base", [11.93, 109.16], 0);
+  southChinaSeaPoints["sc7"] = newBase("Cam Ranh Naval Base", [11.81, 109.26], 0);
 
   let suluCelebesPoints = {};
-  suluCelebesPoints["s1"] = newPort("Zamboanga", [6.91, 122.08], 0.01, [], []);
-  suluCelebesPoints["s2"] = newPort("Sandakan", [5.84, 118.12], 0.01, [], []);
-  suluCelebesPoints["s3"] = newPort("Bitung", [1.45, 125.20], 0.01, [], []);
+  suluCelebesPoints["s1"] = newPort("Zamboanga", [6.91, 122.08], 0.1, [], [], 0.05, true);
+  suluCelebesPoints["s2"] = newPort("Sandakan", [5.84, 118.12], 0.05, [], [], 0.05, true);
+  suluCelebesPoints["s3"] = newPort("Port Bontang", [0.24, 117.53], 0.2, [], [], 0.2, true);
+  
+  suluCelebesPoints["s9"] = newPort("upperLeftSulu", [7.75, 117.14], 0.2, [], [], 0.2, false);
+  suluCelebesPoints["s10"] = newPort("rightSulu", [6.51, 126.43], 0.2, [], [], 0.2, false);
+  suluCelebesPoints["s11"] = newPort("bottomSulu", [0.05, 119.0], 0.3, [], [], 0.3, false);
+
+
+
   suluCelebesPoints["s4"] = newPirateCove("Jolo Archipelago", [6.05, 121.01], 0.01);
   suluCelebesPoints["s5"] = newPirateCove("Tawi Tawi Channels", [5.08, 119.78], 0.01);
   suluCelebesPoints["s8"] = newPirateCove("Semporna Coast", [4.48, 118.62], 0.01);
+
+
   suluCelebesPoints["s6"] = newBase("Philippine Western Mindanao", [6.91, 122.06], 0);
   suluCelebesPoints["s7"] = newBase("Indonesian North Sulawesi", [1.47, 124.83], 0);
 
   let regions = {};
-  regions["r1"] = newRegion(boundsCenter(regionBoundingBoxes["r1"]), somaliaPoints, "Somalian Coast", 1200, 1200, 6, 2, 60, 100, 100);
-  regions["r2"] = newRegion(boundsCenter(regionBoundingBoxes["r2"]), guineaPoints, "Gulf of Guinea", 1200, 1200, 6, 2, 70, 130, 130);
-  regions["r3"] = newRegion(boundsCenter(regionBoundingBoxes["r3"]), malaccaPoints, "Malacca Strait", 1100, 1100, 7, 1, 90, 150, 150);
-  regions["r4"] = newRegion(boundsCenter(regionBoundingBoxes["r4"]), caribbeanPoints, "Caribbean Sea", 1300, 1300, 6, 2, 70, 110, 110);
-  regions["r5"] = newRegion(boundsCenter(regionBoundingBoxes["r5"]), redSeaPoints, "Red Sea", 1100, 1100, 6);
-  regions["r6"] = newRegion(boundsCenter(regionBoundingBoxes["r6"]), mozambiquePoints, "Mozambique Channel", 1200, 1200, 6);
-  regions["r7"] = newRegion(boundsCenter(regionBoundingBoxes["r7"]), southChinaSeaPoints, "South China Sea", 1500, 1500, 5);
-  regions["r8"] = newRegion(boundsCenter(regionBoundingBoxes["r8"]), suluCelebesPoints, "Sulu-Celebes Seas", 1000, 1000, 7);
+  regions["r1"] = newRegion(boundsCenter(regionBoundingBoxes["r1"]), somaliaPoints, "Somalian Coast",         1200, 1200, 6, 60, 100, 100);
+  regions["r2"] = newRegion(boundsCenter(regionBoundingBoxes["r2"]), guineaPoints, "Gulf of Guinea",          1200, 1200, 6, 70, 120, 120);
+  regions["r3"] = newRegion(boundsCenter(regionBoundingBoxes["r3"]), malaccaPoints, "Malacca Strait",         1100, 1100, 7, 80, 150, 150);
+  regions["r4"] = newRegion(boundsCenter(regionBoundingBoxes["r4"]), caribbeanPoints, "Caribbean Sea",        1300, 1300, 6, 70, 120, 120);
+  regions["r5"] = newRegion(boundsCenter(regionBoundingBoxes["r5"]), redSeaPoints, "Red Sea",                 1100, 1100, 6, 60, 100, 100);
+  regions["r6"] = newRegion(boundsCenter(regionBoundingBoxes["r6"]), mozambiquePoints, "Mozambique Channel",  1200, 1200, 6, 60, 90,  90);
+  regions["r7"] = newRegion(boundsCenter(regionBoundingBoxes["r7"]), southChinaSeaPoints, "South China Sea",  1500, 1500, 5, 60, 100, 100);
+  regions["r8"] = newRegion(boundsCenter(regionBoundingBoxes["r8"]), suluCelebesPoints, "Sulu-Celebes Seas",  1000, 1000, 7, 80, 150, 150);
 
   // Expose bounds on each region so clipping/auto-zoom can consume these later.
 
   for (const [regionId, region] of Object.entries(regions)) {
   region.bounds = regionBoundingBoxes[regionId];
-  region.navgraph = buildNavGraph(region, 60);
+  region.navgraph = buildNavGraph(region);
   console.log('navgraph nodes:', Object.keys(region.navgraph).length);
 
    // Compute cartesian bounds of this region from its navgraph node positions:
