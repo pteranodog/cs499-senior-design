@@ -28,12 +28,11 @@ const DANGER_ZONES = {
  * Inputs are a region object (from regions.js) and a grid size in meters; i.e.
  * how far apart two nodes "next to each other" are.
  * 
- * UPDATE: gridSize is now supplied by the region object, and
- * "radius" of increased weight of close-to-shore nodes is also
- * supplied by region object
+ * NEW: gridsize is now supplied by region; some regions are smaller than others,
+ * and can afford to have a more dense graph!
  */
 export function buildNavGraph(region) {
-  const gridSize = region.navgraphDensity
+  const gridSize = region.navGraphDensity;
 const { center, name } = region;
   const [originLat, originLon] = center;
   const { top, bottom, left, right } = region.bounds;
@@ -83,12 +82,8 @@ const { center, name } = region;
 
   // NEW: add a "shore score" to nodes near shore to make cost to these nodes high (avoid shore hug)
   for (const id of Object.keys(graph)) {
-  graph[id].shoreScore = computeShoreScore(graph, id, gridSize, region.shoreRings);
-  }
- // NEW(er): do the same for the edges of the region
-  for (const id of Object.keys(graph)) {
-    graph[id].edgeScore = computeEdgeScore(graph, id, gridSize, region.shoreRings);
-  }
+  graph[id].shoreScore = computeShoreScore(graph, id, gridSize);
+}
 
   // Pass 2: connect neighbors ==============================================
   // Each passable node connects to all adjacent passable nodes (8-directional).
@@ -162,9 +157,7 @@ function haversineMeters(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Assign a "shore score" to a node; used by A* to mark nodes closer to 
-// shores as more expensive to travel to
-function computeShoreScore(graph, nodeId, gridSize, shoreRingCount) {
+function computeShoreScore(graph, nodeId, gridSize) {
   const node = graph[nodeId];
   if (!node.passable) return 0;
 
@@ -174,24 +167,10 @@ function computeShoreScore(graph, nodeId, gridSize, shoreRingCount) {
   // Define specific scores for nodes close to shores;
   // increasing radius = increasing distance from shore.
   // radius of 1 = 1 node "from shore"
-
-  /* DEPRECATED PREDEFINED RING STRUCTURE:
   const rings = [
     { radius: 1, score: 1.3 },
-    { radius: 2, score: 0.9 },
-    { radius: 3, score: 0.7 },
-  ]; */
-
-  const rings = [];
-  const startScore = 1.5;
-  const scoreDecrement = 0.3;
-  for (let i = 0; i <= shoreRingCount; i++) {
-    rings.push(
-      {radius: i + 1, score: startScore - scoreDecrement*i}
-    ) 
-  }
-
-
+    { radius: 2, score: 0.9 }
+  ];
 
   let maxScore = 0;
 
@@ -211,22 +190,4 @@ function computeShoreScore(graph, nodeId, gridSize, shoreRingCount) {
   }
 
   return maxScore;
-}
-
-// Works similarly to the above, but for the nodes nearest to the edge of a region
-function computeEdgeScore(graph, nodeId, gridSize, edgeRingCount) {
-  const node = graph[nodeId];
-  if (!node.passable) return 0;
-
-  const [, row, col] = nodeId.split('_').map(Number);
-
-  // distance to nearest grid edge (in node units)
-  const distToEdge = Math.min(row, col, gridSize - 1 - row, gridSize - 1 - col);
-
-  if (distToEdge >= edgeRingCount) return 0;
-
-  // linear falloff — closer to edge = higher score
-  const startScore = 1.5;
-  const scoreDecrement = 0.3;
-  return Math.max(0, startScore - scoreDecrement * distToEdge);
 }

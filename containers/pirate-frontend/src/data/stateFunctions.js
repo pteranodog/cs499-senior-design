@@ -4,9 +4,21 @@ import { aStar } from './aStar.js';
 import { getOceanCurrent } from './oceanCurrents.js'
 import { isOcean } from '../utils/isOcean.js';
 import { cartesianToLatLng, latLngToCartesian } from '../utils/coords.js';
+import { getTimeOfDayInfo } from '../utils/timeOfDay.js';
 
 const COMBAT_RANGE   = 2000;
 const REPATH_INTERVAL = 20; // steps between A* recomputes for merchants
+const NIGHT_SIGHT_RANGE_MULTIPLIER = 0.5;
+
+function getEffectiveSightRange(ship, isNight) {
+  const baseSightRange = Number(ship.baseSightRange ?? ship.sightRange ?? 0);
+
+  if (!isNight || (ship.type !== 'merchant' && ship.type !== 'pirate')) {
+    return baseSightRange;
+  }
+
+  return baseSightRange * NIGHT_SIGHT_RANGE_MULTIPLIER;
+}
 
 // ============================= Sight =============================
 
@@ -115,7 +127,7 @@ function updateShipState(ship, shipsByID, region) {
           // then sideEffects will contain an object with two fields: the ID of the "savior" patrol ship,
           // and a sub-object of the fields of that patrol ship that will change (its pursue target and state).
           // If modification to ships besides the passed one are not needed, the array remains empty:
-          sideEffects: nearestPatrolID ? [{ targetId: nearestPatrolID, changes: { currentTargetId: nearestId, state: 2, respondingToDistress: true } }] : []
+          sideEffects: nearestPatrolID ? [{ targetId: nearestPatrolID, changes: { currentTargetId: nearestId, state: 2, respondingToDistress: true, maxSpeed: updatedShip.maxSpeed * 1.6 } }] : []
         };
       } 
     }
@@ -189,13 +201,13 @@ function updateShipState(ship, shipsByID, region) {
       const trackedTarget = getTrackedTarget(ship, shipsByID);
       if (!trackedTarget || shouldForget(ship, trackedTarget)) { // and it's outside my "care" range
         if (ship.respondingToDistress) {
-          updatedShip.maxSpeed /= 2.0; 
+          updatedShip.maxSpeed /= 1.6; 
         }
         else { 
-          updatedShip.maxSpeed /= 1.4; 
+          updatedShip.maxSpeed /= 1.3; 
         }
 
-        updatedShip.respondingToDistress = false;
+        ship.respondingToDistress = false;
         updatedShip.state = 1; // forget it and go back to idling
         updatedShip.currentTargetId = null;
 
@@ -208,12 +220,6 @@ function updateShipState(ship, shipsByID, region) {
       const [nearestId, nearest] = nearestShip(ship, allPirates); // pursue the nearest pirate
       if (canSee(ship, nearest)) { // if i can see it
         updatedShip.currentTargetId = nearestId; // save ID of this patrol for flee init
-        if (ship.respondingToDistress) {
-          updatedShip.maxSpeed *= 2.0; 
-        }
-        else { 
-          updatedShip.maxSpeed *= 1.4; 
-        }
         updatedShip.state = 2;
 
         return { updatedShip, sideEffects: [] }
@@ -361,7 +367,7 @@ export function choosePirateDestination(ship, region, seed, step, index) {
   const points = [];
 
   let attempts = 0;
-  while (points.length < n && attempts < region.piratePointAttempts) { 
+  while (points.length < n && attempts < 100) { // limit to 100 tries
     attempts++;
 
     // choose random latlon in the region bounds
@@ -425,7 +431,7 @@ export function choosePatrolDestination(homeBase, ship, region, seed, step, inde
   const points = [];
 
   let attempts = 0;
-  while (points.length < n && attempts < region.piratePointAttempts) { 
+  while (points.length < n && attempts < 100) { // limit to 60 tries
     attempts++;
 
     // choose random latlon in the region bounds
@@ -729,7 +735,21 @@ function updateShipMovement(ship, shipsById, timeStep, region) {
   // to get ONE steering output
 
   // return updated version of the passed in ship, whose movement stats now reflect the updated steering
-  return behaviors.updateShip(ship, steering, timeStep);
+  const updatedShip = behaviors.updateShip(ship, steering, timeStep);
+
+  // NEW: apply ocean current 
+
+  const [currentX, currentY] = getOceanCurrent(updatedShip.pos[0], updatedShip.pos[1],
+    {
+      originLat: region.center[0],
+      originLon: region.center[1]
+    }
+  )
+
+  return {
+    ...updatedShip,
+    pos: [updatedShip.pos[0] + currentX * 60, updatedShip.pos[1] + currentY * 60]
+  }
 }
 
 // ============================= Step =============================
@@ -739,6 +759,7 @@ function updateShipMovement(ship, shipsById, timeStep, region) {
 const pathIdRef = { value: 10000 };
 
 function step(run, regions, timeStep = 1) {
+
   let shipsById = { ...run.currentState.ships };
   let encounterTotals = {
     merchantPirateEncounters: 0,
@@ -751,15 +772,30 @@ function step(run, regions, timeStep = 1) {
     sinks: 0,
     rescues: 0
   };
-
-  
+  // New: List of encounter events (copied from previous state)
+  let encounterEvents = Array.isArray(run.currentState.encounterEvents) ? [...run.currentState.encounterEvents] : [];
 
   // Get navgraph for this run's region (may be undefined for non-Somalia regions)
   const region   = regions?.[run.regionId];
   const navgraph = region?.navgraph ?? null;
+  const timeOfDayInfo = getTimeOfDayInfo({
+    regionName: region?.name,
+    startHour: run?.startHour,
+    startMinute: run?.startMinute,
+    elapsedTicks: run?.elapsedTime || 0,
+    ticksPerMinute: run?.ticksPerMinute || 1,
+  });
 
   for (const [id, ship] of Object.entries(shipsById)) {
-    let updatedShip = shipsById[id];
+    const currentShip = shipsById[id];
+    if (!currentShip) continue;
+
+    let updatedShip = {
+      ...currentShip,
+      baseSightRange: currentShip.baseSightRange ?? currentShip.sightRange,
+      sightRange: getEffectiveSightRange(currentShip, timeOfDayInfo.isNight),
+    };
+    shipsById[id] = updatedShip;
 
     // If this ship is a merchant who has arrived at its port, despawn it
     updatedShip = checkForDestinationArrival(updatedShip, region, run.seed, run.elapsedTime, id);
@@ -800,6 +836,7 @@ function step(run, regions, timeStep = 1) {
     updatedShip = maybeRepath(updatedShip, navgraph, pathIdRef);
     shipsById[id] = updatedShip;
 
+
     // Check if this ship should enter combat with anyone
     const combatResult = checkForCombatScenario(updatedShip, id, shipsById);
     shipsById = combatResult.shipsById;
@@ -812,6 +849,18 @@ function step(run, regions, timeStep = 1) {
         totalPirateEncounters:
           encounterTotals.totalPirateEncounters + combatResult.encounterIncrements.totalPirateEncounters,
       };
+      // New: Save encounter event (combat start)
+      const shipA = updatedShip;
+      const shipB = shipsById[combatResult.shipsById[id]?.currentEnemyId];
+      if (shipA && shipB) {
+        encounterEvents.push({
+          type: 'combat',
+          time: run.elapsedTime,
+          pos: [...shipA.pos],
+          shipAType: shipA.type,
+          shipBType: shipB.type,
+        });
+      }
     }
     updatedShip = shipsById[id];
 
@@ -819,6 +868,18 @@ function step(run, regions, timeStep = 1) {
     const combatOutcome = advanceCombat(updatedShip, id, shipsById, run.seed, run.elapsedTime);
     shipsById = combatOutcome.shipsById;
     if (combatOutcome.liveCountIncrements) {
+      // New: Save outcome event(s)
+      const eventTypes = Object.keys(combatOutcome.liveCountIncrements);
+      eventTypes.forEach(type => {
+        if (combatOutcome.liveCountIncrements[type] > 0) {
+          encounterEvents.push({
+            type,
+            time: run.elapsedTime,
+            pos: [...updatedShip.pos],
+            shipType: updatedShip.type,
+          });
+        }
+      });
       liveCountTotals = {
         captures: liveCountTotals.captures + (combatOutcome.liveCountIncrements.captures ?? 0),
         evasions: liveCountTotals.evasions + (combatOutcome.liveCountIncrements.evasions ?? 0),
@@ -871,7 +932,8 @@ function step(run, regions, timeStep = 1) {
         totalPirateEncounters:
           (run.currentState?.stats?.totalPirateEncounters ?? 0) + encounterTotals.totalPirateEncounters,
       },
-      ships: shipsById
+      ships: shipsById,
+      encounterEvents
     }
   };
 }

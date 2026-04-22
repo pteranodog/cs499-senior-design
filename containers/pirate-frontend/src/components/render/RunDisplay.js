@@ -7,7 +7,6 @@ import DisplayBadge from './DisplayBadge'
 import { useEffect } from 'react';
 
 
-
 function getRegionBounds(region) {
   if (region?.bounds) {
     return [

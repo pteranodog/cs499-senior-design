@@ -86,7 +86,7 @@ function defaultRegions() {
   somaliaPoints["p3"] = newPort("Dar es Salaam (Tanzania)", [-6.7640, 39.2747], 0.04, [], [], 0.02, true); 
   somaliaPoints["p4"] = newPort("Djibouti (Port)", [11.6048, 43.1497], 0.08, [], [], 0.04, true);
   somaliaPoints["p5"] = newPort("upperLeftSomalia", [14.0, 42.6], 0.4, [], [], 0.3, false);
-  somaliaPoints["p6"] = newPort("upperRightSomalia", [12.9, 57.0], 0.36, [], [], 0.2, false);
+  somaliaPoints["p6"] = newPort("upperRightSomalia", [12.9, 56.8], 0.36, [], [], 0.2, false);
   somaliaPoints["p7"] = newPort("lowerSomalia", [-8.0, 42.6], 0.04, [], [], 0.05, false);
   
 

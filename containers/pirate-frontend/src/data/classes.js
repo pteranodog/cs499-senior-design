@@ -145,7 +145,7 @@ function newMerchantShip(startPos, size, homePort) {
  *  - Persists between Runs.
  *  - pointsArr is assumed to be an array of all points within the region boundaries
  */
-function newRegion(center, pointsArr, regionName, length, width, defaultZoom, shoreRings, navgraphDensity, piratePointAttempts, patrolPointAttempts) {
+function newRegion(center, pointsArr, regionName, length, width, defaultZoom, navGraphDensity, patrolPointAttempts, piratePointAttempts) {
   return {
     name: regionName,
     points: pointsArr, // array of Point instances
@@ -154,16 +154,13 @@ function newRegion(center, pointsArr, regionName, length, width, defaultZoom, sh
     width: width,
     defaultZoom: defaultZoom,
 
-    // NEWER ADDITIONS: 
-    // # of nodes outward to project shore weight in the navgraph of the region 
-    shoreRings: shoreRings,
-    // how many graph nodes per lat/lon step
-    navgraphDensity: navgraphDensity,
-    // How many times should a pirate attempt to find a point to look for merchants at? 
-    // (See choosePirateDestination() in stateFunctions.js for usage)
-    piratePointAttempts: piratePointAttempts,
-    // Same as above, but for Patrols.
-    patrolPointAttempts: patrolPointAttempts
+    // NEW: making some graph properties/ spawning params region-specific:
+    // how many grid spaces the navgraph should be in largest dimension
+    navGraphDensity: navGraphDensity, 
+    // # of times a patrol should try to get a new location; see getPatrolDestination in stateFunctions
+    patrolPointAttempts: patrolPointAttempts,
+    // # of times a pirate should try to get a new location; see getPirateDestination in stateFunctions
+    piratePointAttempts: piratePointAttempts
   };
 }
 
@@ -271,7 +268,9 @@ function newRun(name, runConfig, regionId) {
         piratesSpawned: 0
       },
       // Ships is an ID-indexed object of all active Ship objects.
-      ships: {}
+      ships: {},
+      // New: List of encounter events (combat, evasion, sink, etc.)
+      encounterEvents: []
     }
   }
   return {...runConfig, ...run};
