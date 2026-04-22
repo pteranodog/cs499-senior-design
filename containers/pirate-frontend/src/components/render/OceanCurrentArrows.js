@@ -5,17 +5,18 @@ import { getOceanCurrentAtLatLng } from '../../data/oceanCurrents.js';
 import { isOcean } from '../../utils/isOcean.js';
 
 // Only render arrows at zoom >= this level
-const CURRENT_ARROW_MIN_ZOOM = 6;
+const CURRENT_ARROW_MIN_ZOOM = 9;
 
 // Grid spacing in degrees at reference zoom; becomes denser as you zoom in
-const BASE_GRID_SPACING = 2.0;
-const MIN_GRID_SPACING = 0.5;
+const BASE_GRID_SPACING = 0.9;
+const MIN_GRID_SPACING = 0.25;
 
 // Arrow visual tuning
 const ARROW_LENGTH = 28;
 const ARROW_HEAD = 7;
 const ARROW_STROKE = 2;
-const ARROW_COLOR = '#4FC3F7';     // light blue
+const DAY_ARROW_COLOR = '#1e40af';
+const NIGHT_ARROW_COLOR = '#4FC3F7';
 const ARROW_OPACITY = 0.7;
 const MIN_MAGNITUDE = 0.05;        // skip arrows with negligible current
 
@@ -24,7 +25,7 @@ const MIN_MAGNITUDE = 0.05;        // skip arrows with negligible current
  * heading is in radians (0 = east, π/2 = north).
  * scale controls arrow size relative to zoom.
  */
-function createCurrentArrowIcon(heading, magnitude, scale) {
+function createCurrentArrowIcon(heading, magnitude, scale, color) {
   const length = Math.round(ARROW_LENGTH * scale);
   const head = Math.round(ARROW_HEAD * scale);
   const stroke = Math.max(1.5, ARROW_STROKE * scale);
@@ -47,11 +48,11 @@ function createCurrentArrowIcon(heading, magnitude, scale) {
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
       <line x1="0" y1="${centerY}" x2="${tipX}" y2="${centerY}"
-            stroke="${ARROW_COLOR}" stroke-width="${stroke}" stroke-linecap="round" opacity="${opacity}" />
+            stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" opacity="${opacity}" />
       <line x1="${headLeftX}" y1="${headTopY}" x2="${tipX}" y2="${centerY}"
-            stroke="${ARROW_COLOR}" stroke-width="${stroke}" stroke-linecap="round" opacity="${opacity}" />
+            stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" opacity="${opacity}" />
       <line x1="${headLeftX}" y1="${headBottomY}" x2="${tipX}" y2="${centerY}"
-            stroke="${ARROW_COLOR}" stroke-width="${stroke}" stroke-linecap="round" opacity="${opacity}" />
+            stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" opacity="${opacity}" />
     </svg>
   `.trim();
 
@@ -117,9 +118,10 @@ function useCurrentArrows(zoom, map, regionBounds) {
       map.getBounds().getEast()]);
 }
 
-export default function OceanCurrentArrows({ regionBounds }) {
+export default function OceanCurrentArrows({ regionBounds, isNight = false }) {
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
+  const arrowColor = isNight ? NIGHT_ARROW_COLOR : DAY_ARROW_COLOR;
 
   useMapEvents({
     zoomend: () => setZoom(map.getZoom()),
@@ -136,7 +138,7 @@ export default function OceanCurrentArrows({ regionBounds }) {
         <Marker
           key={`current-${lat}-${lon}`}
           position={[lat, lon]}
-          icon={createCurrentArrowIcon(heading, magnitude, scale)}
+          icon={createCurrentArrowIcon(heading, magnitude, scale, arrowColor)}
           interactive={false}
           zIndexOffset={-1000}
         />
