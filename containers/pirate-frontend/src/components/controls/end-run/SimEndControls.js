@@ -2,6 +2,19 @@ import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import FileInputDisplay from '../../../utils/fileInputDisplay';
 import { exportRunAsJson, exportRunAsCsv, formatClock, formatStatus } from '../../../utils/fileInputOutput';
+import EncounterList from './EncounterList';
+
+function formatPercent(numerator, denominator) {
+	if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator <= 0) {
+		return '0.0%';
+	}
+
+	return `${((numerator / denominator) * 100).toFixed(1)}%`;
+}
+
+function formatRatio(leftValue, rightValue) {
+	return `${leftValue}:${rightValue}`;
+}
 
 export default function SimEndControls({ simState, modifySimState, runID }) {
 	const run = typeof runID === 'number'
@@ -18,13 +31,13 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 	const rescues = Number(stats.rescues ?? 0);
 	const sinks = Number(stats.sinks ?? 0);
 	const evasions = Number(stats.evasions ?? 0);
-	const totalMerchantsSpawned = Number(stats.merchantsSpawned ?? 0);
 	const merchantPirateEncounters = Number(stats.merchantPirateEncounters ?? 0);
 	const patrolPirateEncounters = Number(stats.patrolPirateEncounters ?? 0);
 	const totalPirateEncounters = Number(stats.totalPirateEncounters ?? 0);
-	const merchantEncounterChance = totalMerchantsSpawned > 0
-		? ((merchantPirateEncounters / totalMerchantsSpawned) * 100).toFixed(1)
-		: '0.0';
+	const pirateSuccessRate = formatPercent(captures, merchantPirateEncounters);
+	const merchantSurvivalRate = formatPercent(rescues + evasions, merchantPirateEncounters);
+	const patrolInterventionRate = formatPercent(patrolPirateEncounters, totalPirateEncounters);
+	const captureToRescueRatio = formatRatio(captures, rescues);
 
 	const shipCounts = ships.reduce((acc, ship) => {
 		const type = String(ship?.type ?? '').toLowerCase();
@@ -68,14 +81,22 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 
 					<div><strong>Captures:</strong> {captures}</div>
 					<div><strong>Rescues:</strong> {rescues}</div>
-					<div><strong>Sinks:</strong> {sinks}</div>
+					<div><strong>Pirates Sunk:</strong> {sinks}</div>
 
 					<div><strong>Merchant Evasions:</strong> {evasions}</div>
 					<div><strong>Merchant-Pirate Encounters:</strong> {merchantPirateEncounters}</div>
 					<div><strong>Patrol-Pirate Encounters:</strong> {patrolPirateEncounters}</div>
 					<div><strong>Total Pirate Encounters:</strong> {totalPirateEncounters}</div>
+				</div>
+			</div>
 
-					<div><strong>% Chance of Merchants Encountering Pirates:</strong> {merchantEncounterChance}%</div>
+			<div className="border border-secondary rounded p-3">
+				<h6 className="mb-2">Quick Insights</h6>
+				<div className="small d-flex flex-column gap-1">
+					<div><strong>Pirate Success Rate:</strong> {pirateSuccessRate}</div>
+					<div><strong>Merchant Survival Rate:</strong> {merchantSurvivalRate}</div>
+					<div><strong>Security Intervention Rate:</strong> {patrolInterventionRate}</div>
+					<div><strong>Capture-to-Rescue Ratio:</strong> {captureToRescueRatio}</div>
 				</div>
 			</div>
 
@@ -86,6 +107,11 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 					<Button variant="success" onClick={() => exportRunAsJson(run, region)}>Export JSON</Button>
 					<Button variant="success" onClick={() => exportRunAsCsv(run, region)}>Export CSV</Button>
 				</ButtonGroup>
+			</div>
+
+			<div className="border border-secondary rounded p-3">
+				<h6 className="mb-2">Encounter Events</h6>
+				<EncounterList events={run?.currentState?.encounterEvents} />
 			</div>
 
       {/*<Button variant="primary" onClick={() => modifySimState({ type: 'replay-run', index: runID, endTime: run.elapsedTimeEnd })}>

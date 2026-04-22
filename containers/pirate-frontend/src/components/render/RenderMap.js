@@ -2,6 +2,7 @@ import 'leaflet/dist/leaflet.css';
 import { useEffect } from 'react';
 import { MapContainer, useMap, ZoomControl } from 'react-leaflet';
 import RunDisplay from './RunDisplay';
+// EncounterIcons is used in RunDisplay
 import RegionDisplay from './RegionDisplay';
 import DisplayBadge from './DisplayBadge';
 

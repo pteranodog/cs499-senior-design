@@ -3,8 +3,8 @@ import Control from 'react-leaflet-custom-control';
 import Card from 'react-bootstrap/Card';
 import Dropdown from 'react-bootstrap/Dropdown';
 import ConfigDisplay from './ConfigDisplay';
-import StepRateControls from './StepRateControls';
 import EndScreen from './EndScreen';
+import { getTimeOfDayInfo } from '../../utils/timeOfDay.js';
 
 function Controls({
   pointsOfInterest = [],
@@ -36,7 +36,7 @@ function Controls({
 
   // SKELETON: this stores a chosen POI id from the Start modal.
   // Later can persist this in the global sim config instead of the local component state.
-  const [startCenterPointId, setStartCenterPointId] = useState("");
+  const [startCenterPointId, setStartCenterPointId] = useState('');
 
   // LIVE METRICS COUNTING (DROPDOWN)
   const [entries, setEntries] = useState(0);
@@ -143,12 +143,19 @@ function Controls({
       return;
     }
 
-    const totalSimulatedMinutes =
-      Number(startHour) * 60 + Number(startMinute) + Math.floor(seconds / 60);
-    const simulatedHour = Math.floor(totalSimulatedMinutes / 60) % 24;
-    const night = simulatedHour < 6 || simulatedHour >= 18;
-    setTimeOfDay(night ? 'Night' : 'Day');
-  }, [seconds, startHour, startMinute]);
+    const timeInfo = getTimeOfDayInfo({
+      regionName: region,
+      startHour,
+      startMinute,
+      elapsedTicks: seconds,
+      ticksPerMinute: 60,
+    });
+    setTimeOfDay(timeInfo.label);
+
+    if (typeof onConfigTimeChange === 'function') {
+      onConfigTimeChange(timeInfo.totalMinutes);
+    }
+  }, [seconds, startHour, startMinute, region, onConfigTimeChange]);
 
   const formatTime = (value) => {
     const hrs = String(Math.floor(value / 3600)).padStart(2, '0');
@@ -162,12 +169,13 @@ function Controls({
       return '00:00';
     }
 
-    const totalSimulatedMinutes =
-      Number(startHour) * 60 + Number(startMinute) + Math.floor(seconds / 60);
-    const hour = Math.floor(totalSimulatedMinutes / 60) % 24;
-    const minute = totalSimulatedMinutes % 60;
-
-    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    return getTimeOfDayInfo({
+      regionName: '',
+      startHour,
+      startMinute,
+      elapsedTicks: seconds,
+      ticksPerMinute: 60,
+    }).clockLabel;
   };
 
   const handleStart = () => {
@@ -197,8 +205,14 @@ function Controls({
       });
     }
 
-    const initialHour = Number(startHour);
-    setTimeOfDay(initialHour >= 6 && initialHour < 18 ? 'Day' : 'Night');
+    const initialTimeInfo = getTimeOfDayInfo({
+      regionName: region,
+      startHour,
+      startMinute,
+      elapsedTicks: 0,
+      ticksPerMinute: 60,
+    });
+    setTimeOfDay(initialTimeInfo.label);
     resetMetrics();
     setSeconds(0);
     setShowEndScreen(false);
@@ -224,6 +238,11 @@ function Controls({
     }
   };*/
 
+  /*
+    Legacy orphaned block from the previous file version.
+    This was outside any function and caused the syntax/runtime issues.
+    Keeping it here commented out so the original data/intent remains visible.
+
     const durationInSeconds = Number(duration) * 60;
     setSeconds((prev) => {
       const next = prev + 1;
@@ -236,6 +255,7 @@ function Controls({
 
     applyMetricTick();
   };
+  */
 
   const handleExport = (format = 'json') => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -285,7 +305,7 @@ Evasions,${evasions}`;
 
   return (
     <>
-      <EndScreen 
+      <EndScreen
         showEndScreen={showEndScreen}
         simName={simName}
         region={region}
@@ -293,16 +313,16 @@ Evasions,${evasions}`;
         formatTime={formatTime}
         entries={entries}
         exits={exits}
-
         captures={captures}
         defeats={defeats}
         rescues={rescues}
         evasions={evasions}
         handleExport={handleExport}
-        handleRestart={handleRestart}
+        handleRestart={handleStart}
       >
-      </EndScreen>   
-      </>
+      </EndScreen>
+    </>
   );
+}
 
 export default Controls;
