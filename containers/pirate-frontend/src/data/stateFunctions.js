@@ -4,9 +4,21 @@ import { aStar } from './aStar.js';
 import { getOceanCurrent } from './oceanCurrents.js'
 import { isOcean } from '../utils/isOcean.js';
 import { cartesianToLatLng, latLngToCartesian } from '../utils/coords.js';
+import { getTimeOfDayInfo } from '../utils/timeOfDay.js';
 
 const COMBAT_RANGE   = 2000;
 const REPATH_INTERVAL = 20; // steps between A* recomputes for merchants
+const NIGHT_SIGHT_RANGE_MULTIPLIER = 0.5;
+
+function getEffectiveSightRange(ship, isNight) {
+  const baseSightRange = Number(ship.baseSightRange ?? ship.sightRange ?? 0);
+
+  if (!isNight || (ship.type !== 'merchant' && ship.type !== 'pirate')) {
+    return baseSightRange;
+  }
+
+  return baseSightRange * NIGHT_SIGHT_RANGE_MULTIPLIER;
+}
 
 // ============================= Sight =============================
 
@@ -758,9 +770,24 @@ function step(run, regions, timeStep = 1) {
   // Get navgraph for this run's region (may be undefined for non-Somalia regions)
   const region   = regions?.[run.regionId];
   const navgraph = region?.navgraph ?? null;
+  const timeOfDayInfo = getTimeOfDayInfo({
+    regionName: region?.name,
+    startHour: run?.startHour,
+    startMinute: run?.startMinute,
+    elapsedTicks: run?.elapsedTime || 0,
+    ticksPerMinute: run?.ticksPerMinute || 1,
+  });
 
   for (const [id, ship] of Object.entries(shipsById)) {
-    let updatedShip = shipsById[id];
+    const currentShip = shipsById[id];
+    if (!currentShip) continue;
+
+    let updatedShip = {
+      ...currentShip,
+      baseSightRange: currentShip.baseSightRange ?? currentShip.sightRange,
+      sightRange: getEffectiveSightRange(currentShip, timeOfDayInfo.isNight),
+    };
+    shipsById[id] = updatedShip;
 
     // If this ship is a merchant who has arrived at its port, despawn it
     updatedShip = checkForDestinationArrival(updatedShip, region, run.seed, run.elapsedTime, id);
