@@ -3,9 +3,11 @@ import Accordion from 'react-bootstrap/Accordion';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
+import Modal from 'react-bootstrap/Modal';
 import RunSettingsControls from './RunSettingsControls';
 import RunSettingsSummary from './RunSettingsSummary';
 import { exportRunAsJson } from '../../../utils/fileInputOutput';
+
 
 const RunSettings = forwardRef(function RunSettings({ runID, runSettings, regions, allowSelect, modifySimState }, ref) {
   const canBeEdited = (runSettings.status ?? 'new') === 'new' && !runSettings.selected;
@@ -20,6 +22,7 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
     disallowedEditingWarning = "This run has ended. Duplicate this run to try different settings!";
   }
   const [shiftHeld, setShiftHeld] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     const onKey = (e) => setShiftHeld(e.shiftKey);
@@ -50,6 +53,13 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
   const modifyRatios = (setting, value) => {
     modifyRun(setting, Number(value));
   };
+
+  const handleDelete = () => setShowDeleteModal(true);
+  const confirmDelete = () => {
+    setShowDeleteModal(false);
+    modifySimState({ type: 'delete-run', index: runID });
+  };
+  const cancelDelete = () => setShowDeleteModal(false);
 
   return (
     <div ref={ref}>
@@ -106,10 +116,29 @@ const RunSettings = forwardRef(function RunSettings({ runID, runSettings, region
                 Export JSON
               </Button>
               <Button variant="outline-danger" size="sm" className="flex-fill"
-                onClick={() => modifySimState({ type: 'delete-run', index: runID })}>
+                onClick={handleDelete}>
                 Delete
               </Button>
             </ButtonGroup>
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={cancelDelete}>
+              <Modal.Header closeButton>
+                <Modal.Title>Confirm Delete</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                Are you sure you want to delete this run?
+                <br />
+                This action cannot be undone.
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="secondary" onClick={cancelDelete}>
+                  Cancel
+                </Button>
+                <Button variant="danger" onClick={confirmDelete}>
+                  Delete
+                </Button>
+              </Modal.Footer>
+            </Modal>
           </div>
         </Accordion.Body>
       </Accordion.Item>
