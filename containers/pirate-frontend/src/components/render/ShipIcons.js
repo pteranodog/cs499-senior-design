@@ -6,7 +6,7 @@ import L from 'leaflet';
 import ShipIcon from './ShipIcon.js';
 import { cartesianToLatLng } from '../../utils/coords.js';
 
-const ARROW_MIN_ZOOM = 7;
+const ARROW_MIN_ZOOM = 9;
 const ARROW_BASE_ZOOM = 8;
 const ARROW_MIN_SCALE = 0.7;
 const ARROW_MAX_SCALE = 1.35;
