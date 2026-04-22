@@ -3,6 +3,7 @@ import Accordion from 'react-bootstrap/Accordion';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
+import Modal from 'react-bootstrap/Modal';
 import RunSettingsControls from './RunSettingsControls';
 import RunSettingsSummary from './RunSettingsSummary';
 import { exportRunAsJson } from '../../../utils/fileInputOutput';
