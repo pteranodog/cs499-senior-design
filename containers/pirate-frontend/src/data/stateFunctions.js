@@ -126,8 +126,8 @@ function updateShipState(ship, shipsByID, region) {
           // a functional paradigm; if we need to tell the nearest patrol to respond to distress, 
           // then sideEffects will contain an object with two fields: the ID of the "savior" patrol ship,
           // and a sub-object of the fields of that patrol ship that will change (its pursue target and state).
-          // If modification to ships besides the passed one are not needed, the array remains empty:
-          sideEffects: nearestPatrolID ? [{ targetId: nearestPatrolID, changes: { currentTargetId: nearestId, state: 2, respondingToDistress: true, maxSpeed: updatedShip.maxSpeed * 1.6 } }] : []
+          // If modification to ships besides the passed one are not needed, the array remains empty:                                                         1.6x as fast
+          sideEffects: nearestPatrolID ? [{ targetId: nearestPatrolID, changes: { currentTargetId: nearestId, state: 2, respondingToDistress: true, maxSpeed: 1234.672 } }] : []
         };
       } 
     }
@@ -150,7 +150,7 @@ function updateShipState(ship, shipsByID, region) {
     if((ship.state == 3)) { // if i'm fleeing a patrol
       const trackedTarget = getTrackedTarget(ship, shipsByID);
       if (!trackedTarget || shouldForget(ship, trackedTarget)) { // and it's outside my "care" range
-        updatedShip.maxSpeed /= 1.1; // slow back down,
+        updatedShip.maxSpeed = 766.67; // slow back down to normal max speed,
         updatedShip.state = 1; // forget it and go back to idling
         updatedShip.currentTargetId = null;
         return { updatedShip, sideEffects: [] }
@@ -172,7 +172,7 @@ function updateShipState(ship, shipsByID, region) {
     if ((allPatrols.length > 0) && (ship.state <= 2)) { 
       const [nearestId, nearest] = nearestShip(ship, allPatrols); // flee the nearest patrol ship
       if (canSee(ship, nearest)) { //...if I can see it
-        updatedShip.maxSpeed *= 1.1; // speed up in desparation
+        updatedShip.maxSpeed = 843.34; // speed up in desparation
         updatedShip.currentTargetId = nearestId; // save ID of this patrol for flee init
         updatedShip.state = 3;
         console.log("A pirate is fleeing a patrol");
@@ -183,7 +183,7 @@ function updateShipState(ship, shipsByID, region) {
 
     if (ship.fuel <= 15) {
       if ((ship.state === 3)) {
-        updatedShip.maxSpeed /= 1.1;
+        updatedShip.maxSpeed = 766.67;
       }
       updatedShip.state = 4; // forget everything and go HOME for fuel
       console.log("A pirate is running low on fuel and attempting to return home");
@@ -199,14 +199,8 @@ function updateShipState(ship, shipsByID, region) {
 
     if((ship.state == 2)) { // if i'm chasing a pirate
       const trackedTarget = getTrackedTarget(ship, shipsByID);
-      if (!trackedTarget || shouldForget(ship, trackedTarget)) { // and it's outside my "care" range
-        if (ship.respondingToDistress) {
-          updatedShip.maxSpeed /= 1.6; 
-        }
-        else { 
-          updatedShip.maxSpeed /= 1.3; 
-        }
-
+      if (!trackedTarget || shouldForget(ship, trackedTarget)) { // and it's outside my "care" range OR no longer exists...
+        updatedShip.maxSpeed = 771.67; // slow back down to normal max speed...
         ship.respondingToDistress = false;
         updatedShip.state = 1; // forget it and go back to idling
         updatedShip.currentTargetId = null;
@@ -891,7 +885,8 @@ function step(run, regions, timeStep = 1) {
     updatedShip = updateShipMovement(updatedShip, shipsById, timeStep, region);
     
     const stepsAliveUpdate = { stepsAlive: (updatedShip.stepsAlive ?? 0) + 1 };
-    const fuelUpdate = updatedShip.type === 'pirate' ? { fuel: updatedShip.fuel - 0.00868 } : {};
+    // @ this fuel consumption rate, pirates should last ~2 days out at sea
+    const fuelUpdate = updatedShip.type === 'pirate' ? { fuel: updatedShip.fuel - 0.034744 } : {};
 
 
     // Delete this ship if it ventured outside the bounds of the region

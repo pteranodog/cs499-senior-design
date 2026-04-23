@@ -9,7 +9,9 @@ function formatPercent(numerator, denominator) {
 		return '0.0%';
 	}
 
-	return `${((numerator / denominator) * 100).toFixed(1)}%`;
+	const percentage = Math.min((numerator / denominator) * 100, 100);
+
+	return `${percentage.toFixed(1)}%`;
 }
 
 function formatRatio(leftValue, rightValue) {

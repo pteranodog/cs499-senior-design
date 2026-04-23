@@ -108,7 +108,10 @@ function reconstructPath(graph, cameFrom, startId, endId, pathId) {
   const waypoints = nodeIds.map(id => graph[id].cartesian);
 
   const assembled = behaviors.assemblePath(behaviors.newPath(waypoints, pathId));
-  if (!assembled) return null;
+  if (!assembled) {
+    console.warn('aStar: path assembly failed');
+    return null;
+  }
   return assembled;
 }
 
