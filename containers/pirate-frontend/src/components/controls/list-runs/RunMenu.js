@@ -15,12 +15,6 @@ export default function RunMenu ({ simState, modifySimState }) {
     if (selectedCount === 0) return true;
     return selectedRegionIds.has(run.regionId);
   };
-  const selectionTextOptions = { 0: "No Selection", 1: "View", 2: "Compare" };
-  const selectionColorOptions = { 0: 'secondary', 1: 'success', 2: 'warning' };
-  const createRunColorOptions = { 0: 'primary' };
-  const selectionText = selectionTextOptions[selectedCount] || "Too Many Selections!";
-  const selectionColor = selectionColorOptions[selectedCount] || 'danger';
-  const createRunColor = createRunColorOptions[selectedCount] || 'outline-primary';
   const scrollRef = useRef(null);
   const itemRefs = useRef({});
   const fileInputRef = useRef(null);
@@ -134,23 +128,39 @@ export default function RunMenu ({ simState, modifySimState }) {
           </Accordion>
         )}
       <ButtonGroup className="d-flex w-100 mt-1">
-        <Button variant="outline-info" size="sm" className="flex-fill"
-          onClick={() => fileInputRef.current.click()}>
+        <Button 
+          variant="outline-info" 
+          size="sm" 
+          className="flex-fill"
+          onClick={() => fileInputRef.current.click()}
+        >
           Import Run
         </Button>
-        <Button variant={createRunColor} size="sm" className="flex-fill"
-          onClick={() => modifySimState({ type: 'create-run' })}>
-          Create Run
+        <Button
+          variant={
+            selectedCount === 0
+              ? "primary"
+              : selectedCount === 1
+              ? "success"
+              : "warning"
+          }
+          size="sm"
+          className="flex-fill"
+          onClick={() => {
+            if (selectedCount === 0) {
+              modifySimState({ type: "create-run" });
+            } else {
+              handleViewCompare();
+            }
+          }}
+        >
+          {selectedCount === 0
+            ? "Create Run"
+            : selectedCount === 1
+            ? "View Run"
+            : "Compare Runs"}
         </Button>
       </ButtonGroup>
-      <Button
-        variant={selectionColor}
-        size="sm"
-        disabled={selectedCount === 0}
-        onClick={handleViewCompare}
-      >
-        {selectionText}
-      </Button>
     </div>
   );
 }
