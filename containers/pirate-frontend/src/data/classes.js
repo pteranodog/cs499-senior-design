@@ -145,14 +145,22 @@ function newMerchantShip(startPos, size, homePort) {
  *  - Persists between Runs.
  *  - pointsArr is assumed to be an array of all points within the region boundaries
  */
-function newRegion(center, pointsArr, regionName, length, width, defaultZoom) {
+function newRegion(center, pointsArr, regionName, length, width, defaultZoom, navGraphDensity, patrolPointAttempts, piratePointAttempts) {
   return {
     name: regionName,
     points: pointsArr, // array of Point instances
     center: center, // two-tuple of x/y coords
     length: length,
     width: width,
-    defaultZoom: defaultZoom
+    defaultZoom: defaultZoom,
+
+    // NEW: making some graph properties/ spawning params region-specific:
+    // how many grid spaces the navgraph should be in largest dimension
+    navGraphDensity: navGraphDensity, 
+    // # of times a patrol should try to get a new location; see getPatrolDestination in stateFunctions
+    patrolPointAttempts: patrolPointAttempts,
+    // # of times a pirate should try to get a new location; see getPirateDestination in stateFunctions
+    piratePointAttempts: piratePointAttempts
   };
 }
 

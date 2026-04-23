@@ -104,7 +104,7 @@ export default function RunDisplay({ simState, run }) {
       <PointIcons pointList={pointList} />
       <ShipIcons shipList={shipList} regionCenter={region.center} />
       <EncounterIcons events={encounterEvents} regionCenter={region.center} />
-      <OceanCurrentArrows regionBounds={region.bounds} />
+      <OceanCurrentArrows regionBounds={region.bounds} isNight={mapTheme.isNight} />
 
       {/* TEMPORARY: render patrol paths */}
       {Object.values(run.currentState.ships)
