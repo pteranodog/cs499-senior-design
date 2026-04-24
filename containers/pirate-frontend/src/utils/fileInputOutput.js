@@ -179,33 +179,11 @@ function resolveRegionId(run, region, regions) {
   return match[0];
 }
 
-/*
 export function importRun(payload, regions) {
-	requireObject(payload, 'Imported file does not contain a valid run payload.');
-
-  	const { region, outcomes, uuid, expanded, selected, ...run } = payload;
-  	const regionId = resolveRegionId(run, region, regions);
-
-	const baseTitle = run.name ?? 'Untitled Run';
-  	const name = appendImportSuffix(baseTitle);
-
-  	return { 
-		...buildNewRun(), 
-		...run,
-		regionId, 
-		name,
-		status: 'new',
-		isImported: true, 
-		replayEndTime: run.elapsedTimeEnd ?? run.elapsedTime, 
-		elapsedTime: 0,
-		elapsedTimeEnd: 0,
-		uuid: crypto.randomUUID()
-	};
-}
-*/
-
-export function importRun(payload, regions) {
-	requireObject(payload, 'Imported file does not contain a valid run payload.');
+	requireObject(
+		payload,
+		'Imported file does not contain a valid run payload.'
+	);
 
 	const { region, outcomes, uuid, expanded, selected, ...run } = payload;
 	const regionId = resolveRegionId(run, region, regions);
@@ -213,30 +191,41 @@ export function importRun(payload, regions) {
 	const baseTitle = run.name ?? 'Untitled Run';
 	const name = appendImportSuffix(baseTitle);
 
+	const freshRun = buildNewRun();
+
 	return {
-		...buildNewRun(),
+		...freshRun,
+
+		// Preserve imported configuration settings
 		...run,
-
-		currentState: {
-			...buildNewRun().currentState,
-			...run.currentState,
-
-			// clear encounter markers
-			encounterEvents: [],
-
-			// reset stats
-			stats: {
-				...buildNewRun().currentState.stats
-			}
-		},
 
 		regionId,
 		name,
-		status: 'new',
+
+		// Reset runtime simulation state
+		currentState: {
+			...freshRun.currentState,
+
+			ships: {},
+			encounterEvents: [],
+
+			stats: {
+				...freshRun.currentState.stats
+			}
+		},
+
+		// Treat imported runs as replayable fresh runs
+		status: 'running',
 		isImported: true,
-		replayEndTime: run.elapsedTimeEnd ?? run.elapsedTime,
+
+		// Preserve original simulation length for replay cutoff
+		replayEndTime: run.elapsedTimeEnd ?? run.elapsedTime ?? 0,
+
+		// Restart simulation timeline
 		elapsedTime: 0,
 		elapsedTimeEnd: 0,
+
+		// Prevent duplicate IDs
 		uuid: crypto.randomUUID()
 	};
 }
