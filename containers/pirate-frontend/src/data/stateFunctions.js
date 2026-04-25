@@ -150,6 +150,7 @@ function updateShipState(ship, shipsByID, region) {
     if((ship.state == 3)) { // if i'm fleeing a patrol
       const trackedTarget = getTrackedTarget(ship, shipsByID);
       if (!trackedTarget || shouldForget(ship, trackedTarget)) { // and it's outside my "care" range
+        updatedShip.fuelBurnMultiplier = 1;
         updatedShip.maxSpeed = 766.67; // slow back down to normal max speed,
         updatedShip.state = 1; // forget it and go back to idling
         updatedShip.currentTargetId = null;
@@ -173,6 +174,7 @@ function updateShipState(ship, shipsByID, region) {
       const [nearestId, nearest] = nearestShip(ship, allPatrols); // flee the nearest patrol ship
       if (canSee(ship, nearest)) { //...if I can see it
         updatedShip.maxSpeed = 843.34; // speed up in desparation
+        updatedShip.fuelBurnMultiplier = 1.5; // this will burn 50% more fuel, which sucks for them but anything to not sink!
         updatedShip.currentTargetId = nearestId; // save ID of this patrol for flee init
         updatedShip.state = 3;
         console.log("A pirate is fleeing a patrol");
@@ -181,10 +183,12 @@ function updateShipState(ship, shipsByID, region) {
       }
     }
 
-    if (ship.fuel <= 15) {
+    if (ship.fuel <= 15 && ship.state !== 4) {
       if ((ship.state === 3)) {
         updatedShip.maxSpeed = 766.67;
       }
+      updatedShip.destination = ship.homeCove; 
+      updatedShip.stepsSinceRepath = REPATH_INTERVAL; // force immediate repath
       updatedShip.state = 4; // forget everything and go HOME for fuel
       console.log("A pirate is running low on fuel and attempting to return home");
       return { updatedShip, sideEffects: [] }
@@ -214,6 +218,7 @@ function updateShipState(ship, shipsByID, region) {
       const [nearestId, nearest] = nearestShip(ship, allPirates); // pursue the nearest pirate
       if (canSee(ship, nearest)) { // if i can see it
         updatedShip.currentTargetId = nearestId; // save ID of this patrol for flee init
+        updatedShip.maxSpeed = 1080.34; // speed up
         updatedShip.state = 2;
 
         return { updatedShip, sideEffects: [] }
@@ -350,6 +355,7 @@ function buildBehaviors(ship, shipsById, region) {
 // (For pirates and patrols)
 
 export function choosePirateDestination(ship, region, seed, step, index) {
+
   const rng = seedrandom(seed + '-' + step + '-' + index);
   const largestSide = Math.max(region.width, region.length) * 1000; // have to convert km to m
   // min/max distances are fractions of the largest side of the region boundary:
@@ -656,12 +662,16 @@ function checkForDestinationArrival(ship, region, seed, step, index) {
   if (ship.type === "pirate") {
     // choose new destination; arrived at this one and didn't find anything to flee/chase on the way
     const destLatLng = choosePirateDestination(ship, region, seed, step, index);
+    console.log ("a pirate has chosen a new latlon as a dest: " + destLatLng);
     const destCart = destLatLng ? latLngToCartesian(destLatLng[0], destLatLng[1], {
       originLat: region.center[0],
       originLon: region.center[1]
     }) : null;
 
+    console.log ("the cartesian equivalent: " + destCart);
+
     if (ship.state === 4) { // state 4 means this pirate must be arriving to refuel
+      console.log("a pirate is refueling")
       return { ...ship, fuel: 100, state: 1, destination: destCart }; // so fuel it back up!
     } else {
       return { ...ship, destination: destCart };
@@ -886,7 +896,7 @@ function step(run, regions, timeStep = 1) {
     
     const stepsAliveUpdate = { stepsAlive: (updatedShip.stepsAlive ?? 0) + 1 };
     // @ this fuel consumption rate, pirates should last ~2 days out at sea
-    const fuelUpdate = updatedShip.type === 'pirate' ? { fuel: updatedShip.fuel - 0.034744 } : {};
+    const fuelUpdate = updatedShip.type === 'pirate' ? { fuel: updatedShip.fuel - (0.034744 * ship.fuelBurnMultiplier * 2)  } : {};
 
 
     // Delete this ship if it ventured outside the bounds of the region

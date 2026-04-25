@@ -1,7 +1,10 @@
 import { Marker, Popup } from 'react-leaflet';
 
-function PointIcons({ type, lat, lon, name }) {
+function PointIcons({ type, lat, lon, name, shouldRender }) {
   // For now we'll just set marker text using type, later we'll switch it to show different icons
+  if (!shouldRender) {
+    return;
+  } 
   var markerText = "Unknown point type!";
   if (type === "port") {
     markerText = "This is a port!";

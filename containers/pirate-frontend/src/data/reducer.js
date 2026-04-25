@@ -344,7 +344,7 @@ function spawnShips(run, regions) {
       return run;
     }
 
-    const destLatLng = chooseWeightedDestPort(region, rng);
+    const destLatLng = chooseWeightedDestPort(region, rng, chosenPort.pos); // NEW: passing in spawn point as a port to avoid
     const ID = crypto.randomUUID();
     ships[ID] = buildShip("merchant", chosenPort.pos, "medium", region, destLatLng, pathIdCounter++);
     merchantsSpawned += 1;
@@ -478,6 +478,7 @@ function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null
     });
 
     const path = aStar(region.navgraph, cartesianPos, destCartesian, type, pathId);
+    if (!path) console.warn('buildShip: A* returned null for', type, 'from:', pos, 'to:', destPos);
 
     if (path) {
       behaviorList    = [behaviors.newFollowPath(path, 0.04)];
@@ -523,6 +524,7 @@ function buildShip(type, pos, size, region, destPos, pathId, fallbackPath = null
     // Pirate-only
     homeCove: type === 'pirate' ? cartesianPos : null,
     fuel:       100,
+    fuelBurnMultiplier: 1,
     // patrol only
     homeBase: type === 'patrol' ? { pos: cartesianPos } : null,
   };
@@ -588,7 +590,7 @@ function spawnMoreShips(run, regions) {
   if (shouldSpawn(merchantsPerDay, run.seed, run.elapsedTime)) {
     const chosenPort = chooseWeightedSpawnPort(region, rng);
     if (chosenPort) {
-      const destLatLng = chooseWeightedDestPort(region, rng);
+      const destLatLng = chooseWeightedDestPort(region, rng, chosenPort.pos);
       const id = crypto.randomUUID();
       newShips[id] = buildShip('merchant', chosenPort.pos, 'medium', region, destLatLng ?? null, pathIdCounter++);
     }

@@ -36,11 +36,12 @@ export function chooseWeightedSpawnPort(region, rng) {
 
 // Same as above, but returns the *location* of a 
 // *destination* port. 
-export function chooseWeightedDestPort(region, rng) {
+export function chooseWeightedDestPort(region, rng, excludePos) {
 
   // Collect list of all ports in the given region
   const ports = Object.values(region.points)
-    .filter(p => p.type === 'port' && p.destWeight > 0);
+    .filter(p => p.type === 'port' && p.destWeight > 0) // out of all the region's points, only include destination ports
+    .filter(p => !excludePos || !(p.pos[0] === excludePos[0] && p.pos[1] === excludePos[1])); // and exclude the port i spawned at
   if (ports.length === 0) return null;
 
   const totalWeight = ports.reduce((sum, p) => sum + p.destWeight, 0);
@@ -85,7 +86,7 @@ function defaultRegions() {
   somaliaPoints["p2"] = newPort("Mombasa (Port)", [-4.0717, 39.6730], 0.08, [], [], 0.04, true);
   somaliaPoints["p3"] = newPort("Dar es Salaam (Tanzania)", [-6.7640, 39.2747], 0.04, [], [], 0.02, true); 
   somaliaPoints["p4"] = newPort("Djibouti (Port)", [11.6048, 43.1497], 0.08, [], [], 0.04, true);
-  somaliaPoints["p5"] = newPort("upperLeftSomalia", [14.0, 42.6], 0.4, [], [], 0.3, false);
+  somaliaPoints["p5"] = newPort("upperLeftSomalia", [13.8, 42.6], 0.4, [], [], 0.3, false);
   somaliaPoints["p6"] = newPort("upperRightSomalia", [12.9, 56.8], 0.36, [], [], 0.2, false);
   somaliaPoints["p7"] = newPort("lowerSomalia", [-8.0, 42.6], 0.04, [], [], 0.05, false);
   
