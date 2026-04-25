@@ -47,13 +47,6 @@ function getTrackedTarget(ship, shipsByID) {
   return shipsByID.find(([id]) => id === ship.currentTargetId)?.[1] ?? null;
 }
 
-// Does the passed ship reside within the boundaries of its region?
-// Note the cartesian-based checking; might be slightly inaccurate in some
-// areas/points
-function isOutOfRegionBounds(ship, region) {
-
-}
-
 // Return copy of ship w/updated (non-combat) state & flags
 function updateShipState(ship, shipsByID, region) {
   /* ======== SHIP STATE INFORMATION ===========================================
@@ -127,7 +120,7 @@ function updateShipState(ship, shipsByID, region) {
           // then sideEffects will contain an object with two fields: the ID of the "savior" patrol ship,
           // and a sub-object of the fields of that patrol ship that will change (its pursue target and state).
           // If modification to ships besides the passed one are not needed, the array remains empty:                                                         1.6x as fast
-          sideEffects: nearestPatrolID ? [{ targetId: nearestPatrolID, changes: { currentTargetId: nearestId, state: 2, respondingToDistress: true, maxSpeed: 1234.672 } }] : []
+          sideEffects: nearestPatrolID ? [{ targetId: nearestPatrolID, changes: { currentTargetId: nearestId, respondingToDistress: true, state: 2, maxSpeed: 1234.672 } }] : []
         };
       } 
     }
@@ -205,7 +198,7 @@ function updateShipState(ship, shipsByID, region) {
       const trackedTarget = getTrackedTarget(ship, shipsByID);
       if (!trackedTarget || shouldForget(ship, trackedTarget)) { // and it's outside my "care" range OR no longer exists...
         updatedShip.maxSpeed = 771.67; // slow back down to normal max speed...
-        ship.respondingToDistress = false;
+        updatedShip.respondingToDistress = false;
         updatedShip.state = 1; // forget it and go back to idling
         updatedShip.currentTargetId = null;
 
@@ -218,7 +211,7 @@ function updateShipState(ship, shipsByID, region) {
       const [nearestId, nearest] = nearestShip(ship, allPirates); // pursue the nearest pirate
       if (canSee(ship, nearest)) { // if i can see it
         updatedShip.currentTargetId = nearestId; // save ID of this patrol for flee init
-        updatedShip.maxSpeed = 1080.34; // speed up
+        updatedShip.maxSpeed = ship.respondingToDistress? 1234.67 : 1080.34; // speed up
         updatedShip.state = 2;
 
         return { updatedShip, sideEffects: [] }
@@ -258,7 +251,7 @@ function buildBehaviors(ship, shipsById, region) {
   const behaviorList = [];
 
   // LAND AVOIDANCE
-  // Active ONLY FOR SHIPS WHO ARE PURSUING/SEEKING; rely on nagraph
+  // Active ONLY FOR SHIPS WHO ARE PURSUING/SEEKING; rely on navgraph
   // to avoid land if the ship is strictly following a path in it
   const useLandAvoidance = (ship.state === 2 || ship.state === 3 || ship.stepsAlive <= 9);
 
@@ -268,10 +261,10 @@ function buildBehaviors(ship, shipsById, region) {
       const distToLand = behaviors.getLength(behaviors.subtract(ship.pos, nearestLandNode.cartesian));
       let danger_dist;
       if (ship.type === 'patrol') {
-        danger_dist = 10000; // ~150km — tune this
+        danger_dist = 10000; // 10km; significantly less than pirates so they dont both get corner trapped
       } 
       else {
-        danger_dist = 150000; // ~150km — tune this
+        danger_dist = 150000; // 150km 
       }
       if (distToLand < danger_dist) {
         const urgency = 1 - (distToLand / danger_dist); // 0 at edge, 1 at land
@@ -285,9 +278,10 @@ function buildBehaviors(ship, shipsById, region) {
   }
 
   // FOLLOW PATH
-  // Active in state 1 ("idle") for all ship types, and state 4 for pirates (refueling path)
+  // Active in state 1 ("idle") for all ship types, and state 4 for pirates (refueling path), and NEW: state 2 patrols responding to distress calls
   // Carried over from ship.behaviorList so path progress persists
-  const shouldFollowPath = ship.state === 1 || ((ship.type === 'merchant' && ship.state === 2) || (ship.type === 'pirate' && ship.state === 4));
+  const shouldFollowPath = ship.state === 1 || ((ship.type === 'merchant' && ship.state === 2) || (ship.type === 'pirate' && ship.state === 4)
+  || (ship.type === 'patrol' && ship.respondingToDistress && ship.state === 2));
   if (shouldFollowPath) {
     const existingFollowPath = ship.behaviorList?.find(b => b.type === 'followPath');
     if (existingFollowPath) { // if I was already following a path, and should keep doing so, include follow in this updated behavior list.
@@ -319,7 +313,7 @@ function buildBehaviors(ship, shipsById, region) {
   }
 
   if (ship.type === 'patrol') {
-    if (ship.state === 2 && target) {
+    if (ship.state === 2 && target && !ship.respondingToDistress) {
       // pursue the pirate
       behaviorList.push({ ...behaviors.newPursue(4), target, weight: 2.0 });
     }
@@ -424,13 +418,13 @@ export function choosePatrolDestination(homeBase, ship, region, seed, step, inde
   const maxDist = largestSide / 1.5; 
 
   const minDist = largestSide / 4; 
-  const targetDist = (minDist + maxDist) / 2; // TEMPORARY?: prioritize the middle distance between the two
+  const targetDist = (minDist + maxDist) / 2; // prioritize the middle distance between the two
   const n = 3; // # of possible points to choose from CHANGED TO 3 BECAUSE 5 WAS CAUSING PERFORMANCE PROBLEMS
   const bounds = region.bounds;
   const points = [];
 
   let attempts = 0;
-  while (points.length < n && attempts < 100) { // limit to 60 tries
+  while (points.length < n && attempts < 100) { // limit to 100 tries
     attempts++;
 
     // choose random latlon in the region bounds
@@ -438,7 +432,7 @@ export function choosePatrolDestination(homeBase, ship, region, seed, step, inde
     const randLon = bounds.left  + rng() * (bounds.right - bounds.left);
 
     // disregard that point if it's on land
-    if (!isOcean(randLat, randLon)) continue;
+    if (!isOcean(randLat, randLon)) continue; // POTENTIAL PERFORMANCE TODO: this should probably just check if a land node is nearby
 
     // convert that latlon to cartesian so we can check its distance from this ship
     // and compare that distance against max, min and target dist
@@ -483,17 +477,29 @@ export function choosePatrolDestination(homeBase, ship, region, seed, step, inde
 // Recomputes path from current position to destination
 // every REPATH_INTERVAL steps. Swaps in new path if found.
 
-function maybeRepath(ship, navgraph, pathIdRef) {
+function maybeRepath(ship, navgraph, pathIdRef, shipsByID) {
   if ( /* ship.type !== 'merchant' || */ !ship.destination || !navgraph) return ship;
 
-  const steps = (ship.stepsSinceRepath ?? 0) + 1;
+
+  // NEW: since patrols responding to distress are pathing to a moving target, they need to repath very frequently
+  const steps = (ship.stepsSinceRepath ?? 0) + (ship.respondingToDistress? 5 : 1); 
 
   if (steps < REPATH_INTERVAL) {
     return { ...ship, stepsSinceRepath: steps };
   }
 
-  // Time to repath
-  const newPath = aStar(navgraph, ship.pos, ship.destination, ship.type, pathIdRef.value++);
+  // If we got here, time for this ship to repath
+  let dest = ship.destination;
+  // NEW: updated path for patrols responding to distress should set their destination to location of target
+  if (ship.respondingToDistress) {
+    // get reference to the pirate that caused distress
+    const trackedTarget = getTrackedTarget(ship, shipsByID);
+    if (trackedTarget) {
+      // set destination to trackedTargets location
+      dest = trackedTarget.pos;
+    }
+  }
+  const newPath = aStar(navgraph, ship.pos, dest, ship.type, pathIdRef.value++);
 
   if (newPath) {
     return {
@@ -648,31 +654,32 @@ function checkForCombatScenario(ship, shipId, shipsById) { // return updated shi
 function checkForDestinationArrival(ship, region, seed, step, index) {
   if (!ship) return null; // bandaid fix for weird combat thing
 
+  let cutoff = 0.97;
+  if (ship.respondingToDistress) {
+    cutoff = 0.99;
+  }
+
   const followPath = ship.behaviorList?.find(b => b.type === 'followPath');
   if (!followPath?.path) return ship; // ignore ships who don't have a path
-  if (followPath.currentParam < 0.97) return ship; // ignore ships who aren't within 3% of completing their path
+  if (followPath.currentParam < cutoff) return ship; // ignore ships who aren't within 3% of completing their path
 
   // IF WE REACH THIS POINT, the ship in question is *very* near the end of its path; determine what to do based on type + state:
 
   if ((ship.type === "merchant" ) && ship.state === 1) {
     return null; // merchant arrives at its destination port; succesful delivery
-    // TODO: track total succesful deliveries? would need to pass in run
   }
 
   if (ship.type === "pirate") {
     // choose new destination; arrived at this one and didn't find anything to flee/chase on the way
     const destLatLng = choosePirateDestination(ship, region, seed, step, index);
-    console.log ("a pirate has chosen a new latlon as a dest: " + destLatLng);
     const destCart = destLatLng ? latLngToCartesian(destLatLng[0], destLatLng[1], {
       originLat: region.center[0],
       originLon: region.center[1]
     }) : null;
 
-    console.log ("the cartesian equivalent: " + destCart);
 
     if (ship.state === 4) { // state 4 means this pirate must be arriving to refuel
-      console.log("a pirate is refueling")
-      return { ...ship, fuel: 100, state: 1, destination: destCart }; // so fuel it back up!
+      return null; // NEW: delete to represent pirate "taking a break" so as to not allow theoretically infinite pirates
     } else {
       return { ...ship, destination: destCart };
     }
@@ -686,41 +693,6 @@ function checkForDestinationArrival(ship, region, seed, step, index) {
       originLon: region.center[1]
     }) : null;
     return { ...ship, destination: destCart };
-
-    // TODO: figure out why the heck ocean currents were only being applied here?
-
-    // WEIRD MERGE ISSUE
-    // I don't think the following block of code is supposed to be here
-    // I'm also not sure where it's supposed to go
-    // So I've just gotta comment it out for the time being
-    // And we'll figure out where it goes soon
-
-//   // Apply ocean current displacement to the ship's new position
-//   const pos = newMover.kinematic.pos;
-//   const [cx, cy] = getOceanCurrent(pos[0], pos[1]);
-//   const currentOffset = [cx * timeStep, cy * timeStep];
-//   const adjustedPos = behaviors.add(pos, currentOffset);
-//
-//   const moverWithCurrent = {
-//     ...newMover,
-//     kinematic: {
-//       ...newMover.kinematic,
-//       pos: adjustedPos,
-//     },
-//     behavior: {
-//       ...newMover.behavior,
-//       k1: {
-//         ...newMover.kinematic,
-//         pos: adjustedPos,
-//       },
-//     },
-//   };
-//
-//   return {
-//     ...ship,
-//     mover: moverWithCurrent
-//   };
-// }
   }
   return ship; // no change to this ship needed if we hit this point
 }
@@ -805,16 +777,8 @@ function step(run, regions, timeStep = 1) {
       continue;
     }
 
-    // im so sick of every solution for land avoidance not workign so this is the last straw for this
-    // ONE INCREDIBLY SPECIFIC INSTANCE OF THE ISSUE so im just deleting tany ships it happens to
-    if ((updatedShip.type === 'merchant' || updatedShip.type === 'patrol' ) && !updatedShip.behaviorList?.find(b => b.type === 'followPath')) {
-      delete shipsById[id];
-      continue;
-    }
-
-
     // process this ship's state (as in, if ship.state and various flags should change, do so)
-    // in pasing shipsByID to this function, we filter out the current ship and pass it as an array rather than an object:
+    // in passing shipsByID to this function, we filter out the current ship and pass it as an array rather than an object:
     const stateMachineResult = updateShipState(updatedShip, Object.entries(shipsById).filter(([otherId]) => otherId !== id), region);
 
     updatedShip = stateMachineResult.updatedShip; // apply state changes to this ship
@@ -834,7 +798,7 @@ function step(run, regions, timeStep = 1) {
 
 
     // Repath periodically
-    updatedShip = maybeRepath(updatedShip, navgraph, pathIdRef);
+    updatedShip = maybeRepath(updatedShip, navgraph, pathIdRef, Object.entries(shipsById));
     shipsById[id] = updatedShip;
 
 
@@ -899,13 +863,13 @@ function step(run, regions, timeStep = 1) {
     const fuelUpdate = updatedShip.type === 'pirate' ? { fuel: updatedShip.fuel - (0.034744 * ship.fuelBurnMultiplier * 2)  } : {};
 
 
-    // Delete this ship if it ventured outside the bounds of the region
+    // Delete this ship if it ventured outside the bounds of the region, or if it ran out of fuel
     if (region && (
       updatedShip.pos[0] < region.cartesianBounds.minX ||
       updatedShip.pos[0] > region.cartesianBounds.maxX ||
       updatedShip.pos[1] < region.cartesianBounds.minY ||
       updatedShip.pos[1] > region.cartesianBounds.maxY
-    )) {
+    ) || ship.fuel <= 0) {
       delete shipsById[id];
       continue;
     }

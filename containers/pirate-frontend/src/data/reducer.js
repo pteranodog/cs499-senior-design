@@ -385,57 +385,6 @@ function spawnShips(run, regions) {
         const destLatLng = choosePatrolDestination({ pos: cartesianPos }, { pos: cartesianPos }, region, run.seed, run.elapsedTime, point);
         ships[id] = buildShip('patrol', point.pos, 'medium', region, destLatLng ?? null, pathIdCounter++);
       }
-    
-
-      // OLD SPAWNING CODE:
-  /*
-  for (const [pointId, point] of Object.entries(region.points)) {
-    const pos = point.pos;
-
-    if (point.type === 'port' && shouldSpawn(merchantsPerDay)) {            
-      merchantsSpawned += 1;
-      const id = crypto.randomUUID();
-
-      // Pick a random destination port from predefined, prioritized destination list
-      // TODO: generalize for other regions
-      const destPortLatLn = getSomaliaMerchantDestination();
-
-      ships[id] = buildShip(
-        'merchant', pos, 'medium', region, 
-        destPortLatLn ?? null,
-        pathIdCounter++
-      );
-    
-    }
-
-    if (point.type === 'patrolBase') {
-      const currentPatrols = Object.values(ships).filter(s => s.type === 'patrol').length; // Convoluted way of checking if we've hit max patrol count yet
-      if (currentPatrols < maxPatrols) {
-        const id    = crypto.randomUUID();
-        const cartesianPos = latLngToCartesian(pos[0], pos[1], {
-        originLat: region.center[0],
-        originLon: region.center[1]
-      });
-      const destLatLng = choosePatrolDestination({ pos: cartesianPos }, region);
-      ships[id] = buildShip('patrol', pos, 'medium', region, destLatLng ?? null, pathIdCounter++);
-      }
-    }
-
-    if ((point.type === 'pirateCove') && shouldSpawn(piratesPerDay)) {
-      piratesSpawned += 1;
-      const id = crypto.randomUUID();
-      const cartesianPos = latLngToCartesian(pos[0], pos[1], {
-        originLat: region.center[0],
-        originLon: region.center[1],
-        metersPerUnit: 1,
-        headingDegrees: 0,
-      });
-      const destLatLng = choosePirateDestination({ pos: cartesianPos }, region);
-      ships[id] = buildShip('pirate', pos, 'medium', region, destLatLng ?? null, pathIdCounter++);
-    }
-  }
-
-  */
 
   return {
     ...run,
