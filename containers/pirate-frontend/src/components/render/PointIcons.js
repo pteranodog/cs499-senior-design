@@ -10,6 +10,7 @@ function PointIcons({ pointList }) {
           lat={point.pos[0]}
           lon={point.pos[1]}
           name={point.name}
+          shouldRender={point.visible !== false} // unique to Ports that exist on region edges
         />
       ))}
     </>
