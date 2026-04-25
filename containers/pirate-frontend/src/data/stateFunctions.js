@@ -264,7 +264,7 @@ function buildBehaviors(ship, shipsById, region) {
         danger_dist = 10000; // 10km; significantly less than pirates so they dont both get corner trapped
       } 
       else {
-        danger_dist = 150000; // 150km 
+        danger_dist = 90000; // 90km 
       }
       if (distToLand < danger_dist) {
         const urgency = 1 - (distToLand / danger_dist); // 0 at edge, 1 at land
