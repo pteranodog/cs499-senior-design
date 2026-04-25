@@ -4,6 +4,8 @@ import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import { useEffect, useRef } from 'react';
 import { readRunFile } from '../../../utils/fileInputOutput';
+import Modal from 'react-bootstrap/Modal';
+import { useState } from 'react';
 
 export default function RunMenu ({ simState, modifySimState }) {
   const selectedRuns = (simState.runs || []).filter(r => r.selected);
@@ -60,6 +62,8 @@ export default function RunMenu ({ simState, modifySimState }) {
     }
   };
 
+  const [showHelp, setShowHelp] = useState(false);
+
   useEffect(() => {
     const expandedRun = simState.runs.find(r => r.expanded);
     if (!expandedRun) return;
@@ -93,6 +97,18 @@ export default function RunMenu ({ simState, modifySimState }) {
         flexDirection: 'column',
         padding: '4px',
       }}>
+      
+      <div
+        classname="d-flex justify-content-end mb2">
+        <Button
+          variant="outline-light"
+          size="sm"
+          onClick={() => setShowHelp(true)}
+        >
+          Getting Started
+        </Button>
+      </div>
+
       <input
         ref={fileInputRef}
         type="file"
@@ -161,6 +177,50 @@ export default function RunMenu ({ simState, modifySimState }) {
             : "Compare Runs"}
         </Button>
       </ButtonGroup>
+
+      <Modal show={showHelp} onHide={() => setShowHelp(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Getting Started</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+        <p className="mt-3">
+            To make a new run:
+        </p>
+          <ol>
+            <li>Click "Create run"</li>
+            <li>Name the run</li>
+            <li>Set a start time and duration</li>
+            <li>Select a region</li>
+            <li>Adjust particpant rates</li>
+            <li>Click "Select" then "View Run"</li>
+            <li>Click "Start"</li>
+          </ol>
+
+        <p className="mt-3">
+          To import a run:
+        </p>
+            <ol>
+              <li>Click "Import Run"</li>
+              <li>Click "Select"</li>
+              <li>Click "View"</li>
+            </ol>
+
+        <p className="mt-3">
+          Notes:
+        </p>
+          <ol>
+            <li>To compare runs, slect two runs for the same region</li>
+            <li>You cannot edit the settings of an imported run</li>
+          </ol>
+      </Modal.Body>
+
+      <Modal.Footer>
+        <Button variant="secondary" onClick={() => setShowHelp(false)}>
+          Close
+        </Button>
+      </Modal.Footer>
+      </Modal>
     </div>
   );
 }
