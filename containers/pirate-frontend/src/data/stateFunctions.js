@@ -313,11 +313,10 @@ function buildBehaviors(ship, shipsById, region) {
   }
 
   if (ship.type === 'patrol') {
-    if (ship.state === 2 && target && !ship.respondingToDistress) {
-      // pursue the pirate
+    if (ship.state === 2 && target && (!ship.respondingToDistress || canSee(ship, target))) {
       behaviorList.push({ ...behaviors.newPursue(4), target, weight: 2.0 });
     }
-  }
+}
 
   // fallback to wander (SHOULDN'T happen)
   if (behaviorList.length === 0) {
@@ -655,13 +654,10 @@ function checkForDestinationArrival(ship, region, seed, step, index) {
   if (!ship) return null; // bandaid fix for weird combat thing
 
   let cutoff = 0.97;
-  if (ship.respondingToDistress) {
-    cutoff = 0.99;
-  }
 
   const followPath = ship.behaviorList?.find(b => b.type === 'followPath');
   if (!followPath?.path) return ship; // ignore ships who don't have a path
-  if (followPath.currentParam < cutoff) return ship; // ignore ships who aren't within 3% of completing their path
+  if (followPath.currentParam < cutoff) return ship; // ignore ships who aren't within (100 - cutoff) % of completing their path
 
   // IF WE REACH THIS POINT, the ship in question is *very* near the end of its path; determine what to do based on type + state:
 
