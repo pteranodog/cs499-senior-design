@@ -111,10 +111,11 @@ export default function SimEndControls({ simState, modifySimState, runID }) {
 				</ButtonGroup>
 			</div>
 
-			<div className="border border-secondary rounded p-3">
-				<h6 className="mb-2">Encounter Events</h6>
-				<EncounterList events={run?.currentState?.encounterEvents} />
-			</div>
+      {/* Removed because it currently shows grid coordinates instead of lat/lon and there's not time to fix it now */}
+			{/* <div className="border border-secondary rounded p-3"> */}
+			{/* 	<h6 className="mb-2">Encounter Events</h6> */}
+			{/* 	<EncounterList events={run?.currentState?.encounterEvents} /> */}
+			{/* </div> */}
 
       {/*<Button variant="primary" onClick={() => modifySimState({ type: 'replay-run', index: runID, endTime: run.elapsedTimeEnd })}>
         Replay

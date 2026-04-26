@@ -20,7 +20,6 @@ function MapResizeHandler({ controlsType }) {
 }
 
 function SingleMap({ simState, modifySimState, style }) {
-  const { type, index } = simState.display;
   const controlsHasSidePanel = simState.controls.type === 'list-runs' || simState.controls.type === 'end-run';
 
   return (
@@ -32,7 +31,6 @@ function SingleMap({ simState, modifySimState, style }) {
       height: '100%',
     }}>
       <MapContainer
-        key={`${simState.controls.type}-${type}-${index}`}
         style={{ width: '100%', height: '100%' }}
         center={[transformConfig.originLat, transformConfig.originLon]}
         zoom={4}
@@ -41,8 +39,8 @@ function SingleMap({ simState, modifySimState, style }) {
         <ZoomControl position="topright" />
         <MapResizeHandler controlsType={simState.controls.type} />
         <DisplayBadge simState={simState} />
-        {type === 'run'    && <RunDisplay    simState={simState} run={simState.runs[index]} />}
-        {type === 'region' && <RegionDisplay simState={simState} region={simState.regions[index]} />}
+        {simState.display.type === 'run'    && <RunDisplay    simState={simState} run={simState.display.run} />}
+        {simState.display.type === 'region' && <RegionDisplay simState={simState} region={simState.regions[simState.display.index]} />}
       </MapContainer>
     </div>
   );
@@ -60,7 +58,6 @@ function CompareMap({ simState, modifySimState, runIndex, side }) {
       height: '100%',
     }}>
       <MapContainer
-        key={run?.uuid || `empty-${side}`}
         style={{ width: '100%', height: '100%' }}
         center={[transformConfig.originLat, transformConfig.originLon]}
         zoom={4}
@@ -69,8 +66,8 @@ function CompareMap({ simState, modifySimState, runIndex, side }) {
         <MapResizeHandler controlsType={simState.controls.type} />
         {run && (
           <>
-            <RunDisplay simState={simState} run={run} />
-            <DisplayBadge simState={{ ...simState, display: { type: 'run', index: runIndex } }} />
+            <RunDisplay simState={simState} run={run} showShips={false} />
+            <DisplayBadge simState={{ ...simState, display: { type: 'run', run: run } }} />
           </>
         )}
       </MapContainer>

@@ -285,7 +285,7 @@ function buildBehaviors(ship, shipsById, region) {
   if (shouldFollowPath) {
     const existingFollowPath = ship.behaviorList?.find(b => b.type === 'followPath');
     if (existingFollowPath) { // if I was already following a path, and should keep doing so, include follow in this updated behavior list.
-      behaviorList.push(Object.assign(existingFollowPath, { weight: 1.0 }));
+      behaviorList.push({...existingFollowPath, weight: 1.0 });
     }
   }
 
@@ -698,13 +698,23 @@ function checkForDestinationArrival(ship, region, seed, step, index) {
 function updateShipMovement(ship, shipsById, timeStep, region) {
   if (ship.inCombat) return ship; // ships in combat don't move
 
-  const behaviorList = buildBehaviors(ship, shipsById, region); // determine what behaviors this ship
-  // should currently exhibit based on what ships are visible to it
-  const steering     = behaviors.getTotalSteering(ship, behaviorList); // combine those behaviors
-  // to get ONE steering output
-
-  // return updated version of the passed in ship, whose movement stats now reflect the updated steering
+  const behaviorList = buildBehaviors(ship, shipsById, region);
+  // Shallow-clone the followPath behavior so getTotalSteering's currentParam
+  // mutation lands on a local copy, not the live ship state.
+  const followPathBehavior = behaviorList.find(b => b.type === 'followPath');
+  if (followPathBehavior) {
+    const idx = behaviorList.indexOf(followPathBehavior);
+    behaviorList[idx] = { ...followPathBehavior };
+  }
+  const steering    = behaviors.getTotalSteering(ship, behaviorList);
   const updatedShip = behaviors.updateShip(ship, steering, timeStep);
+  // Write the updated currentParam back from our local clone into the new ship.
+  if (followPathBehavior) {
+    const updatedFollow = behaviorList.find(b => b.type === 'followPath');
+    updatedShip.behaviorList = updatedShip.behaviorList.map(b =>
+      b.type === 'followPath' ? { ...b, currentParam: updatedFollow.currentParam } : b
+    );
+  }
 
   // NEW: apply ocean current 
 
@@ -723,11 +733,11 @@ function updateShipMovement(ship, shipsById, timeStep, region) {
 
 // ============================= Step =============================
 
-// pathIdRef is a simple counter object so repath calls get unique path IDs
-// without needing global state
-const pathIdRef = { value: 10000 };
 
 function step(run, regions, timeStep = 1) {
+  // pathIdRef is a simple counter object so repath calls get unique path IDs
+  // without needing global state
+  const pathIdRef = { value: run.elapsedTime * 10000 };
 
   let shipsById = { ...run.currentState.ships };
   let encounterTotals = {
@@ -755,7 +765,7 @@ function step(run, regions, timeStep = 1) {
     ticksPerMinute: run?.ticksPerMinute || 1,
   });
 
-  for (const [id, ship] of Object.entries(shipsById)) {
+  for (const [id, ship] of Object.entries(shipsById).sort(([a], [b]) => a < b ? -1 : 1)) {
     const currentShip = shipsById[id];
     if (!currentShip) continue;
 
@@ -826,7 +836,7 @@ function step(run, regions, timeStep = 1) {
     updatedShip = shipsById[id];
 
     // Performing combat
-    const combatOutcome = advanceCombat(updatedShip, id, shipsById, run.seed, run.elapsedTime);
+    const combatOutcome = advanceCombat(updatedShip, id, shipsById, run.seed, run.elapsedTime, id);
     shipsById = combatOutcome.shipsById;
     if (combatOutcome.liveCountIncrements) {
       // New: Save outcome event(s)

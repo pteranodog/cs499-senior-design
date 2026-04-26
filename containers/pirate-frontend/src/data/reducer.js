@@ -25,14 +25,16 @@ function simStateReducer(state, action) {
     case 'display-region':
       return { ...state, display: { type: 'region', index: action.id } };
     case 'display-run':
-      return { ...state, display: { type: 'run', index: action.index } };
+      return { ...state, display: { type: 'run', run: {...state.runs[action.index]} } };
     case 'step-run':
       return {
         ...state,
         runs: state.runs.map((run, i) => {
           if (i !== action.index) return run;
           if (!['running', 'paused'].includes(run.status)) return run;
-          const stepped = step(run, state.regions);
+          const incremented = incrementRunTime(run, 1); 
+          if (incremented.status === 'completed') return incremented;
+          const stepped = step(incremented, state.regions);
           return spawnMoreShips(stepped, state.regions);
         })
       };
@@ -66,7 +68,11 @@ function simStateReducer(state, action) {
     case 'view-run-controls':
       return viewRunControls(state, action.run);
     case 'view-run-end':
-      return { ...state, display: { type: 'run', index: action.run }, controls: { type: 'end-run', index: action.run }};
+      return {
+        ...state,
+        display: { type: 'run', run: {...state.runs[action.run]} },
+        controls: { type: 'end-run', index: action.run }
+      };
     case 'increment-run-time':
       return {
         ...state,
@@ -90,7 +96,7 @@ function simStateReducer(state, action) {
 
           while (
             updatedRun.elapsedTime < durationTicks &&
-            updatedRun.status !== 'completed'
+              updatedRun.status !== 'completed'
           ) {
             // Match actual Step button behavior
             updatedRun = incrementRunTime(updatedRun, 1);
@@ -345,7 +351,7 @@ function spawnShips(run, regions) {
     }
 
     const destLatLng = chooseWeightedDestPort(region, rng, chosenPort.pos); // NEW: passing in spawn point as a port to avoid
-    const ID = crypto.randomUUID();
+    const ID = Math.floor(rng() * 2147483647);
     ships[ID] = buildShip("merchant", chosenPort.pos, "medium", region, destLatLng, pathIdCounter++);
     merchantsSpawned += 1;
   }
@@ -357,7 +363,7 @@ function spawnShips(run, regions) {
       return run;
     }
     const [, chosenPoint] = coves[Math.floor(rng() * coves.length)]; // randomly choose a spawn cove; should these be weighted too?..
-    const ID = crypto.randomUUID();
+    const ID = Math.floor(rng() * 2147483647);
 
     // need cartesian equivalent for point choosing
     const cartesianPos = latLngToCartesian(chosenPoint.pos[0], chosenPoint.pos[1], {
@@ -378,7 +384,7 @@ function spawnShips(run, regions) {
         const currentPatrols = Object.values(ships).filter(s => s.type === 'patrol').length;
         if (currentPatrols >= maxPatrols) break;
         if (!shouldSpawn(maxPatrols * 2, run.seed, run.elapsedTime)) continue;
-        const id = crypto.randomUUID();
+        const id = Math.floor(rng() * 2147483647);
         const cartesianPos = latLngToCartesian(point.pos[0], point.pos[1], {
           originLat: region.center[0], originLon: region.center[1], metersPerUnit: 1, headingDegrees: 0,
         });
@@ -497,7 +503,7 @@ function viewRunControls(state, runIndex) {
   return {
     ...state,
     runs: state.runs,
-    display:  { type: 'run', index: runIndex },
+    display:  { type: 'run', run: run },
     controls: { type: 'active-run', index: runIndex },
   };
 }
@@ -533,14 +539,14 @@ function spawnMoreShips(run, regions) {
   const piratesPerDay   = (run.maxPirates   ?? 0);
   const maxPatrols      = (run.maxPatrols   ?? 0);
 
-  let pathIdCounter = Date.now(); // avoid ID collisions with initial spawn
+  let pathIdCounter = run.elapsedTime * 10000; // avoid ID collisions with initial spawn
 
   // Merchants: one roll per tick, spawn @ random (weighted probability) port if it fires
   if (shouldSpawn(merchantsPerDay, run.seed, run.elapsedTime)) {
     const chosenPort = chooseWeightedSpawnPort(region, rng);
     if (chosenPort) {
       const destLatLng = chooseWeightedDestPort(region, rng, chosenPort.pos);
-      const id = crypto.randomUUID();
+      const id = Math.floor(rng() * 2147483647);
       newShips[id] = buildShip('merchant', chosenPort.pos, 'medium', region, destLatLng ?? null, pathIdCounter++);
     }
   }
@@ -550,7 +556,7 @@ function spawnMoreShips(run, regions) {
     const coves = Object.entries(region.points).filter(([, p]) => p.type === 'pirateCove');
     if (coves.length > 0) {
       const [, chosenPoint] = coves[Math.floor(rng() * coves.length)];
-      const id = crypto.randomUUID();
+      const id = Math.floor(rng() * 2147483647);
       const cartesianPos = latLngToCartesian(chosenPoint.pos[0], chosenPoint.pos[1], {
         originLat: region.center[0], originLon: region.center[1], metersPerUnit: 1, headingDegrees: 0,
       });
@@ -566,7 +572,7 @@ function spawnMoreShips(run, regions) {
     const currentPatrols = Object.values(newShips).filter(s => s.type === 'patrol').length; // Convoluted way of checking if we've hit max patrol count yet
     if (currentPatrols >= maxPatrols) break;
     if (!shouldSpawn(maxPatrols * 2, run.seed, run.elapsedTime)) continue; // spawn all patrols in ~1/2 a day
-    const id = crypto.randomUUID();
+    const id = Math.floor(rng() * 2147483647);
     const cartesianPos = latLngToCartesian(point.pos[0], point.pos[1], {
       originLat: region.center[0], originLon: region.center[1], metersPerUnit: 1, headingDegrees: 0,
     });

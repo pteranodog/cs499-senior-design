@@ -87,8 +87,8 @@ function choosePort(portArr, seed) {
 }
 
 // export somalia-specific destination getters
-export function getSomaliaHotspot(seed) {
-    return choosePirateHotspot(somalianPirateHotspots, seed);
+export function getSomaliaHotspot(seed, shipID) {
+    return choosePirateHotspot(somalianPirateHotspots, seed + '-' + shipID);
 }
 
 

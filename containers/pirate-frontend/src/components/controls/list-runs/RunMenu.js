@@ -98,17 +98,6 @@ export default function RunMenu ({ simState, modifySimState }) {
         padding: '4px',
       }}>
       
-      <div
-        classname="d-flex justify-content-end mb2">
-        <Button
-          variant="outline-light"
-          size="sm"
-          onClick={() => setShowHelp(true)}
-        >
-          Getting Started
-        </Button>
-      </div>
-
       <input
         ref={fileInputRef}
         type="file"
@@ -143,10 +132,15 @@ export default function RunMenu ({ simState, modifySimState }) {
             ))}
           </Accordion>
         )}
+      <Button
+        variant="outline-light"
+        onClick={() => setShowHelp(true)}
+      >
+        Getting Started
+      </Button>
       <ButtonGroup className="d-flex w-100 mt-1">
         <Button 
           variant="outline-info" 
-          size="sm" 
           className="flex-fill"
           onClick={() => fileInputRef.current.click()}
         >
@@ -160,7 +154,6 @@ export default function RunMenu ({ simState, modifySimState }) {
               ? "success"
               : "warning"
           }
-          size="sm"
           className="flex-fill"
           onClick={() => {
             if (selectedCount === 0) {
@@ -210,7 +203,7 @@ export default function RunMenu ({ simState, modifySimState }) {
           Notes:
         </p>
           <ol>
-            <li>To compare runs, slect two runs for the same region</li>
+            <li>To compare runs, select two runs for the same region</li>
             <li>You cannot edit the settings of an imported run</li>
           </ol>
       </Modal.Body>

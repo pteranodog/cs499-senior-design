@@ -18,12 +18,20 @@ export default function RunControls({ simState, modifySimState, runID }) {
             return undefined;
         }
         const interval = setInterval(() => {
-            modifySimState({ type: 'increment-run-time', index: runID, ticks: 1 });
             modifySimState({ type: 'step-run', index: runID });
         }, 1000 / speed);
 
-    return () => clearInterval(interval);
+      return () => clearInterval(interval);
     }, [run, runID, modifySimState, speed]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            console.log(runID);
+            modifySimState({ type: 'display-run', index: runID });
+        }, 250);
+
+      return () => clearInterval(interval);
+    }, [runID, modifySimState, speed]);
 
     useEffect(() => {
         if (!run || run.status !== 'completed') {

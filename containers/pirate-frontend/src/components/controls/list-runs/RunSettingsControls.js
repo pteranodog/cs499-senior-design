@@ -30,9 +30,19 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
   return (
     <div className="d-flex flex-column gap-2">
       {/*
-      // TODO: RANDOM SEED MODIFICATION
       // TODO: Normal DateTime instead of Hour:Minute? Might be easier
       */}
+      <FloatingLabel label="Random Seed" className="floating-dark">
+        <Form.Control
+          size="sm" 
+          type="number" 
+          placeholder="Random Seed"
+          className="bg-dark text-light border-secondary"
+          value={runSettings.seed}
+          onChange={(e) => modifyRun('seed', e.target.value)}
+        />
+      </FloatingLabel>
+
       <div className="d-flex gap-2 align-items-center">
         <FloatingLabel label="Hour (HH)" className="floating-dark flex-fill">
           <Form.Control
@@ -89,7 +99,7 @@ export default function RunSettingsControls({ runSettings, regions, modifyRun, m
         { id: 'maxPatrols',   label: 'Total Security', max: 25},
       ].map(({ id, label, max }) => (
         <div key={id} className="d-flex align-items-center gap-2">
-          <Form.Label data-testid={`${id}-label`} className="floating-dark small mb-0 text-nowrap" style={{ width: '120px' }}>
+          <Form.Label data-testid={`${id}-label`} className="floating-dark small mb-0 text-nowrap" style={{ width: '175px' }}>
             {label}: {runSettings[id]}
           </Form.Label>
           <Form.Range
