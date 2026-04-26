@@ -7,10 +7,10 @@ import { saveStateToUrl, loadStateFromUrl } from '../data/stateEncoding.js';
 function PirateMap() {
   const [simState, modifySimState] = useReducer(simStateReducer, {}, () => loadStateFromUrl() ?? appStartState());
 
-  // useEffect(() => {
-  //   saveStateToUrl(simState);
-  //   console.log(simState);
-  // }, [simState]);
+  useEffect(() => {
+    // saveStateToUrl(simState);
+    console.log(simState);
+  }, [simState]);
 
   return (
     <>

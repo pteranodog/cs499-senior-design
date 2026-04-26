@@ -45,7 +45,10 @@ function App() {
           <div className="marquee-content">
             <img src="/patrol-icon.png" alt="Patrol" style={{ height: '50px', marginRight: '40px' }} />
             <img src="/pirate-icon.png" alt="Pirate" style={{ height: '50px', marginRight: '40px' }} />
-            <img src="/merchant-icon.png" alt="Merchant" style={{ height: '50px' }} />
+            <img src="/merchant-icon.png" alt="Merchant" style={{ height: '50px', marginRight: '40px' }} />
+            <img src="/patrol-icon.png" alt="" style={{ height: '50px', marginRight: '40px' }} />
+            <img src="/pirate-icon.png" alt="" style={{ height: '50px', marginRight: '40px' }} />
+            <img src="/merchant-icon.png" alt="" style={{ height: '50px', marginRight: '40px' }} />
           </div>
         </div>
         <h1>Please use a desktop browser</h1>

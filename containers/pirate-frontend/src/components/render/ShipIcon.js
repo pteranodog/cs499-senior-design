@@ -1,5 +1,4 @@
 import { Marker, Popup } from 'react-leaflet';
-import { useMemo } from 'react';
 import L from 'leaflet';
 
 const BASE_ZOOM = 10;
@@ -30,45 +29,52 @@ const ICON_CONFIG = {
   }
 };
 
-function ShipIcons({ type, lat, lon, zoom }) {
-  // For now we'll just set marker text using type, later we'll switch it to show different icons
-  var markerText = "Unknown vessel type!";
-  if (type === "pirate") {
-    markerText = "This is a pirate!";
-  } else if (type === "merchant") {
-    markerText = "This is a merchant!";
-  } else if (type === "patrol") {
-    markerText = "This is a patrol vessel!";
-  }
+const POPUP_TEXT = {
+  pirate: 'This is a pirate!',
+  merchant: 'This is a merchant!',
+  patrol: 'This is a patrol vessel!',
+};
 
-  const shipIcon = useMemo(() => {
-    const iconConfig = ICON_CONFIG[type] || ICON_CONFIG.default;
-    const scale = Math.min(
-      MAX_SCALE,
-      Math.max(MIN_SCALE, BASE_SCALE * Math.pow(1.15, zoom - BASE_ZOOM))
-    );
-    const [baseWidth, baseHeight] = iconConfig.iconSize;
-    const width = Math.round(baseWidth * scale);
-    const height = Math.round(baseHeight * scale);
+// Module-level cache: lives for the lifetime of the page, shared across all
+// ShipIcon instances. Key is "type:zoom" — only as many entries as there are
+// distinct (type × zoom-level) combinations, typically < 50.
+const shipIconCache = new Map();
 
-    const filterStyle = iconConfig.filter ? `filter:${iconConfig.filter};` : '';
+function getShipIcon(type, zoom) {
+  const key = `${type}:${zoom}`;
+  if (shipIconCache.has(key)) return shipIconCache.get(key);
 
-    return L.divIcon({
-      className: '',
-      html: `<img src="${iconConfig.iconUrl}" width="${width}" height="${height}" style="${filterStyle}" />`,
-      iconSize: [width, height],
-      iconAnchor: [Math.round(width / 2), height],
-      popupAnchor: [0, -height + 5],
-    });
-  }, [type, zoom]);
+  const iconConfig = ICON_CONFIG[type] || ICON_CONFIG.default;
+  const scale = Math.min(
+    MAX_SCALE,
+    Math.max(MIN_SCALE, BASE_SCALE * Math.pow(1.15, zoom - BASE_ZOOM))
+  );
+  const [baseWidth, baseHeight] = iconConfig.iconSize;
+  const width = Math.round(baseWidth * scale);
+  const height = Math.round(baseHeight * scale);
+  const filterStyle = iconConfig.filter ? `filter:${iconConfig.filter};` : '';
 
-  return (
-    <Marker position={[lat, lon]} icon={shipIcon}>
-      <Popup>
-        {markerText}
-      </Popup>
-    </Marker>
-  )
+  const icon = L.divIcon({
+    className: '',
+    html: `<img src="${iconConfig.iconUrl}" width="${width}" height="${height}" style="${filterStyle}" />`,
+    iconSize: [width, height],
+    iconAnchor: [Math.round(width / 2), height],
+    popupAnchor: [0, -height + 5],
+  });
+
+  shipIconCache.set(key, icon);
+  return icon;
 }
 
-export default ShipIcons;
+function ShipIcon({ type, lat, lon, zoom }) {
+  const icon = getShipIcon(type, zoom);
+  const markerText = POPUP_TEXT[type] ?? 'Unknown vessel type!';
+
+  return (
+    <Marker position={[lat, lon]} icon={icon}>
+      <Popup>{markerText}</Popup>
+    </Marker>
+  );
+}
+
+export default ShipIcon;

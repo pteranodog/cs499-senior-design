@@ -1,20 +1,18 @@
 import { getTimeOfDayInfo } from '../../utils/timeOfDay.js';
 
 export default function DisplayBadge({ simState }) {
-  const { type, index } = simState.display;
-
   let emoji = '🗺️';
   let primary;
   let secondary;
   let timeOfDay = 'Day';
 
-  if (type === 'region') {
-    const region = simState.regions[index];
+  if (simState.display.type === 'region') {
+    const region = simState.regions[simState.display.index];
     if (!region) return null;
     primary = region.name;
     emoji = '🗺️';
-  } else if (type === 'run') {
-    const run = simState.runs[index];
+  } else if (simState.display.type === 'run') {
+    const run = simState.runs[simState.display.run];
     if (!run) return null;
     const region = simState.regions[run.regionId];
     emoji = '🏴\u200d☠️';

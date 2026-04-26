@@ -12,8 +12,8 @@ import { getMapTheme } from './mapTheme.js';
 function getRegionBounds(region) {
   if (region?.bounds) {
     return [
-      [region.bounds.bottom, region.bounds.left],
-      [region.bounds.top, region.bounds.right],
+      [region.bounds.bottom - 1, region.bounds.left - 1],
+      [region.bounds.top + 1, region.bounds.right + 1],
     ];
   }
 
@@ -24,7 +24,7 @@ function getRegionBounds(region) {
   ];
 }
 
-export default function RunDisplay({ simState, run }) {
+export default function RunDisplay({ simState, run, showShips = true }) {
   const map = useMap();
   const region = simState?.regions?.[run?.regionId];
   const timeOfDay = getTimeOfDayInfo({
@@ -102,7 +102,7 @@ export default function RunDisplay({ simState, run }) {
     <>
       <TileLayer attribution={mapTheme.attribution} url={mapTheme.tileUrl} />
       <PointIcons pointList={pointList} />
-      <ShipIcons shipList={shipList} regionCenter={region.center} />
+      {showShips ? <ShipIcons shipList={shipList} regionCenter={region.center} /> : null}
       <EncounterIcons events={encounterEvents} regionCenter={region.center} />
       <OceanCurrentArrows regionBounds={region.bounds} isNight={mapTheme.isNight} />
 

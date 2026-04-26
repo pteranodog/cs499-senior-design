@@ -7,8 +7,8 @@ import { getMapTheme } from './mapTheme.js';
 function getRegionBounds(region) {
   if (region?.bounds) {
     return [
-      [region.bounds.bottom, region.bounds.left],
-      [region.bounds.top, region.bounds.right],
+      [region.bounds.bottom - 1, region.bounds.left - 1],
+      [region.bounds.top + 1, region.bounds.right + 1],
     ];
   }
 
