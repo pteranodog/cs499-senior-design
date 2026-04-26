@@ -1,5 +1,11 @@
 import * as behaviors from './behaviors.js';
 
+// Note: A majority of this code was generated (with author guidance) by Claude.
+// Orginally, I was attempting to adapt A* to the sim by myself, but was struggling
+// and came to the realization that a somewhat general task like graph construction
+// and A* implementation is something that Claude would excel at. I've made
+// a pass or two to make comments about what exactly is going on in here
+// since AI-generated code tends to be on the less readable side. - Jonathan
 
 // Danger weight per ship type. (How "scary" is pirate presence to each ship type)
 // Merchants fully consider danger zones, all others ignore them.
@@ -157,7 +163,7 @@ function heuristic(node, goalNode) {
 // ============================= Min-heap ======================================
 // Simple binary min-heap for the A* open set, keyed on f cost.
 // Using a heap rather than sorting an array gives O(log n) push/pop
-// instead of O(n log n), which matters for large graphs.
+// instead of O(n log n), which matters for large graphs like the ones we are working with.
 
 class MinHeap {
   constructor() {

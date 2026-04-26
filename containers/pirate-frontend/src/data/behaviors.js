@@ -59,7 +59,8 @@ function newSteeringOutput(linear, angular) {
 }
 
 // ============================= Ship update =============================
-// Replaces updateMover. Takes a ship and steering output, returns updated ship.
+// NEW: Replaces updateMover. Takes a ship and steering output, returns updated ship.
+// Was used to decouple ships and movers; movement data lives on ships now!
 
 function updateShip(ship, steering, timeStep) {
     let newPos = add(ship.pos, scalarMult(ship.velocity, timeStep));
@@ -134,6 +135,10 @@ function newFollowPath(path, pathOffset, weight = 1) {
 }
 
 // ============================= Steering constants =============================
+// In traditional implementations of these steering behaviors, these are parameters
+// that you'd normally find in behavior constructors; however, for the purposes of our sim,
+// it's not unwise to make them constant across all behavior instances
+// to make initiating such behaviors less of a headache.
 
 const ARRIVE_TARGET_RADIUS  = 500;
 const ARRIVE_SLOW_RADIUS    = 5000;
@@ -294,20 +299,29 @@ function getSteering(ship, behavior, target = null) {
 
 // ============================= Blended steering =============================
 
+/**
+ * Go through a list of a ship's behaviors and 
+ * return ONE steering output that results from
+ * weighting the steering outputs of individual
+ * behaviors and summing the vectors up. 
+ */
 function getTotalSteering(ship, behaviors) {
     let totalLinear  = [0, 0];
     let totalAngular = 0;
     let totalWeight  = 0;
 
     for (const behavior of behaviors) {
+        // First, get this behavior's steering output
         const target   = behavior.target ?? null;
         const steering = getSteering(ship, behavior, target);
 
+        // account for any math errors I may have missed in vector functions causing a NaN return for steering
         if (isNaN(steering.linear[0]) || isNaN(steering.linear[1])) {
             console.warn('NaN steering from behavior:', behavior.type, 'ship:', ship.type, 'behavior:', behavior);
             continue; // skip this behavior rather than corrupting total
         }
 
+        // Then weight & add to total
         totalLinear    = add(totalLinear, scalarMult(steering.linear, behavior.weight));
         totalAngular  += steering.angular * behavior.weight;
         totalWeight   += behavior.weight;
@@ -330,6 +344,7 @@ function getTotalSteering(ship, behaviors) {
 }
 
 // ============================= Path functions =============================
+// used by the A* implementation present in our sim; see aStar.js for that!
 
 function newPath(points, id) {
     return {

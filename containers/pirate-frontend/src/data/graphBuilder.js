@@ -1,11 +1,20 @@
 import { isOcean } from '../utils/isOcean.js';
 import { latLngToCartesian } from '../utils/coords.js';
 
+// Note: A majority of this code was generated (with author guidance) by Claude.
+// Orginally, I was attempting to adapt A* to the sim by myself, but was struggling
+// and came to the realization that a somewhat general task like graph construction
+// and A* implementation is something that Claude would excel at. I've made
+// a pass or two to make comments about what exactly is going on in here
+// since AI-generated code tends to be on the less readable side. - Jonathan
+
 // ============================= Danger zones =============================
 // Static danger zones per region. Each zone has a center lat/lon, radius in
 // meters, and intensity (0-1). Node danger scores are computed from these
 // at graph-build time so A* can factor in piracy risk without runtime queries.
 
+// NOTE: I forgot to define danger zones for other regions, so non-somalia
+// merchants dont really take extra care to avoid coves in the area. sorry
 const DANGER_ZONES = {
   "Somalian Coast": [
     { lat: 11.1705, lon: 47.4048, radius: 300000, intensity: 3.0 }, // Cove One
@@ -29,11 +38,11 @@ const DANGER_ZONES = {
  * how far apart two nodes "next to each other" are.
  * 
  * NEW: gridsize is now supplied by region; some regions are smaller than others,
- * and can afford to have a more dense graph!
+ * and can thus afford to have a more dense graph!
  */
 export function buildNavGraph(region) {
   const gridSize = region.navGraphDensity;
-const { center, name } = region;
+  const { center, name } = region;
   const [originLat, originLon] = center;
   const { top, bottom, left, right } = region.bounds;
 
@@ -157,6 +166,10 @@ function haversineMeters(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/** 
+ * Assign a score to nodes close to shore, causing connections to them
+ * to have a heightened cost when examined by A*. 
+ */
 function computeShoreScore(graph, nodeId, gridSize) {
   const node = graph[nodeId];
   if (!node.passable) return 0;
