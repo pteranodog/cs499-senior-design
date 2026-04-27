@@ -9,7 +9,6 @@ function PirateMap() {
 
   useEffect(() => {
     // saveStateToUrl(simState);
-    console.log(simState);
   }, [simState]);
 
   return (

@@ -158,9 +158,9 @@ function buildDiff(simState) {
 export function encodeState(simState) {
   const diff = buildDiff(simState);
   if (Object.keys(diff).length === 0) return null;
-  console.log('minifying:', JSON.stringify(diff));
+  //console.log('minifying:', JSON.stringify(diff));
   const mini = minify(diff);
-  console.log('encoding:', JSON.stringify(mini));
+  //console.log('encoding:', JSON.stringify(mini));
   const bytes = encode(mini);
   return ENCODERS
     .map(enc => ({ param: enc.param, value: enc.encode(bytes, mini) }))
