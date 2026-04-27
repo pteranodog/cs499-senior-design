@@ -244,8 +244,8 @@ function getFaceSteering(ship, behavior, target) {
     return getAlignSteering(ship, behavior, tempTarget);
 }
 
-function getWanderSteering(ship, behavior) {
-    behavior.wanderOrientation += (Math.random() * 2 - 1) * WANDER_RATE;
+function getWanderSteering(ship, behavior, rng) {
+    behavior.wanderOrientation += (rng() * 2 - 1) * WANDER_RATE;
 
     let targetOrientation = behavior.wanderOrientation + ship.orientation;
     let center    = add(ship.pos, scalarMult(orientationToVector(ship.orientation), WANDER_OFFSET));
@@ -279,7 +279,7 @@ function getFollowPathSteering(ship, behavior) {
 
 // ============================= Master steering dispatcher =============================
 
-function getSteering(ship, behavior, target = null) {
+function getSteering(ship, behavior, target = null, rng = null) {
     switch (behavior.type) {
         case 'continue':   return getContinueSteering(ship, behavior);
         case 'seek':       return getSeekSteering(ship, behavior, target);
@@ -288,7 +288,7 @@ function getSteering(ship, behavior, target = null) {
         case 'pursue':     return getPursueSteering(ship, behavior, target);
         case 'align':      return getAlignSteering(ship, behavior, target);
         case 'face':       return getFaceSteering(ship, behavior, target);
-        case 'wander':     return getWanderSteering(ship, behavior);
+        case 'wander':     return getWanderSteering(ship, behavior, rng);
         case 'followPath': return getFollowPathSteering(ship, behavior);
         default:
             console.warn('getSteering: unrecognized behavior type:', behavior.type);
@@ -304,7 +304,7 @@ function getSteering(ship, behavior, target = null) {
  * weighting the steering outputs of individual
  * behaviors and summing the vectors up. 
  */
-function getTotalSteering(ship, behaviors) {
+function getTotalSteering(ship, behaviors, rng) {
     let totalLinear  = [0, 0];
     let totalAngular = 0;
     let totalWeight  = 0;
@@ -312,7 +312,7 @@ function getTotalSteering(ship, behaviors) {
     for (const behavior of behaviors) {
         // First, get this behavior's steering output
         const target   = behavior.target ?? null;
-        const steering = getSteering(ship, behavior, target);
+        const steering = getSteering(ship, behavior, target, rng);
 
         // account for potnetial NaN math errora
         if (isNaN(steering.linear[0]) || isNaN(steering.linear[1])) {
