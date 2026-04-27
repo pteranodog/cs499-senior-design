@@ -695,7 +695,7 @@ function checkForDestinationArrival(ship, region, seed, step, index) {
 
 // ============================= Movement =============================
 
-function updateShipMovement(ship, shipsById, timeStep, region) {
+function updateShipMovement(ship, shipsById, timeStep, region, rng) {
   if (ship.inCombat) return ship; // ships in combat don't move
 
   const behaviorList = buildBehaviors(ship, shipsById, region);
@@ -706,7 +706,7 @@ function updateShipMovement(ship, shipsById, timeStep, region) {
     const idx = behaviorList.indexOf(followPathBehavior);
     behaviorList[idx] = { ...followPathBehavior };
   }
-  const steering    = behaviors.getTotalSteering(ship, behaviorList);
+  const steering    = behaviors.getTotalSteering(ship, behaviorList, rng);
   const updatedShip = behaviors.updateShip(ship, steering, timeStep);
   // Write the updated currentParam back from our local clone into the new ship.
   if (followPathBehavior) {
@@ -738,6 +738,7 @@ function step(run, regions, timeStep = 1) {
   // pathIdRef is a simple counter object so repath calls get unique path IDs
   // without needing global state
   const pathIdRef = { value: run.elapsedTime * 10000 };
+  const rng = seedrandom(run.seed + '-' + run.elapsedTime + 'step');
 
   let shipsById = { ...run.currentState.ships };
   let encounterTotals = {
@@ -862,7 +863,7 @@ function step(run, regions, timeStep = 1) {
     if (!updatedShip) continue; // If this ship lost (was deleted) in combat, skip it
 
     // Movement
-    updatedShip = updateShipMovement(updatedShip, shipsById, timeStep, region);
+    updatedShip = updateShipMovement(updatedShip, shipsById, timeStep, region, rng);
     
     const stepsAliveUpdate = { stepsAlive: (updatedShip.stepsAlive ?? 0) + 1 };
     // @ this fuel consumption rate, pirates should last ~2 days out at sea
