@@ -127,9 +127,9 @@ const onStep = () => {
           <Button variant="secondary" onClick={() => setShowTerminateModal(false)}>
             Cancel
           </Button>
-          <Button variant="warning" onClick={skipToEnd}>
-            Skip To End
-          </Button>
+          {/* <Button variant="warning" onClick={skipToEnd}> */}
+          {/*   Skip To End */}
+          {/* </Button> */}
           <Button variant="danger" onClick={confirmTerminate}>
             Terminate
           </Button>
