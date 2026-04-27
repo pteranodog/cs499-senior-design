@@ -74,7 +74,7 @@ const onStep = () => {
     modifyRun('status', 'paused');
   }
 
-  modifySimState({ type: 'increment-run-time', index: runID, ticks: 1 });
+  // modifySimState({ type: 'increment-run-time', index: runID, ticks: 1 });
   modifySimState({ type: 'step-run', index: runID });
 };
 
