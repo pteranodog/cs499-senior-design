@@ -7,7 +7,7 @@ import { cartesianToLatLng, latLngToCartesian } from '../utils/coords.js';
 import { getTimeOfDayInfo } from '../utils/timeOfDay.js';
 
 const COMBAT_RANGE   = 2000;
-const REPATH_INTERVAL = 20; // steps between A* recomputes for merchants
+const REPATH_INTERVAL = 80; // steps between A* recomputes for merchants
 const NIGHT_SIGHT_RANGE_MULTIPLIER = 0.5;
 
 function getEffectiveSightRange(ship, isNight) {
@@ -431,7 +431,7 @@ export function choosePatrolDestination(homeBase, ship, region, seed, step, inde
     const randLon = bounds.left  + rng() * (bounds.right - bounds.left);
 
     // disregard that point if it's on land
-    if (!isOcean(randLat, randLon)) continue; // POTENTIAL PERFORMANCE TODO: this should probably just check if a land node is nearby
+    if (!isOcean(randLat, randLon)) continue; 
 
     // convert that latlon to cartesian so we can check its distance from this ship
     // and compare that distance against max, min and target dist

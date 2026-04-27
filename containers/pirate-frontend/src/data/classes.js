@@ -1,11 +1,8 @@
-// import * as behvaiors from './behaviors.js'
 // Class definitions; for ships, points, regions, runs
-// TODOs: 
-// fill out const values for accelerations/speeds of ships
-// finish assigning initial behaviors to all ships 
-// make predetermined Paths for patrols and merchants?
 
 
+// NOTE: these values are unused, see the stats object in reducer.js's 
+// buildShip function for stuff like that
 const MAX_SMALL_PIRATE_SPEED = 10;
 const MAX_MED_PIRATE_SPEED = 10;
 const MAX_SMALL_MERCHANT_SPEED = 10;
@@ -36,12 +33,14 @@ function newShip(type, startPos, size, sightRange, crewSize, armament, durabilit
     size: size, // String expected; small, medium, or large
     sightRange: sightRange, // Unit is miles?
 
+    // INFO ON THESE: part of a proposed combat system that we unfortunately ditched
+    // due to time constraints; only sightRange was kept for the final combat system
     crewSize: crewSize,
     armament: armament,
     durability: durability,
 
     state: 1,
-    fuel: 100, // Default value; unit is gallons.
+    fuel: 100, // %age of tank remaining; only relevant for pirates, based on research
     inCombat: false
   }; 
 }
@@ -50,8 +49,10 @@ function newShip(type, startPos, size, sightRange, crewSize, armament, durabilit
  * flee from patrol ships.
  */
 function newPirateShip(startPos, size, homeCove) {
-  // Using ? operator for shorthand if-else, since current research only mentions two sizes of pirate ships
-  // NEW: speed/acc
+  // NOTE: these values are entirely fake as of project conclusion
+  // and are instead assigned under different names in buildShip.js;
+  // this is because we ditched the idea of ship size due to time constraints.
+  // also, again, antiquated combat stats of armament, crew size and durability
   let maxAcc = (size === "small" ? MAX_SMALL_PIRATE_ACC : MAX_MED_MERCHANT_ACC);
   let maxSpeed = (size === "small" ? MAX_SMALL_PIRATE_SPEED : MAX_MED_MERCHANT_SPEED);
   let crewSize = (size === "small" ? 7 : 19);
@@ -77,10 +78,16 @@ function newPirateShip(startPos, size, homeCove) {
 function newPatrolShip(startPos, size, homePort) {
 
   // Before calling super, initialize size-dependent ship properties
+  // NOTE: again, combat stats antiquared
   let crewSize = 0
   let durability = 0
   let armament = 0
   let sightRange = 0
+
+
+  // another unused part of something that was abandoned due to time constraints:
+  // medium patrols were going to carry and release smaller ones (ship size is
+  // also entirely unused)
   let carriedSmallPatrols = {}
 
   switch (size) {
@@ -124,14 +131,12 @@ function newPatrolShip(startPos, size, homePort) {
  * and send distress calls to nearby Patrol Ships when fleeing.
  */
 function newMerchantShip(startPos, size, homePort) {
-  // Before calling super, initialize size-dependent ship properties
-  // TODO: Currently only have research for one size of merchant; more to come?
+  // NOTE: once more, antiquated combat stats
   let crewSize = 21;
   let durability = 70;
   let armament = 25;
   let sightRange = 1;
 
-  // switch/if-else statement here for sizes if last comment is correct
 
   let ship = newShip("merchant", startPos, size, sightRange, crewSize, armament, durability);
   ship.homePort = homePort; // Spawn point / "Point A" of patrol path. Port object expected.
@@ -141,7 +146,8 @@ function newMerchantShip(startPos, size, homePort) {
 // ================= Map-object classes: for use by the simulation's designers =================
 /** A defined area for the simulation to take place in. Consists of various
  * ports and pirate coves. Things to note: 
- *  - (MIGHT CHANGE) Strictly rectangular (length/width boundaries in args). TODO: decide if centered on a point or justified
+ *  - Strictly rectangular (from viewport POV; in actuality, a section of the globe, of course) 
+ * (length/width boundaries in args). 
  *  - Persists between Runs.
  *  - pointsArr is assumed to be an array of all points within the region boundaries
  */
@@ -181,13 +187,15 @@ function newPort(name, portPos, spawnWeight, toPorts, fromPorts, destWeight, vis
 {
   let point = newPoint(name, "port", portPos)
 
-  /// probability for this port to be chosen as the location when a merchant spawns (0-1)
+  // probability for this port to be chosen as the location when a merchant spawns (0-1)
   point.spawnWeight = spawnWeight;
 
-  // Merchants export goods from this port *to* where?
+  // Merchants export goods from this port *to* where? 
+  // (unused as of project conclusion because Jonathan forgot to use it)
   point.toPorts = toPorts // array of Ports 
 
   // Merchants import goods to this port *from* where?
+  // (unused as of project conclusion because Jonathan forgot to use it)
   point.fromPorts = fromPorts // array of Ports 
 
   // probability for this port to be chosen as the destination when a merchant spawns (0-1)
@@ -226,8 +234,7 @@ function newBase(name, basePos, patrolSpawnChance)
 // ================= Run and Config classes: pre-run configuration by user + run data  =================
 
 /** Holds the configuration data that the user sets prior to starting the run.
- * TODO: probably needs more arguments, will refer to docs + update to include 
- * all the user settings */
+*/
 function newConfig(seed, startHour, startMinute, duration, weatherType, maxPirates, maxMerchants, maxPatrols) {
   return {
     seed: seed,
