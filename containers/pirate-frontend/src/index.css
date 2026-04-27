@@ -11,3 +11,38 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.floating-dark label {
+  color: #adb5bd !important;
+}
+
+.accordion-item.run-item .accordion-button {
+  background-color: var(--bs-gray-800);
+  color: var(--bs-light);
+}
+
+.accordion-item.run-item .accordion-button:not(.collapsed) {
+  background-color: var(--bs-gray-700);
+  color: var(--bs-light);
+}
+
+.accordion-item.run-item .accordion-button::after {
+  filter: invert(1); /* makes the chevron visible on dark backgrounds */
+}
+
+.marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.marquee-content {
+  display: inline-block;
+  animation: marquee-scroll 10s linear infinite;
+}
+
+@keyframes marquee-scroll {
+  from { transform: translateX(-100vw); }
+  to   { transform: translateX(100vw); }
+}
+

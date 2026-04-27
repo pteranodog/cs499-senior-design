@@ -1,0 +1,89 @@
+import 'leaflet/dist/leaflet.css';
+import { useEffect } from 'react';
+import { MapContainer, useMap, ZoomControl } from 'react-leaflet';
+import RunDisplay from './RunDisplay';
+// EncounterIcons is used in RunDisplay
+import RegionDisplay from './RegionDisplay';
+import DisplayBadge from './DisplayBadge';
+
+const transformConfig = {
+  originLat: 0,
+  originLon: 0,
+};
+
+function MapResizeHandler({ controlsType }) {
+  const map = useMap();
+  useEffect(() => {
+    setTimeout(() => map.invalidateSize(), 10);
+  }, [controlsType, map]);
+  return null;
+}
+
+function SingleMap({ simState, modifySimState, style }) {
+  const controlsHasSidePanel = simState.controls.type === 'list-runs' || simState.controls.type === 'end-run';
+
+  return (
+    <div style={style ?? {
+      position: 'absolute',
+      top: 0,
+      left: controlsHasSidePanel ? '600px' : '0',
+      width: controlsHasSidePanel ? 'calc(100% - 600px)' : '100%',
+      height: '100%',
+    }}>
+      <MapContainer
+        style={{ width: '100%', height: '100%' }}
+        center={[transformConfig.originLat, transformConfig.originLon]}
+        zoom={4}
+        zoomControl={false}
+      >
+        <ZoomControl position="topright" />
+        <MapResizeHandler controlsType={simState.controls.type} />
+        <DisplayBadge simState={simState} />
+        {simState.display.type === 'run'    && <RunDisplay    simState={simState} run={simState.display.run} />}
+        {simState.display.type === 'region' && <RegionDisplay simState={simState} region={simState.regions[simState.display.index]} />}
+      </MapContainer>
+    </div>
+  );
+}
+
+function CompareMap({ simState, modifySimState, runIndex, side }) {
+  const run = simState.runs[runIndex];
+
+  return (
+    <div style={{
+      position: 'absolute',
+      top: 0,
+      left: side === 'left' ? '0' : '50%',
+      width: '50%',
+      height: '100%',
+    }}>
+      <MapContainer
+        style={{ width: '100%', height: '100%' }}
+        center={[transformConfig.originLat, transformConfig.originLon]}
+        zoom={4}
+      >
+        <ZoomControl position="topright" />
+        <MapResizeHandler controlsType={simState.controls.type} />
+        {run && (
+          <>
+            <RunDisplay simState={simState} run={run} showShips={false} />
+            <DisplayBadge simState={{ ...simState, display: { type: 'run', run: run } }} />
+          </>
+        )}
+      </MapContainer>
+    </div>
+  );
+}
+
+export default function RenderMap({ simState, modifySimState }) {
+  if (simState.controls.type === 'compare-runs') {
+    return (
+      <>
+        <CompareMap simState={simState} modifySimState={modifySimState} runIndex={simState.controls.runA} side="left" />
+        <CompareMap simState={simState} modifySimState={modifySimState} runIndex={simState.controls.runB} side="right" />
+      </>
+    );
+  }
+
+  return <SingleMap simState={simState} modifySimState={modifySimState} />;
+}
