@@ -238,7 +238,6 @@ function defaultRegions() {
   for (const [regionId, region] of Object.entries(regions)) {
   region.bounds = regionBoundingBoxes[regionId];
   region.navgraph = buildNavGraph(region);
-  console.log('navgraph nodes:', Object.keys(region.navgraph).length);
 
    // Compute cartesian bounds of this region from its navgraph node positions:
   const cartesians = Object.values(region.navgraph).map(n => n.cartesian);

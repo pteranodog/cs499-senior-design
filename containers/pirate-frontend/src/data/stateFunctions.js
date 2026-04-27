@@ -360,7 +360,7 @@ export function choosePirateDestination(ship, region, seed, step, index) {
   const points = [];
 
   let attempts = 0;
-  while (points.length < n && attempts < 100) { // limit to 100 tries
+  while (points.length < n && attempts < 300) { // limit to 150 tries
     attempts++;
 
     // choose random latlon in the region bounds
@@ -423,7 +423,7 @@ export function choosePatrolDestination(homeBase, ship, region, seed, step, inde
   const points = [];
 
   let attempts = 0;
-  while (points.length < n && attempts < 100) { // limit to 100 tries
+  while (points.length < n && attempts < 300) { // limit to 100 tries
     attempts++;
 
     // choose random latlon in the region bounds

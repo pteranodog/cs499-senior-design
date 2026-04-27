@@ -26,7 +26,6 @@ export default function RunControls({ simState, modifySimState, runID }) {
 
     useEffect(() => {
         const interval = setInterval(() => {
-            console.log(runID);
             modifySimState({ type: 'display-run', index: runID });
         }, 250);
 
